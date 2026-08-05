@@ -1,0 +1,345 @@
+import { Request, Response } from 'express';
+import Order, { OrderStatus, PaymentStatus } from '../models/Order';
+import Customer from '../models/Customer';
+import Payment from '../models/Payment';
+import { generateOrderNumber } from '../utils/orderNumberGenerator';
+import { generateQRCodeDataUrl } from '../utils/qrGenerator';
+
+export const getOrders = async (req: Request, res: Response) => {
+  try {
+    const { status, paymentStatus, search, dateFrom, dateTo, page = 1, limit = 20 } = req.query;
+
+    const pageNum = parseInt(page as string);
+    const limitNum = parseInt(limit as string);
+    const skip = (pageNum - 1) * limitNum;
+
+    let query: any = {};
+
+    if (status) {
+      query.status = status;
+    }
+
+    if (paymentStatus) {
+      query.paymentStatus = paymentStatus;
+    }
+
+    if (search) {
+      const searchRegex = new RegExp(search as string, 'i');
+      query.$or = [
+        { orderNumber: searchRegex },
+        { 'customerSnapshot.name': searchRegex },
+        { 'customerSnapshot.mobile': searchRegex },
+      ];
+    }
+
+    if (dateFrom || dateTo) {
+      query.orderDate = {};
+      if (dateFrom) query.orderDate.$gte = new Date(dateFrom as string);
+      if (dateTo) query.orderDate.$lte = new Date(dateTo as string);
+    }
+
+    const total = await Order.countDocuments(query);
+    const orders = await Order.find(query)
+      .populate('customer', 'name mobile address email')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitNum);
+
+    res.json({
+      success: true,
+      orders,
+      pagination: {
+        total,
+        page: pageNum,
+        limit: limitNum,
+        pages: Math.ceil(total / limitNum),
+      },
+    });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const getOrderById = async (req: Request, res: Response) => {
+  try {
+    const order = await Order.findById(req.params.id).populate('customer');
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Order not found' });
+    }
+
+    const payments = await Payment.find({ orderId: order._id }).sort({ paidAt: -1 });
+
+    res.json({ success: true, order, payments });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const createOrder = async (req: Request, res: Response) => {
+  try {
+    const {
+      customerId,
+      newCustomer,
+      items,
+      expectedDeliveryDate,
+      discount = 0,
+      taxPercent = 0,
+      advancePaid = 0,
+      paymentMethod = 'Pending',
+      notes = '',
+    } = req.body;
+
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ success: false, message: 'At least one laundry item is required' });
+    }
+
+    let customerObj: any = null;
+
+    if (customerId) {
+      customerObj = await Customer.findById(customerId);
+      if (!customerObj) {
+        return res.status(404).json({ success: false, message: 'Selected customer not found' });
+      }
+    } else if (newCustomer && newCustomer.name && newCustomer.mobile) {
+      let existing = await Customer.findOne({ mobile: newCustomer.mobile });
+      if (existing) {
+        customerObj = existing;
+      } else {
+        customerObj = new Customer({
+          name: newCustomer.name,
+          mobile: newCustomer.mobile,
+          address: newCustomer.address || 'Local',
+          email: newCustomer.email || '',
+        });
+        await customerObj.save();
+      }
+    } else {
+      return res.status(400).json({ success: false, message: 'Please select a customer or provide new customer details' });
+    }
+
+    // Process items & subtotal
+    const processedItems = items.map((item: any) => {
+      const qty = Number(item.quantity) || 1;
+      const price = Number(item.unitPrice) || 0;
+      return {
+        itemId: item.itemId,
+        itemName: item.itemName,
+        serviceId: item.serviceId,
+        serviceName: item.serviceName,
+        quantity: qty,
+        unitPrice: price,
+        subtotal: qty * price,
+      };
+    });
+
+    const subtotal = processedItems.reduce((acc: number, item: any) => acc + item.subtotal, 0);
+    const disc = Number(discount) || 0;
+    const taxPct = Number(taxPercent) || 0;
+    const taxableAmount = Math.max(0, subtotal - disc);
+    const taxAmount = (taxableAmount * taxPct) / 100;
+    const totalAmount = Math.round(taxableAmount + taxAmount);
+
+    const advPaid = Number(advancePaid) || 0;
+    const remainingBalance = Math.max(0, totalAmount - advPaid);
+
+    let paymentStatus: PaymentStatus = 'Pending';
+    if (advPaid >= totalAmount) {
+      paymentStatus = 'Paid';
+    } else if (advPaid > 0) {
+      paymentStatus = 'Partially Paid';
+    }
+
+    const orderNumber = await generateOrderNumber();
+
+    // QR Content for digital receipt
+    const qrData = JSON.stringify({
+      orderNumber,
+      customer: customerObj.name,
+      mobile: customerObj.mobile,
+      totalAmount,
+      balance: remainingBalance,
+    });
+    const qrCodeUrl = await generateQRCodeDataUrl(qrData);
+
+    const deliveryDate = expectedDeliveryDate
+      ? new Date(expectedDeliveryDate)
+      : new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+    const order = new Order({
+      orderNumber,
+      customer: customerObj._id,
+      customerSnapshot: {
+        name: customerObj.name,
+        mobile: customerObj.mobile,
+        address: customerObj.address,
+        email: customerObj.email,
+      },
+      items: processedItems,
+      status: 'Received',
+      statusHistory: [
+        {
+          status: 'Received',
+          timestamp: new Date(),
+          note: 'Order created & received in shop',
+        },
+      ],
+      orderDate: new Date(),
+      expectedDeliveryDate: deliveryDate,
+      discount: disc,
+      taxPercent: taxPct,
+      taxAmount,
+      subtotal,
+      totalAmount,
+      advancePaid: advPaid,
+      remainingBalance,
+      paymentStatus,
+      paymentMethod: advPaid > 0 ? paymentMethod : 'Pending',
+      notes,
+      qrCodeUrl,
+    });
+
+    await order.save();
+
+    // Update Customer statistics
+    customerObj.totalOrders += 1;
+    customerObj.totalSpent += totalAmount;
+    await customerObj.save();
+
+    // Record initial payment if advance paid
+    if (advPaid > 0) {
+      const payment = new Payment({
+        orderId: order._id,
+        orderNumber: order.orderNumber,
+        customerId: customerObj._id,
+        customerName: customerObj.name,
+        amount: advPaid,
+        paymentMethod: paymentMethod === 'Pending' ? 'Cash' : paymentMethod,
+        note: 'Advance Payment',
+        paidAt: new Date(),
+      });
+      await payment.save();
+    }
+
+    res.status(201).json({
+      success: true,
+      message: 'Order created successfully',
+      order,
+    });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const updateOrderStatus = async (req: Request, res: Response) => {
+  try {
+    const { status, note } = req.body;
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Order not found' });
+    }
+
+    const validStatuses: OrderStatus[] = [
+      'Received',
+      'Washing',
+      'Drying',
+      'Ironing',
+      'Packing',
+      'Ready for Pickup',
+      'Delivered',
+      'Cancelled',
+    ];
+
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ success: false, message: 'Invalid order status' });
+    }
+
+    order.status = status;
+    if (status === 'Delivered') {
+      order.deliveredAt = new Date();
+    }
+
+    order.statusHistory.push({
+      status,
+      timestamp: new Date(),
+      note: note || `Status updated to ${status}`,
+    });
+
+    await order.save();
+
+    res.json({
+      success: true,
+      message: `Order status updated to ${status}`,
+      order,
+    });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const recordOrderPayment = async (req: Request, res: Response) => {
+  try {
+    const { amount, paymentMethod, transactionId, note } = req.body;
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Order not found' });
+    }
+
+    const payAmount = Number(amount);
+    if (!payAmount || payAmount <= 0) {
+      return res.status(400).json({ success: false, message: 'Please enter a valid positive payment amount' });
+    }
+
+    const newAdvance = order.advancePaid + payAmount;
+    order.advancePaid = newAdvance;
+    order.remainingBalance = Math.max(0, order.totalAmount - newAdvance);
+
+    if (order.remainingBalance === 0) {
+      order.paymentStatus = 'Paid';
+    } else {
+      order.paymentStatus = 'Partially Paid';
+    }
+    order.paymentMethod = paymentMethod;
+
+    await order.save();
+
+    const payment = new Payment({
+      orderId: order._id,
+      orderNumber: order.orderNumber,
+      customerId: order.customer,
+      customerName: order.customerSnapshot.name,
+      amount: payAmount,
+      paymentMethod,
+      transactionId: transactionId || '',
+      note: note || 'Subsequent Payment',
+      paidAt: new Date(),
+    });
+    await payment.save();
+
+    res.json({
+      success: true,
+      message: 'Payment recorded successfully',
+      order,
+      payment,
+    });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const deleteOrder = async (req: Request, res: Response) => {
+  try {
+    const order = await Order.findById(req.params.id);
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Order not found' });
+    }
+
+    await Order.findByIdAndDelete(req.params.id);
+    await Payment.deleteMany({ orderId: req.params.id });
+
+    res.json({ success: true, message: 'Order deleted successfully' });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
