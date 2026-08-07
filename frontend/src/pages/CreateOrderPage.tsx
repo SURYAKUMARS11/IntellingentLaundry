@@ -248,6 +248,22 @@ export const CreateOrderPage: React.FC = () => {
     try {
       const res = await createOrderApi({
         customerId: selectedCustomerId,
+        customerSnapshot: selectedCustomerObj
+          ? {
+              name: selectedCustomerObj.name,
+              mobile: selectedCustomerObj.mobile,
+              address: selectedCustomerObj.address || 'Local',
+              email: selectedCustomerObj.email || '',
+            }
+          : undefined,
+        newCustomer: selectedCustomerObj
+          ? {
+              name: selectedCustomerObj.name,
+              mobile: selectedCustomerObj.mobile,
+              address: selectedCustomerObj.address || 'Local',
+              email: selectedCustomerObj.email || '',
+            }
+          : undefined,
         items: orderItems,
         expectedDeliveryDate,
         discount,

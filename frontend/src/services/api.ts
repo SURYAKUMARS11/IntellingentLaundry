@@ -365,12 +365,13 @@ export const createOrderApi = async (orderData: any) => {
     const customers = getMockCustomers();
 
     // Look up customer snapshot accurately
-    let customerName = 'Walk-in Customer';
-    let customerMobile = '9876543210';
-    let customerAddress = 'Local';
-    let customerEmail = '';
+    const snap = orderData.customerSnapshot || orderData.newCustomer;
+    let customerName = snap?.name;
+    let customerMobile = snap?.mobile;
+    let customerAddress = snap?.address || 'Local';
+    let customerEmail = snap?.email || '';
 
-    if (orderData.customerId) {
+    if (!customerName && orderData.customerId) {
       const found = customers.find((c) => c._id === orderData.customerId);
       if (found) {
         customerName = found.name;
@@ -378,11 +379,11 @@ export const createOrderApi = async (orderData: any) => {
         customerAddress = found.address || 'Local';
         customerEmail = found.email || '';
       }
-    } else if (orderData.newCustomer) {
-      customerName = orderData.newCustomer.name || customerName;
-      customerMobile = orderData.newCustomer.mobile || customerMobile;
-      customerAddress = orderData.newCustomer.address || customerAddress;
-      customerEmail = orderData.newCustomer.email || customerEmail;
+    }
+
+    if (!customerName) {
+      customerName = 'Walk-in Customer';
+      customerMobile = '9876543210';
     }
 
     const items = orderData.items || [];

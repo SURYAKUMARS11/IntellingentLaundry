@@ -109,26 +109,29 @@ export const createOrder = async (req: Request, res: Response) => {
 
     let customerObj: any = null;
 
+    const custData = newCustomer || req.body.customerSnapshot;
+
     if (customerId) {
       customerObj = await Customer.findById(customerId);
-      if (!customerObj) {
-        return res.status(404).json({ success: false, message: 'Selected customer not found' });
-      }
-    } else if (newCustomer && newCustomer.name && newCustomer.mobile) {
-      let existing = await Customer.findOne({ mobile: newCustomer.mobile });
+    }
+    
+    if (!customerObj && custData && custData.name && custData.mobile) {
+      let existing = await Customer.findOne({ mobile: custData.mobile });
       if (existing) {
         customerObj = existing;
       } else {
         customerObj = new Customer({
-          name: newCustomer.name,
-          mobile: newCustomer.mobile,
-          address: newCustomer.address || 'Local',
-          email: newCustomer.email || '',
+          name: custData.name,
+          mobile: custData.mobile,
+          address: custData.address || 'Local',
+          email: custData.email || '',
         });
         await customerObj.save();
       }
-    } else {
-      return res.status(400).json({ success: false, message: 'Please select a customer or provide new customer details' });
+    }
+
+    if (!customerObj) {
+      return res.status(400).json({ success: false, message: 'Please select a valid customer or provide customer details' });
     }
 
     // Process items & subtotal
