@@ -491,7 +491,6 @@ export const DashboardPage: React.FC = () => {
                     <th className="py-3 px-4">Order ID</th>
                     <th className="py-3 px-4">Customer</th>
                     <th className="py-3 px-4">Order Date & Time</th>
-                    <th className="py-3 px-4">Delivery Due</th>
                     <th className="py-3 px-4">Amount</th>
                     <th className="py-3 px-4">Order Status (Dropdown)</th>
                     <th className="py-3 px-4">Payment</th>
@@ -521,13 +520,6 @@ export const DashboardPage: React.FC = () => {
                       <td className="py-3.5 px-4 text-slate-500 whitespace-nowrap">
                         <p className="font-medium text-slate-700 dark:text-slate-300">
                           {formatDateTime(ord.orderDate)}
-                        </p>
-                      </td>
-
-                      {/* Delivery Due */}
-                      <td className="py-3.5 px-4 text-slate-500 whitespace-nowrap">
-                        <p className="font-semibold text-slate-800 dark:text-slate-200">
-                          {new Date(ord.expectedDeliveryDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
                         </p>
                       </td>
 
@@ -644,20 +636,12 @@ export const DashboardPage: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Date & Time Badges */}
-                  <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 text-[11px] text-slate-600 dark:text-slate-300 space-y-1">
-                    <div className="flex items-center justify-between">
-                      <span className="text-slate-400 font-medium">Placed Date & Time:</span>
-                      <span className="font-bold text-slate-800 dark:text-slate-200">
-                        {formatDateTime(ord.orderDate)}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-slate-400 font-medium">Expected Delivery:</span>
-                      <span className="font-bold text-brand-600 dark:text-brand-400">
-                        {new Date(ord.expectedDeliveryDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
-                      </span>
-                    </div>
+                  {/* Date & Time Badge */}
+                  <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 text-[11px] text-slate-600 dark:text-slate-300 flex items-center justify-between">
+                    <span className="text-slate-400 font-medium">Order Date & Time:</span>
+                    <span className="font-bold text-slate-800 dark:text-slate-200">
+                      {formatDateTime(ord.orderDate)}
+                    </span>
                   </div>
 
                   {/* Order Status Select Input */}
