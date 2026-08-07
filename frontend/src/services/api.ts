@@ -99,11 +99,31 @@ export const updateProfile = async (data: any) => {
 };
 
 // --- Customer API ---
-export const fetchCustomers = async (search = '') => {
+export const fetchCustomers = async (params: { search?: string; page?: number; limit?: number } | string = '') => {
+  const search = typeof params === 'string' ? params : params.search || '';
+  const page = typeof params === 'object' ? params.page || 1 : 1;
+  const limit = typeof params === 'object' ? params.limit || 10 : 10;
+  const query = new URLSearchParams({ search, page: String(page), limit: String(limit) }).toString();
   try {
-    return await fetchApi(`/customers?search=${encodeURIComponent(search)}`);
+    return await fetchApi(`/customers?${query}`);
   } catch (err) {
-    return { success: true, customers: getMockCustomers() };
+    let customers = getMockCustomers();
+    if (search) {
+      const q = search.toLowerCase();
+      customers = customers.filter(
+        (c) =>
+          c.name.toLowerCase().includes(q) ||
+          c.mobile.includes(q) ||
+          c.address.toLowerCase().includes(q)
+      );
+    }
+    const skip = (page - 1) * limit;
+    const paginated = customers.slice(skip, skip + limit);
+    return {
+      success: true,
+      customers: paginated,
+      pagination: { total: customers.length, page, limit, pages: Math.ceil(customers.length / limit) },
+    };
   }
 };
 
