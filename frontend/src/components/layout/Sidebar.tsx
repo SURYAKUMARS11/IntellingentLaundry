@@ -12,6 +12,7 @@ import {
   Sparkles,
   ChevronLeft,
   ChevronRight,
+  Wallet,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -24,6 +25,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed = false, onToggleC
     { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
     { label: 'New Order', path: '/orders/new', icon: PlusCircle },
     { label: 'Orders', path: '/orders', icon: ShoppingBag, end: true },
+    { label: 'Accounts & Expenses', path: '/accounts', icon: Wallet },
     { label: 'Customers', path: '/customers', icon: Users },
     { label: 'Services', path: '/services', icon: WashingMachine },
     { label: 'Clothing Items', path: '/items', icon: Shirt },

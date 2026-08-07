@@ -144,3 +144,50 @@ export interface DashboardStats {
   periodRevenue?: number;
   totalCustomers?: number;
 }
+
+export type ExpenseCategory =
+  | 'Electricity Bill'
+  | 'Labour & Salaries'
+  | 'Detergents & Solvents'
+  | 'Machinery & Maintenance'
+  | 'Shop Rent'
+  | 'Transport & Fuel'
+  | 'Tea & Refreshments'
+  | 'Miscellaneous';
+
+export interface Expense {
+  _id: string;
+  voucherNumber: string;
+  expenseDate: string;
+  category: ExpenseCategory;
+  description: string;
+  amount: number;
+  paymentMethod: 'Cash' | 'Bank / UPI' | 'Card';
+  paidTo?: string;
+  notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface AccountsTransaction {
+  id: string;
+  refNumber: string;
+  date: string;
+  type: 'Income' | 'Expense';
+  category: string;
+  description: string;
+  paymentMethod: string;
+  amount: number;
+}
+
+export interface AccountsSummary {
+  totalIncome: number;
+  totalExpenses: number;
+  cashBalance: number;
+  bankBalance: number;
+  cashIncome: number;
+  cashExpenses: number;
+  bankIncome: number;
+  bankExpenses: number;
+}
+
