@@ -31,7 +31,8 @@ import {
   Smartphone,
   Edit,
   Eye,
-  Calendar,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 
 export const DashboardPage: React.FC = () => {
@@ -40,6 +41,9 @@ export const DashboardPage: React.FC = () => {
   const [recentOrders, setRecentOrders] = useState<Order[]>([]);
   const [setting, setSetting] = useState<Setting | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Collapsible Filter Drawer State (collapsed by default for ultra-clean UI)
+  const [isFilterExpanded, setIsFilterExpanded] = useState<boolean>(false);
 
   // Filter States
   const [preset, setPreset] = useState<string>('today');
@@ -157,6 +161,8 @@ export const DashboardPage: React.FC = () => {
     return `${d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}, ${d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`;
   };
 
+  const activePresetLabel = presetOptions.find((p) => p.id === preset)?.label || 'All Time';
+
   return (
     <div className="space-y-6 pb-12">
       {/* Header Banner & Quick Action Buttons */}
@@ -194,135 +200,174 @@ export const DashboardPage: React.FC = () => {
         </div>
       </div>
 
-      {/* DASHBOARD FILTERS SECTION */}
-      <div className="glass-card p-4 sm:p-5 space-y-4 border-l-4 border-l-brand-600">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 pb-2 border-b border-slate-100 dark:border-slate-800">
-          <div className="flex items-center gap-2">
-            <Filter className="w-4 h-4 text-brand-600 dark:text-brand-400" />
-            <h2 className="font-extrabold text-sm text-slate-900 dark:text-white">
-              Dashboard Analytics Filters
-            </h2>
+      {/* COLLAPSIBLE DASHBOARD FILTERS ACCORDION */}
+      <div className="glass-card p-4 sm:p-5 border-l-4 border-l-brand-600 space-y-3">
+        {/* Header Summary & Toggle Bar */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-2">
+              <Filter className="w-4 h-4 text-brand-600 dark:text-brand-400" />
+              <h2 className="font-extrabold text-sm text-slate-900 dark:text-white">
+                Dashboard Filters
+              </h2>
+            </div>
+
+            {/* Active Filter Chips */}
+            <div className="flex flex-wrap items-center gap-1.5 ml-1">
+              <span className="px-2.5 py-0.5 rounded-full bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300 font-bold text-[10px] border border-brand-200 dark:border-brand-800">
+                Preset: {dateFrom || dateTo ? 'Custom Range' : activePresetLabel}
+              </span>
+
+              {paymentStatus && (
+                <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 font-bold text-[10px] border border-emerald-200">
+                  Payment: {paymentStatus}
+                </span>
+              )}
+
+              {orderStatus && (
+                <span className="px-2.5 py-0.5 rounded-full bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-300 font-bold text-[10px] border border-purple-200">
+                  Status: {orderStatus}
+                </span>
+              )}
+            </div>
           </div>
-          {(preset || paymentStatus || orderStatus || dateFrom || dateTo) && (
+
+          {/* Action Buttons: Expand Toggle & Clear Filters */}
+          <div className="flex items-center gap-2 self-end sm:self-auto">
+            {(preset || paymentStatus || orderStatus || dateFrom || dateTo) && (
+              <button
+                onClick={handleClearFilters}
+                className="text-xs font-semibold text-rose-600 dark:text-rose-400 hover:underline flex items-center gap-1 mr-1"
+              >
+                <X className="w-3.5 h-3.5" /> Clear All
+              </button>
+            )}
+
             <button
-              onClick={handleClearFilters}
-              className="text-xs font-semibold text-rose-600 dark:text-rose-400 hover:underline flex items-center gap-1 self-end sm:self-auto"
+              onClick={() => setIsFilterExpanded((prev) => !prev)}
+              className="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-200 text-xs font-semibold flex items-center gap-1.5 transition-all"
             >
-              <X className="w-3.5 h-3.5" /> Clear Filters
+              <span>{isFilterExpanded ? 'Hide Filters' : 'Filter Dashboard'}</span>
+              {isFilterExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
             </button>
-          )}
+          </div>
         </div>
 
-        {/* Quick Date Presets Scrollable Bar */}
-        <div>
-          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-2">
-            Quick Date Presets
-          </span>
-          <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-            {presetOptions.map((p) => {
-              const active = preset === p.id && !dateFrom && !dateTo;
-              return (
-                <button
-                  key={p.id}
-                  onClick={() => handlePresetSelect(p.id)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
-                    active
-                      ? 'bg-brand-600 text-white shadow-md shadow-brand-600/30'
-                      : 'bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
-                  }`}
+        {/* Collapsible Content Body */}
+        {isFilterExpanded && (
+          <div className="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-4 animate-in fade-in zoom-in-95 duration-150">
+            {/* Quick Date Presets Scrollable Bar */}
+            <div>
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-2">
+                Quick Date Presets
+              </span>
+              <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+                {presetOptions.map((p) => {
+                  const active = preset === p.id && !dateFrom && !dateTo;
+                  return (
+                    <button
+                      key={p.id}
+                      onClick={() => handlePresetSelect(p.id)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+                        active
+                          ? 'bg-brand-600 text-white shadow-md shadow-brand-600/30'
+                          : 'bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                      }`}
+                    >
+                      {p.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Detailed Controls Grid: Payment Status, Order Status, Date Type, From Date, To Date */}
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+              {/* Payment Status Dropdown */}
+              <div>
+                <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
+                  Payment Status
+                </label>
+                <select
+                  value={paymentStatus}
+                  onChange={(e) => setPaymentStatus(e.target.value)}
+                  className="w-full px-2.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-brand-500"
                 >
-                  {p.label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
+                  <option value="">All Payment</option>
+                  <option value="Paid">Paid</option>
+                  <option value="Partially Paid">Partially Paid</option>
+                  <option value="Pending">Pending</option>
+                </select>
+              </div>
 
-        {/* Detailed Controls Grid: Payment Status, Order Status, Date Type, From Date, To Date */}
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-3 pt-2">
-          {/* Payment Status Dropdown */}
-          <div>
-            <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
-              Payment Status
-            </label>
-            <select
-              value={paymentStatus}
-              onChange={(e) => setPaymentStatus(e.target.value)}
-              className="w-full px-2.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-brand-500"
-            >
-              <option value="">All Payment</option>
-              <option value="Paid">Paid</option>
-              <option value="Partially Paid">Partially Paid</option>
-              <option value="Pending">Pending</option>
-            </select>
-          </div>
+              {/* Order Status Dropdown */}
+              <div>
+                <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
+                  Order Status
+                </label>
+                <select
+                  value={orderStatus}
+                  onChange={(e) => setOrderStatus(e.target.value)}
+                  className="w-full px-2.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-brand-500"
+                >
+                  <option value="">All Statuses</option>
+                  {statusOptions.map((st) => (
+                    <option key={st} value={st}>
+                      {st}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-          {/* Order Status Dropdown */}
-          <div>
-            <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
-              Order Status
-            </label>
-            <select
-              value={orderStatus}
-              onChange={(e) => setOrderStatus(e.target.value)}
-              className="w-full px-2.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-brand-500"
-            >
-              <option value="">All Statuses</option>
-              {statusOptions.map((st) => (
-                <option key={st} value={st}>
-                  {st}
-                </option>
-              ))}
-            </select>
-          </div>
+              {/* Date Type Selector */}
+              <div>
+                <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
+                  Date Filter Type
+                </label>
+                <select
+                  value={dateType}
+                  onChange={(e) => setDateType(e.target.value)}
+                  className="w-full px-2.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-brand-500"
+                >
+                  <option value="orderDate">Order Date</option>
+                  <option value="expectedDeliveryDate">Delivery Date</option>
+                </select>
+              </div>
 
-          {/* Date Type Selector */}
-          <div>
-            <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
-              Date Filter Type
-            </label>
-            <select
-              value={dateType}
-              onChange={(e) => setDateType(e.target.value)}
-              className="w-full px-2.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-brand-500"
-            >
-              <option value="orderDate">Order Date</option>
-              <option value="expectedDeliveryDate">Delivery Date</option>
-            </select>
-          </div>
+              {/* Custom From Date */}
+              <div>
+                <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
+                  From Date
+                </label>
+                <input
+                  type="date"
+                  value={dateFrom}
+                  onChange={(e) => {
+                    setDateFrom(e.target.value);
+                    setPreset('');
+                  }}
+                  className="w-full px-2.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-brand-500"
+                />
+              </div>
 
-          {/* Custom From Date */}
-          <div>
-            <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
-              From Date
-            </label>
-            <input
-              type="date"
-              value={dateFrom}
-              onChange={(e) => {
-                setDateFrom(e.target.value);
-                setPreset('');
-              }}
-              className="w-full px-2.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-brand-500"
-            />
+              {/* Custom To Date */}
+              <div className="col-span-2 sm:col-span-1">
+                <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
+                  To Date
+                </label>
+                <input
+                  type="date"
+                  value={dateTo}
+                  onChange={(e) => {
+                    setDateTo(e.target.value);
+                    setPreset('');
+                  }}
+                  className="w-full px-2.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-brand-500"
+                />
+              </div>
+            </div>
           </div>
-
-          {/* Custom To Date */}
-          <div className="col-span-2 sm:col-span-1">
-            <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
-              To Date
-            </label>
-            <input
-              type="date"
-              value={dateTo}
-              onChange={(e) => {
-                setDateTo(e.target.value);
-                setPreset('');
-              }}
-              className="w-full px-2.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-brand-500"
-            />
-          </div>
-        </div>
+        )}
       </div>
 
       {/* 8 Key Metric Cards Grid */}
