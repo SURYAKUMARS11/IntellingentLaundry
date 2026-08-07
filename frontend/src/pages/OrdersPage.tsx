@@ -246,8 +246,8 @@ export const OrdersPage: React.FC = () => {
                       </td>
 
                       <td className="py-3.5 px-4">
-                        <p className="font-bold">{ord.customerSnapshot.name}</p>
-                        <p className="text-[10px] text-slate-400">+91 {ord.customerSnapshot.mobile}</p>
+                        <p className="font-bold">{ord.customerSnapshot?.name || (typeof ord.customer === 'object' ? (ord.customer as any)?.name : 'Customer')}</p>
+                        <p className="text-[10px] text-slate-400">+91 {ord.customerSnapshot?.mobile || (typeof ord.customer === 'object' ? (ord.customer as any)?.mobile : '')}</p>
                       </td>
 
                       <td className="py-3.5 px-4 text-slate-500">
@@ -345,9 +345,9 @@ export const OrdersPage: React.FC = () => {
                         #{ord.orderNumber}
                       </button>
                       <p className="font-bold text-xs text-slate-900 dark:text-white mt-0.5">
-                        {ord.customerSnapshot.name}
+                        {ord.customerSnapshot?.name || (typeof ord.customer === 'object' ? (ord.customer as any)?.name : 'Customer')}
                       </p>
-                      <p className="text-[11px] text-slate-500">+91 {ord.customerSnapshot.mobile}</p>
+                      <p className="text-[11px] text-slate-500">+91 {ord.customerSnapshot?.mobile || (typeof ord.customer === 'object' ? (ord.customer as any)?.mobile : '')}</p>
                     </div>
                     <div className="text-right">
                       <p className="font-black text-sm text-slate-900 dark:text-white">{currencySymbol}{ord.totalAmount}</p>

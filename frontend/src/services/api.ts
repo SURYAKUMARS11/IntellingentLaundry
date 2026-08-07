@@ -316,33 +316,70 @@ export const fetchPublicOrderByNumber = async (orderNumber: string) => {
   }
 };
 
-export const fetchOrders = async (params: { status?: string; paymentStatus?: string; search?: string; page?: number; limit?: number } = {}) => {
-  const query = new URLSearchParams(params as any).toString();
+export const fetchOrders = async (
+  params: { status?: string; paymentStatus?: string; search?: string; page?: number; limit?: number } | string = {}
+) => {
+  const p = typeof params === 'string' ? { search: params } : params;
+  const query = new URLSearchParams(p as any).toString();
+
+  let apiOrders: Order[] = [];
+  let apiSuccess = false;
+  let apiPagination: any = null;
+
   try {
-    return await fetchApi(`/orders?${query}`);
-  } catch (err) {
-    let orders = getMockOrders();
-    if (params.status) orders = orders.filter((o) => o.status === params.status);
-    if (params.paymentStatus) orders = orders.filter((o) => o.paymentStatus === params.paymentStatus);
-    if (params.search) {
-      const q = params.search.toLowerCase();
-      orders = orders.filter(
-        (o) =>
-          o.orderNumber.toLowerCase().includes(q) ||
-          o.customerSnapshot.name.toLowerCase().includes(q) ||
-          o.customerSnapshot.mobile.includes(q)
-      );
+    const res = await fetchApi(`/orders?${query}`);
+    if (res.success && Array.isArray(res.orders)) {
+      apiOrders = res.orders;
+      apiSuccess = true;
+      apiPagination = res.pagination;
     }
-    const page = Number(params.page) || 1;
-    const limit = Number(params.limit) || 10;
-    const skip = (page - 1) * limit;
-    const paginatedOrders = orders.slice(skip, skip + limit);
-    return {
-      success: true,
-      orders: paginatedOrders,
-      pagination: { total: orders.length, page, limit, pages: Math.ceil(orders.length / limit) },
-    };
+  } catch (err) {
+    // Backend fetch failed or offline mode
   }
+
+  const mockOrders = getMockOrders();
+  const mergedMap = new Map<string, Order>();
+
+  apiOrders.forEach((o) => mergedMap.set(o._id || o.orderNumber, o));
+  mockOrders.forEach((o) => {
+    const key = o._id || o.orderNumber;
+    if (!mergedMap.has(key)) {
+      mergedMap.set(key, o);
+    }
+  });
+
+  let combined = Array.from(mergedMap.values());
+  combined.sort(
+    (a, b) => new Date(b.createdAt || b.orderDate).getTime() - new Date(a.createdAt || a.orderDate).getTime()
+  );
+
+  if (p.status) combined = combined.filter((o) => o.status === p.status);
+  if (p.paymentStatus) combined = combined.filter((o) => o.paymentStatus === p.paymentStatus);
+  if (p.search) {
+    const q = p.search.toLowerCase();
+    combined = combined.filter(
+      (o) =>
+        o.orderNumber.toLowerCase().includes(q) ||
+        (o.customerSnapshot?.name && o.customerSnapshot.name.toLowerCase().includes(q)) ||
+        (o.customerSnapshot?.mobile && o.customerSnapshot.mobile.includes(q))
+    );
+  }
+
+  const page = Number(p.page) || 1;
+  const limit = Number(p.limit) || 10;
+  const skip = (page - 1) * limit;
+  const paginatedOrders = combined.slice(skip, skip + limit);
+
+  return {
+    success: true,
+    orders: paginatedOrders,
+    pagination: apiPagination || {
+      total: combined.length,
+      page,
+      limit,
+      pages: Math.ceil(combined.length / limit) || 1,
+    },
+  };
 };
 
 export const fetchOrderById = async (id: string) => {
@@ -356,10 +393,16 @@ export const fetchOrderById = async (id: string) => {
 
 export const createOrderApi = async (orderData: any) => {
   try {
-    return await fetchApi('/orders', {
+    const res = await fetchApi('/orders', {
       method: 'POST',
       body: JSON.stringify(orderData),
     });
+    if (res.success && res.order) {
+      const orders = getMockOrders();
+      orders.unshift(res.order);
+      saveMockOrders(orders);
+    }
+    return res;
   } catch (err) {
     const orders = getMockOrders();
     const customers = getMockCustomers();
