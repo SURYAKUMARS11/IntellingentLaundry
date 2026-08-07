@@ -755,46 +755,7 @@ export const updateSettingsApi = async (settingsData: any) => {
 const getMockCustomers = (): Customer[] => {
   const stored = localStorage.getItem('mock_customers');
   if (stored) return JSON.parse(stored);
-  const initial: Customer[] = [
-    {
-      _id: 'cust-1',
-      name: 'Rahul Sharma',
-      mobile: '9876543210',
-      address: 'B-204, Green Heights, Main Road',
-      email: 'rahul.s@example.com',
-      notes: 'Prefers crisp steam iron for formal shirts',
-      totalOrders: 2,
-      totalSpent: 750,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-    {
-      _id: 'cust-2',
-      name: 'Ananya Verma',
-      mobile: '9812345678',
-      address: 'Flat 101, Sunshine Apartments',
-      email: 'ananya@example.com',
-      notes: 'Dry clean only for delicate sarees',
-      totalOrders: 1,
-      totalSpent: 400,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-    {
-      _id: 'cust-3',
-      name: 'Vikram Singh',
-      mobile: '9988776655',
-      address: 'Villa 12, Palm Meadows',
-      email: 'vikram.singh@example.com',
-      notes: 'Express delivery required',
-      totalOrders: 1,
-      totalSpent: 1200,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-  ];
-  localStorage.setItem('mock_customers', JSON.stringify(initial));
-  return initial;
+  return [];
 };
 
 const saveMockCustomers = (customers: Customer[]) => localStorage.setItem('mock_customers', JSON.stringify(customers));
@@ -832,47 +793,7 @@ const saveMockItems = (items: LaundryItem[]) => localStorage.setItem('mock_items
 const getMockExpenses = (): Expense[] => {
   const stored = localStorage.getItem('mock_expenses');
   if (stored) return JSON.parse(stored);
-  const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-  const initial: Expense[] = [
-    {
-      _id: 'exp-1',
-      voucherNumber: `EXP-${dateStr}-0001`,
-      expenseDate: new Date(Date.now() - 86400000).toISOString(),
-      category: 'Electricity Bill',
-      description: 'Electricity Bill Payment July 2026',
-      amount: 4500,
-      paymentMethod: 'Bank / UPI',
-      paidTo: 'State Electricity Board',
-      notes: 'Monthly power tariff bill',
-      createdAt: new Date().toISOString(),
-    },
-    {
-      _id: 'exp-2',
-      voucherNumber: `EXP-${dateStr}-0002`,
-      expenseDate: new Date(Date.now() - 86400000 * 2).toISOString(),
-      category: 'Detergents & Solvents',
-      description: '20 Liters Liquid Detergent & Spotting Chemical',
-      amount: 2800,
-      paymentMethod: 'Cash',
-      paidTo: 'Chemical Supplies Store',
-      notes: 'Purchased detergent stock',
-      createdAt: new Date().toISOString(),
-    },
-    {
-      _id: 'exp-3',
-      voucherNumber: `EXP-${dateStr}-0003`,
-      expenseDate: new Date(Date.now() - 86400000 * 3).toISOString(),
-      category: 'Labour & Salaries',
-      description: 'Ironing Worker Daily Wages - Suresh',
-      amount: 750,
-      paymentMethod: 'Cash',
-      paidTo: 'Suresh (Pressing Staff)',
-      notes: 'Daily wage payment',
-      createdAt: new Date().toISOString(),
-    },
-  ];
-  localStorage.setItem('mock_expenses', JSON.stringify(initial));
-  return initial;
+  return [];
 };
 
 const saveMockExpenses = (e: Expense[]) => localStorage.setItem('mock_expenses', JSON.stringify(e));
@@ -880,81 +801,22 @@ const saveMockExpenses = (e: Expense[]) => localStorage.setItem('mock_expenses',
 const getMockOrders = (): Order[] => {
   const stored = localStorage.getItem('mock_orders');
   if (stored) return JSON.parse(stored);
-  const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-  const initial: Order[] = [
-    {
-      _id: 'ord-1',
-      orderNumber: `ORD-${dateStr}-0001`,
-      customer: 'cust-1',
-      customerSnapshot: {
-        name: 'Rahul Sharma',
-        mobile: '9876543210',
-        address: 'B-204, Green Heights, Main Road',
-      },
-      items: [
-        { itemName: 'Shirt / T-Shirt', serviceName: 'Wash & Iron', quantity: 5, unitPrice: 60, subtotal: 300 },
-        { itemName: 'Pant / Jeans', serviceName: 'Wash & Iron', quantity: 3, unitPrice: 60, subtotal: 180 },
-      ],
-      status: 'Washing',
-      statusHistory: [
-        { status: 'Received', timestamp: new Date(Date.now() - 86400000).toISOString(), note: 'Received in shop' },
-        { status: 'Washing', timestamp: new Date().toISOString(), note: 'Processing wash cycle' },
-      ],
-      orderDate: new Date().toISOString(),
-      expectedDeliveryDate: new Date(Date.now() + 86400000).toISOString(),
-      discount: 0,
-      taxPercent: 0,
-      taxAmount: 0,
-      subtotal: 480,
-      totalAmount: 480,
-      advancePaid: 200,
-      remainingBalance: 280,
-      paymentStatus: 'Partially Paid',
-      paymentMethod: 'Cash',
-      notes: 'Handle white shirt carefully',
-      qrCodeUrl: `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=ORD-${dateStr}-0001`,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-    {
-      _id: 'ord-2',
-      orderNumber: `ORD-${dateStr}-0002`,
-      customer: 'cust-2',
-      customerSnapshot: {
-        name: 'Ananya Verma',
-        mobile: '9812345678',
-        address: 'Flat 101, Sunshine Apartments',
-      },
-      items: [
-        { itemName: 'Saree (Silk)', serviceName: 'Dry Cleaning', quantity: 2, unitPrice: 200, subtotal: 400 },
-      ],
-      status: 'Ready for Pickup',
-      statusHistory: [
-        { status: 'Received', timestamp: new Date(Date.now() - 86400000 * 2).toISOString(), note: 'Received' },
-        { status: 'Ready for Pickup', timestamp: new Date().toISOString(), note: 'Ready for delivery' },
-      ],
-      orderDate: new Date(Date.now() - 86400000 * 2).toISOString(),
-      expectedDeliveryDate: new Date().toISOString(),
-      discount: 0,
-      taxPercent: 0,
-      taxAmount: 0,
-      subtotal: 400,
-      totalAmount: 400,
-      advancePaid: 400,
-      remainingBalance: 0,
-      paymentStatus: 'Paid',
-      paymentMethod: 'Cash',
-      notes: 'Customer notified',
-      qrCodeUrl: `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=ORD-${dateStr}-0002`,
-      createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-  ];
-  localStorage.setItem('mock_orders', JSON.stringify(initial));
-  return initial;
+  return [];
 };
 
 const saveMockOrders = (orders: Order[]) => localStorage.setItem('mock_orders', JSON.stringify(orders));
+
+export const clearAllDataApi = async () => {
+  localStorage.removeItem('mock_customers');
+  localStorage.removeItem('mock_orders');
+  localStorage.removeItem('mock_payments');
+  localStorage.removeItem('mock_expenses');
+  try {
+    return await fetchApi('/settings/reset', { method: 'DELETE' });
+  } catch (err) {
+    return { success: true, message: 'All local & backend customer/order/expense data cleared.' };
+  }
+};
 
 const getMockSettings = (): Setting => {
   const stored = localStorage.getItem('mock_settings');

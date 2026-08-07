@@ -1,5 +1,9 @@
 import { Request, Response } from 'express';
 import Setting from '../models/Setting';
+import Customer from '../models/Customer';
+import Order from '../models/Order';
+import Payment from '../models/Payment';
+import Expense from '../models/Expense';
 
 export const getSettings = async (req: Request, res: Response) => {
   try {
@@ -55,6 +59,23 @@ export const updateSettings = async (req: Request, res: Response) => {
       success: true,
       message: 'Settings updated successfully',
       setting,
+    });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const resetData = async (req: Request, res: Response) => {
+  try {
+    await Promise.all([
+      Customer.deleteMany({}),
+      Order.deleteMany({}),
+      Payment.deleteMany({}),
+      Expense.deleteMany({}),
+    ]);
+    res.json({
+      success: true,
+      message: 'All existing customers, orders, invoices and shop expenses deleted successfully.',
     });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });

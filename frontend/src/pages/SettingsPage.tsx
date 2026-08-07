@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { fetchSettings, updateSettingsApi, updateProfile } from '../services/api';
+import { fetchSettings, updateSettingsApi, updateProfile, clearAllDataApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { Setting } from '../types';
-import { Settings, Store, Receipt, Lock, CheckCircle, Save } from 'lucide-react';
+import { Settings, Store, Receipt, Lock, CheckCircle, Save, Trash2 } from 'lucide-react';
 
 export const SettingsPage: React.FC = () => {
   const { admin, updateAdminState } = useAuth();
@@ -76,6 +76,17 @@ export const SettingsPage: React.FC = () => {
       }
     } catch (err: any) {
       setAccountMsg(err.message || 'Failed to update profile');
+    }
+  };
+
+  const handleResetAllData = async () => {
+    if (!window.confirm('Are you sure you want to delete ALL existing customers, orders, invoices, and expenses? This will wipe all data to test from scratch.')) return;
+    try {
+      await clearAllDataApi();
+      alert('All orders, customers, invoices & expenses deleted successfully! Ready to test from scratch.');
+      window.location.reload();
+    } catch (err: any) {
+      alert(err.message || 'Failed to reset data');
     }
   };
 
@@ -221,12 +232,20 @@ export const SettingsPage: React.FC = () => {
             />
           </div>
 
-          <div className="pt-3">
+          <div className="pt-3 flex items-center justify-between border-t border-slate-100 dark:border-slate-800">
             <button
               type="submit"
               className="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold shadow-md flex items-center gap-2"
             >
               <Save className="w-4 h-4" /> Save Shop Profile
+            </button>
+
+            <button
+              type="button"
+              onClick={handleResetAllData}
+              className="px-4 py-2.5 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white dark:bg-rose-950/50 dark:text-rose-400 font-extrabold text-xs transition-colors flex items-center gap-1.5"
+            >
+              <Trash2 className="w-4 h-4" /> Reset All Orders & Customers
             </button>
           </div>
         </form>
