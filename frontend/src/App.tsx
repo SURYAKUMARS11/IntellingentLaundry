@@ -21,6 +21,17 @@ import { NotFoundPage } from './pages/NotFoundPage';
 
 const ProtectedLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated, isLoading } = useAuth();
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = React.useState<boolean>(
+    () => localStorage.getItem('sidebar_collapsed') === 'true'
+  );
+
+  const toggleSidebar = () => {
+    setIsSidebarCollapsed((prev) => {
+      const next = !prev;
+      localStorage.setItem('sidebar_collapsed', String(next));
+      return next;
+    });
+  };
 
   if (isLoading) {
     return (
@@ -40,11 +51,11 @@ const ProtectedLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50 dark:bg-slate-950">
       {/* Desktop Sidebar */}
-      <Sidebar />
+      <Sidebar isCollapsed={isSidebarCollapsed} onToggleCollapse={toggleSidebar} />
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col h-full overflow-hidden">
-        <Header />
+        <Header isSidebarCollapsed={isSidebarCollapsed} onToggleSidebar={toggleSidebar} />
 
         <main className="flex-1 overflow-y-auto px-4 sm:px-8 py-6">
           <div className="max-w-7xl mx-auto">{children}</div>

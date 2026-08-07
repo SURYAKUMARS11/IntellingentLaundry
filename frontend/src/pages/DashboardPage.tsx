@@ -36,6 +36,8 @@ import {
   AlertTriangle,
   Receipt,
   UserCheck,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 
 type CardType = 'orders' | 'payments' | 'active' | 'customers' | 'overdue';
@@ -54,6 +56,10 @@ export const DashboardPage: React.FC = () => {
   const [activeOrdersList, setActiveOrdersList] = useState<Order[]>([]);
   const [newCustomersList, setNewCustomersList] = useState<Customer[]>([]);
   const [overdueOrdersList, setOverdueOrdersList] = useState<Order[]>([]);
+
+  // Pagination states for Dashboard Table
+  const [dashPage, setDashPage] = useState<number>(1);
+  const [dashLimit, setDashLimit] = useState<number>(10);
 
   // Collapsible Filter Drawer State
   const [isFilterExpanded, setIsFilterExpanded] = useState<boolean>(false);
@@ -108,7 +114,8 @@ export const DashboardPage: React.FC = () => {
 
   useEffect(() => {
     loadData();
-  }, [preset, paymentStatus, orderStatus, dateType, dateFrom, dateTo]);
+    setDashPage(1);
+  }, [preset, paymentStatus, orderStatus, dateType, dateFrom, dateTo, activeCard]);
 
   const currencySymbol = setting?.currencySymbol || '₹';
 
@@ -139,7 +146,7 @@ export const DashboardPage: React.FC = () => {
   const handleWhatsAppShare = (ord: Order) => {
     const mobile = ord.customerSnapshot.mobile.replace(/\D/g, '');
     const receiptUrl = `${window.location.origin}/receipt/${ord.orderNumber}`;
-    const text = `Hello *${ord.customerSnapshot.name}*,\n\nYour official laundry invoice & receipt for Order *#${ord.orderNumber}* from *${setting?.shopName || 'IntelligentLaundry'}* is ready!\n\n📋 *Invoice Summary*:\n• Status: ${ord.status}\n• Payment: ${ord.paymentStatus}\n• Total Amount: ${currencySymbol}${ord.totalAmount}\n• Advance Paid: ${currencySymbol}${ord.advancePaid}\n• Remaining Balance: ${currencySymbol}${ord.remainingBalance}\n\n🔗 *View / Print / Download PDF Invoice Directly*:\n${receiptUrl}\n\nThank you for choosing ${setting?.shopName || 'IntelligentLaundry'}!`;
+    const text = `Hello *${ord.customerSnapshot.name}*,\n\nYour official laundry invoice & receipt for Order *#${ord.orderNumber}* from *${setting?.shopName || 'IntelligentLaundry'}* is ready!\n\n📋 *Invoice Summary*:\n• Status: ${ord.status}\n• Payment: ${ord.paymentStatus}\n• Total Amount: ${currencySymbol}${ord.totalAmount}\n• Advance Paid: ${currencySymbol}${ord.advancePaid}\n• Remaining Balance: ${currencySymbol}${ord.remainingBalance}\n\n🔗 *View / Print Invoice Directly*:\n${receiptUrl}\n\nThank you for choosing ${setting?.shopName || 'IntelligentLaundry'}!`;
     const url = `https://wa.me/${mobile.length === 10 ? '91' + mobile : mobile}?text=${encodeURIComponent(text)}`;
     window.open(url, '_blank');
   };
@@ -174,6 +181,17 @@ export const DashboardPage: React.FC = () => {
   };
 
   const activePresetLabel = presetOptions.find((p) => p.id === preset)?.label || 'All Time';
+
+  // Active Category List & Pagination math
+  const activeList: any[] = activeCard === 'orders' ? ordersList
+    : activeCard === 'payments' ? paymentsList
+    : activeCard === 'active' ? activeOrdersList
+    : activeCard === 'customers' ? newCustomersList
+    : overdueOrdersList;
+
+  const totalDashRecords = activeList.length;
+  const totalDashPages = Math.ceil(totalDashRecords / dashLimit) || 1;
+  const paginatedList = activeList.slice((dashPage - 1) * dashLimit, dashPage * dashLimit);
 
   return (
     <div className="space-y-6 pb-12">
@@ -382,7 +400,7 @@ export const DashboardPage: React.FC = () => {
         )}
       </div>
 
-      {/* THE 5 REQUIRED DYNAMIC KEY METRIC CARDS */}
+      {/* THE 5 DYNAMIC KEY METRIC CARDS */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
         {/* CARD 1: Orders */}
         <div
@@ -523,15 +541,15 @@ export const DashboardPage: React.FC = () => {
               {activeCard === 'overdue' && <AlertTriangle className="w-5 h-5 text-rose-500" />}
 
               <span>
-                {activeCard === 'orders' && `All Filtered Orders (${ordersList.length})`}
-                {activeCard === 'payments' && `Payments Collected Records (${paymentsList.length})`}
-                {activeCard === 'active' && `Active In-Progress Orders (${activeOrdersList.length})`}
-                {activeCard === 'customers' && `Registered Customers (${newCustomersList.length})`}
-                {activeCard === 'overdue' && `Overdue & Pending Balance Orders (${overdueOrdersList.length})`}
+                {activeCard === 'orders' && `All Filtered Orders (${totalDashRecords})`}
+                {activeCard === 'payments' && `Payments Collected Records (${totalDashRecords})`}
+                {activeCard === 'active' && `Active In-Progress Orders (${totalDashRecords})`}
+                {activeCard === 'customers' && `Registered Customers (${totalDashRecords})`}
+                {activeCard === 'overdue' && `Overdue & Pending Balance Orders (${totalDashRecords})`}
               </span>
             </h3>
             <p className="text-xs text-slate-500 mt-0.5">
-              {activeCard === 'orders' && 'Showing all orders matching filter criteria. Update status, print invoice, or share on WhatsApp.'}
+              {activeCard === 'orders' && 'Showing all orders matching filter criteria.'}
               {activeCard === 'payments' && 'Showing payment collection receipts matching filter criteria.'}
               {activeCard === 'active' && 'Active orders currently in washing, drying, ironing, packing, or ready for pickup.'}
               {activeCard === 'customers' && 'Showing new customer profiles registered during selected period.'}
@@ -551,7 +569,7 @@ export const DashboardPage: React.FC = () => {
         {/* --- VIEW 1: ORDERS LIST (activeCard === 'orders') --- */}
         {activeCard === 'orders' && (
           <div>
-            {ordersList.length === 0 ? (
+            {paginatedList.length === 0 ? (
               <div className="text-center py-8 text-slate-500 text-xs">No orders found matching filters.</div>
             ) : (
               <div>
@@ -569,7 +587,7 @@ export const DashboardPage: React.FC = () => {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-slate-800 dark:text-slate-200">
-                      {ordersList.map((ord) => (
+                      {(paginatedList as Order[]).map((ord) => (
                         <tr key={ord._id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
                           <td className="py-3.5 px-4 font-bold text-brand-600 dark:text-brand-400 whitespace-nowrap">
                             <button onClick={() => setSelectedOrder(ord)} className="hover:underline">
@@ -626,7 +644,7 @@ export const DashboardPage: React.FC = () => {
 
                 {/* Mobile Cards */}
                 <div className="md:hidden space-y-3">
-                  {ordersList.map((ord) => (
+                  {(paginatedList as Order[]).map((ord) => (
                     <div key={ord._id} className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
                       <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
                         <button onClick={() => setSelectedOrder(ord)} className="font-black text-sm text-brand-600 dark:text-brand-400">
@@ -679,7 +697,7 @@ export const DashboardPage: React.FC = () => {
         {/* --- VIEW 2: PAYMENTS RECEIVED LIST (activeCard === 'payments') --- */}
         {activeCard === 'payments' && (
           <div>
-            {paymentsList.length === 0 ? (
+            {paginatedList.length === 0 ? (
               <div className="text-center py-8 text-slate-500 text-xs">No payment records found for selected filters.</div>
             ) : (
               <div className="overflow-x-auto">
@@ -694,7 +712,7 @@ export const DashboardPage: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-slate-800 dark:text-slate-200">
-                    {paymentsList.map((p, idx) => (
+                    {paginatedList.map((p, idx) => (
                       <tr key={p._id || idx} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
                         <td className="py-3.5 px-4 font-bold text-brand-600 dark:text-brand-400">
                           #{p.orderNumber || p.orderId || 'N/A'}
@@ -725,7 +743,7 @@ export const DashboardPage: React.FC = () => {
         {/* --- VIEW 3: ACTIVE ORDERS LIST (activeCard === 'active') --- */}
         {activeCard === 'active' && (
           <div>
-            {activeOrdersList.length === 0 ? (
+            {paginatedList.length === 0 ? (
               <div className="text-center py-8 text-slate-500 text-xs">No active orders currently processing.</div>
             ) : (
               <div>
@@ -743,7 +761,7 @@ export const DashboardPage: React.FC = () => {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-slate-800 dark:text-slate-200">
-                      {activeOrdersList.map((ord) => (
+                      {(paginatedList as Order[]).map((ord) => (
                         <tr key={ord._id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
                           <td className="py-3.5 px-4 font-bold text-brand-600 dark:text-brand-400 whitespace-nowrap">
                             <button onClick={() => setSelectedOrder(ord)} className="hover:underline">
@@ -796,7 +814,7 @@ export const DashboardPage: React.FC = () => {
 
                 {/* Mobile Cards */}
                 <div className="md:hidden space-y-3">
-                  {activeOrdersList.map((ord) => (
+                  {(paginatedList as Order[]).map((ord) => (
                     <div key={ord._id} className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
                       <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
                         <button onClick={() => setSelectedOrder(ord)} className="font-black text-sm text-brand-600 dark:text-brand-400">
@@ -845,7 +863,7 @@ export const DashboardPage: React.FC = () => {
         {/* --- VIEW 4: NEW CUSTOMERS LIST (activeCard === 'customers') --- */}
         {activeCard === 'customers' && (
           <div>
-            {newCustomersList.length === 0 ? (
+            {paginatedList.length === 0 ? (
               <div className="text-center py-8 text-slate-500 text-xs">No new customers registered in selected filter range.</div>
             ) : (
               <div className="overflow-x-auto">
@@ -862,7 +880,7 @@ export const DashboardPage: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-slate-800 dark:text-slate-200">
-                    {newCustomersList.map((c) => (
+                    {(paginatedList as Customer[]).map((c) => (
                       <tr key={c._id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
                         <td className="py-3.5 px-4 font-bold text-slate-900 dark:text-white">
                           {c.name}
@@ -902,7 +920,7 @@ export const DashboardPage: React.FC = () => {
         {/* --- VIEW 5: OVERDUE & PENDING BALANCE ORDERS (activeCard === 'overdue') --- */}
         {activeCard === 'overdue' && (
           <div>
-            {overdueOrdersList.length === 0 ? (
+            {paginatedList.length === 0 ? (
               <div className="text-center py-8 text-slate-500 text-xs">No overdue or pending balance orders. Excellent!</div>
             ) : (
               <div>
@@ -920,7 +938,7 @@ export const DashboardPage: React.FC = () => {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-slate-800 dark:text-slate-200">
-                      {overdueOrdersList.map((ord) => (
+                      {(paginatedList as Order[]).map((ord) => (
                         <tr key={ord._id} className="hover:bg-rose-50/20 dark:hover:bg-rose-950/20">
                           <td className="py-3.5 px-4 font-bold text-rose-600 dark:text-rose-400 whitespace-nowrap">
                             <button onClick={() => setSelectedOrder(ord)} className="hover:underline">
@@ -969,7 +987,7 @@ export const DashboardPage: React.FC = () => {
 
                 {/* Mobile Cards */}
                 <div className="md:hidden space-y-3">
-                  {overdueOrdersList.map((ord) => (
+                  {(paginatedList as Order[]).map((ord) => (
                     <div key={ord._id} className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-rose-200 dark:border-rose-900/60 shadow-sm space-y-3">
                       <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
                         <button onClick={() => setSelectedOrder(ord)} className="font-black text-sm text-rose-600 dark:text-rose-400">
@@ -1009,6 +1027,51 @@ export const DashboardPage: React.FC = () => {
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {/* DASHBOARD LIMIT & PAGINATION CONTROLS BAR */}
+        {totalDashRecords > 0 && (
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 bg-slate-50 dark:bg-slate-800/60 border-t border-slate-200 dark:border-slate-800 text-xs rounded-b-2xl">
+            <div className="flex items-center gap-2">
+              <span className="text-slate-500 font-semibold">Rows per page:</span>
+              <select
+                value={dashLimit}
+                onChange={(e) => {
+                  setDashLimit(Number(e.target.value));
+                  setDashPage(1);
+                }}
+                className="px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 outline-none font-bold"
+              >
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+              <span className="text-slate-500 font-medium ml-2">
+                Showing {Math.min(totalDashRecords, (dashPage - 1) * dashLimit + 1)} - {Math.min(totalDashRecords, dashPage * dashLimit)} of {totalDashRecords} entries
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                disabled={dashPage <= 1}
+                onClick={() => setDashPage((p) => Math.max(1, p - 1))}
+                className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 flex items-center gap-1"
+              >
+                <ChevronLeft className="w-4 h-4" /> Previous
+              </button>
+              <span className="px-2 font-bold text-slate-700 dark:text-slate-300">
+                Page {dashPage} of {totalDashPages}
+              </span>
+              <button
+                disabled={dashPage >= totalDashPages}
+                onClick={() => setDashPage((p) => Math.min(totalDashPages, p + 1))}
+                className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 flex items-center gap-1"
+              >
+                Next <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         )}
       </div>

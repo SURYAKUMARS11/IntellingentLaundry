@@ -10,17 +10,20 @@ import {
   BarChart3,
   Settings,
   Sparkles,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 
 interface SidebarProps {
-  collapsed?: boolean;
+  isCollapsed?: boolean;
+  onToggleCollapse?: () => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = () => {
+export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed = false, onToggleCollapse }) => {
   const navItems = [
     { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
-    { label: 'New Order', path: '/orders/new', icon: PlusCircle, highlight: true },
-    { label: 'Orders', path: '/orders', icon: ShoppingBag },
+    { label: 'New Order', path: '/orders/new', icon: PlusCircle },
+    { label: 'Orders', path: '/orders', icon: ShoppingBag, end: true },
     { label: 'Customers', path: '/customers', icon: Users },
     { label: 'Services', path: '/services', icon: WashingMachine },
     { label: 'Clothing Items', path: '/items', icon: Shirt },
@@ -29,55 +32,78 @@ export const Sidebar: React.FC<SidebarProps> = () => {
   ];
 
   return (
-    <aside className="hidden lg:flex flex-col w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 shrink-0 select-none">
+    <aside
+      className={`hidden lg:flex flex-col bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 shrink-0 select-none transition-all duration-300 ${
+        isCollapsed ? 'w-20' : 'w-64'
+      }`}
+    >
       {/* Brand Header */}
-      <div className="h-16 px-6 flex items-center gap-3 border-b border-slate-200 dark:border-slate-800">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-cyan-500 flex items-center justify-center text-white shadow-md shadow-brand-500/20">
-          <WashingMachine className="w-6 h-6 animate-pulse" />
+      <div className="h-16 px-4 flex items-center justify-between border-b border-slate-200 dark:border-slate-800">
+        <div className="flex items-center gap-3 overflow-hidden">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-cyan-500 flex items-center justify-center text-white shadow-md shadow-brand-500/20 shrink-0">
+            <WashingMachine className="w-6 h-6 animate-pulse" />
+          </div>
+          {!isCollapsed && (
+            <div className="truncate">
+              <h1 className="font-bold text-sm tracking-tight text-slate-900 dark:text-white flex items-center gap-1">
+                IntelligentLaundry <Sparkles className="w-3 h-3 text-brand-500 fill-brand-500 shrink-0" />
+              </h1>
+              <p className="text-[10px] text-slate-500 dark:text-slate-400">Laundry Admin POS</p>
+            </div>
+          )}
         </div>
-        <div>
-          <h1 className="font-bold text-base tracking-tight text-slate-900 dark:text-white flex items-center gap-1">
-            IntelligentLaundry <Sparkles className="w-3.5 h-3.5 text-brand-500 fill-brand-500" />
-          </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400">Laundry Admin POS</p>
-        </div>
+
+        {/* Toggle Collapse Button */}
+        {onToggleCollapse && (
+          <button
+            onClick={onToggleCollapse}
+            title={isCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
+            className="p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors shrink-0"
+          >
+            {isCollapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
+          </button>
+        )}
       </div>
 
       {/* Nav Menu */}
-      <div className="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto">
-        <div className="px-3 text-[11px] font-semibold tracking-wider text-slate-400 uppercase mb-2">
-          Management
-        </div>
+      <div className="flex-1 px-3 py-6 space-y-1.5 overflow-y-auto">
+        {!isCollapsed && (
+          <div className="px-3 text-[11px] font-semibold tracking-wider text-slate-400 uppercase mb-2">
+            Management
+          </div>
+        )}
         {navItems.map((item) => {
           const Icon = item.icon;
           return (
             <NavLink
               key={item.path}
               to={item.path}
+              end={item.end}
+              title={isCollapsed ? item.label : undefined}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all duration-150 ${
+                `flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-sm transition-all duration-150 ${
+                  isCollapsed ? 'justify-center' : ''
+                } ${
                   isActive
-                    ? item.highlight
-                      ? 'bg-brand-600 text-white shadow-md shadow-brand-600/30'
-                      : 'bg-brand-50 dark:bg-brand-950/50 text-brand-600 dark:text-brand-400 font-semibold'
-                    : item.highlight
-                    ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 hover:bg-brand-500/20'
+                    ? 'bg-brand-600 text-white shadow-md shadow-brand-600/30 font-bold'
                     : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-slate-100'
                 }`
               }
             >
               <Icon className="w-5 h-5 shrink-0" />
-              <span>{item.label}</span>
+              {!isCollapsed && <span>{item.label}</span>}
             </NavLink>
           );
         })}
       </div>
 
       {/* Footer Info */}
-      <div className="p-4 m-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400">
-        <p className="font-semibold text-slate-700 dark:text-slate-300">IntelligentLaundry v1.0</p>
-        <p className="mt-0.5">Express Laundry & Dry Clean</p>
-      </div>
+      {!isCollapsed && (
+        <div className="p-3 m-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400">
+          <p className="font-semibold text-slate-700 dark:text-slate-300">IntelligentLaundry v1.0</p>
+          <p className="mt-0.5 text-[11px]">Express Laundry POS</p>
+        </div>
+      )}
     </aside>
   );
 };

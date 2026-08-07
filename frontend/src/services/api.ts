@@ -300,7 +300,7 @@ export const fetchPublicOrderByNumber = async (orderNumber: string) => {
   }
 };
 
-export const fetchOrders = async (params: { status?: string; paymentStatus?: string; search?: string } = {}) => {
+export const fetchOrders = async (params: { status?: string; paymentStatus?: string; search?: string; page?: number; limit?: number } = {}) => {
   const query = new URLSearchParams(params as any).toString();
   try {
     return await fetchApi(`/orders?${query}`);
@@ -317,7 +317,15 @@ export const fetchOrders = async (params: { status?: string; paymentStatus?: str
           o.customerSnapshot.mobile.includes(q)
       );
     }
-    return { success: true, orders, pagination: { total: orders.length, page: 1, limit: 100, pages: 1 } };
+    const page = Number(params.page) || 1;
+    const limit = Number(params.limit) || 10;
+    const skip = (page - 1) * limit;
+    const paginatedOrders = orders.slice(skip, skip + limit);
+    return {
+      success: true,
+      orders: paginatedOrders,
+      pagination: { total: orders.length, page, limit, pages: Math.ceil(orders.length / limit) },
+    };
   }
 };
 
