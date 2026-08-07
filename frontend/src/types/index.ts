@@ -129,13 +129,18 @@ export interface Setting {
 }
 
 export interface DashboardStats {
-  todayOrders: number;
-  pendingOrders: number;
-  inProgress: number;
-  readyForPickup: number;
-  deliveredOrders: number;
-  todayRevenue: number;
-  monthlyRevenue: number;
+  orders: number;
+  paymentsReceived: number;
+  activeOrders: number;
+  newCustomers: number;
+  overdueOrders: number;
+  todayOrders?: number;
+  pendingOrders?: number;
+  inProgress?: number;
+  readyForPickup?: number;
+  deliveredOrders?: number;
+  todayRevenue?: number;
+  monthlyRevenue?: number;
   periodRevenue?: number;
-  totalCustomers: number;
+  totalCustomers?: number;
 }

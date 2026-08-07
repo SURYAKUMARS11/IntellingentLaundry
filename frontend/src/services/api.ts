@@ -461,22 +461,46 @@ export const fetchDashboardStats = async (params: {
     return await fetchApi(`/reports/dashboard?${query}`);
   } catch (err) {
     const orders = getMockOrders();
+    const customers = getMockCustomers();
+    const activeOrds = orders.filter((o) => o.status !== 'Delivered' && o.status !== 'Cancelled');
+    const overdueOrds = orders.filter((o) => o.remainingBalance > 0 || (o.status !== 'Delivered' && o.status !== 'Cancelled'));
+
     const stats: DashboardStats = {
-      todayOrders: orders.filter((o) => new Date(o.createdAt).toDateString() === new Date().toDateString()).length,
-      pendingOrders: orders.filter((o) => ['Received', 'Washing', 'Drying', 'Ironing', 'Packing'].includes(o.status)).length,
-      inProgress: orders.filter((o) => ['Washing', 'Drying', 'Ironing'].includes(o.status)).length,
+      orders: orders.length,
+      paymentsReceived: orders.reduce((acc, o) => acc + o.advancePaid, 0),
+      activeOrders: activeOrds.length,
+      newCustomers: customers.length,
+      overdueOrders: overdueOrds.length,
+      todayOrders: orders.length,
+      pendingOrders: activeOrds.length,
+      inProgress: activeOrds.length,
       readyForPickup: orders.filter((o) => o.status === 'Ready for Pickup').length,
       deliveredOrders: orders.filter((o) => o.status === 'Delivered').length,
       todayRevenue: orders.reduce((acc, o) => acc + o.advancePaid, 0),
       monthlyRevenue: orders.reduce((acc, o) => acc + o.totalAmount, 0),
       periodRevenue: orders.reduce((acc, o) => acc + o.advancePaid, 0),
-      totalCustomers: getMockCustomers().length,
+      totalCustomers: customers.length,
     };
+
     return {
       success: true,
       stats,
-      pendingReminders: orders.filter((o) => o.status !== 'Delivered' && o.status !== 'Cancelled').slice(0, 5),
-      recentOrders: orders.slice(0, 5),
+      ordersList: orders,
+      paymentsList: orders.map((o) => ({
+        _id: o._id,
+        orderId: o._id,
+        orderNumber: o.orderNumber,
+        customerId: o.customerSnapshot.name,
+        customerName: o.customerSnapshot.name,
+        amount: o.advancePaid || o.totalAmount,
+        paymentMethod: o.paymentMethod || 'Cash',
+        paidAt: o.createdAt,
+      })),
+      activeOrdersList: activeOrds,
+      newCustomersList: customers,
+      overdueOrdersList: overdueOrds,
+      pendingReminders: activeOrds,
+      recentOrders: orders,
     };
   }
 };

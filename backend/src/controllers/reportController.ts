@@ -29,7 +29,7 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       endDate = new Date(y.getFullYear(), y.getMonth(), y.getDate(), 23, 59, 59, 999);
     } else if (preset === 'current_week') {
       const day = now.getDay();
-      const diff = now.getDate() - day + (day === 0 ? -6 : 1); // Monday start
+      const diff = now.getDate() - day + (day === 0 ? -6 : 1);
       startDate = new Date(now.getFullYear(), now.getMonth(), diff, 0, 0, 0, 0);
       endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
     } else if (preset === 'current_month') {
@@ -85,50 +85,55 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       if (endDate) orderQuery[field].$lte = endDate;
     }
 
-    // Order counts matching query
+    // 1. Total Orders List & Count
     const totalOrdersCount = await Order.countDocuments(orderQuery);
+    const ordersList = await Order.find(orderQuery).sort({ createdAt: -1 }).limit(20);
 
-    const pendingQuery = { ...orderQuery };
-    if (!status) {
-      pendingQuery.status = { $in: ['Received', 'Washing', 'Drying', 'Ironing', 'Packing'] };
-    }
-    const pendingOrdersCount = await Order.countDocuments(pendingQuery);
-
-    const inProgressQuery = { ...orderQuery };
-    if (!status) {
-      inProgressQuery.status = { $in: ['Washing', 'Drying', 'Ironing'] };
-    }
-    const inProgressCount = await Order.countDocuments(inProgressQuery);
-
-    const readyQuery = { ...orderQuery };
-    if (!status) {
-      readyQuery.status = 'Ready for Pickup';
-    }
-    const readyForPickupCount = await Order.countDocuments(readyQuery);
-
-    const deliveredQuery = { ...orderQuery };
-    if (!status) {
-      deliveredQuery.status = 'Delivered';
-    }
-    const deliveredOrdersCount = await Order.countDocuments(deliveredQuery);
-
-    const totalCustomersCount = await Customer.countDocuments();
-
-    // Period Revenue (Sum of payments collected in date range)
+    // 2. Payments Received List & Total
     let paymentMatch: any = {};
     if (startDate || endDate) {
       paymentMatch.paidAt = {};
       if (startDate) paymentMatch.paidAt.$gte = startDate;
       if (endDate) paymentMatch.paidAt.$lte = endDate;
     }
-
+    const paymentsList = await Payment.find(paymentMatch).sort({ paidAt: -1 }).limit(20);
     const periodPayments = await Payment.aggregate([
       { $match: paymentMatch },
       { $group: { _id: null, total: { $sum: '$amount' } } },
     ]);
     const periodRevenue = periodPayments[0]?.total || 0;
 
-    // Today's specific revenue
+    // 3. Active Orders List & Count
+    const activeQuery = {
+      ...orderQuery,
+      status: { $in: ['Received', 'Washing', 'Drying', 'Ironing', 'Packing', 'Ready for Pickup'] },
+    };
+    const activeOrdersCount = await Order.countDocuments(activeQuery);
+    const activeOrdersList = await Order.find(activeQuery).sort({ orderDate: -1 }).limit(20);
+
+    // 4. New Customers List & Count
+    let customerQuery: any = {};
+    if (startDate || endDate) {
+      customerQuery.createdAt = {};
+      if (startDate) customerQuery.createdAt.$gte = startDate;
+      if (endDate) customerQuery.createdAt.$lte = endDate;
+    }
+    const newCustomersCount = await Customer.countDocuments(customerQuery);
+    const newCustomersList = await Customer.find(customerQuery).sort({ createdAt: -1 }).limit(20);
+
+    // 5. Overdue / Pending Balance Orders List & Count
+    const overdueQuery = {
+      ...orderQuery,
+      status: { $nin: ['Delivered', 'Cancelled'] },
+      $or: [
+        { expectedDeliveryDate: { $lt: now } },
+        { remainingBalance: { $gt: 0 } },
+      ],
+    };
+    const overdueOrdersCount = await Order.countDocuments(overdueQuery);
+    const overdueOrdersList = await Order.find(overdueQuery).sort({ expectedDeliveryDate: 1 }).limit(20);
+
+    // Legacy values for fallback compatibility
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
     const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
     const todayPayments = await Payment.aggregate([
@@ -137,7 +142,6 @@ export const getDashboardStats = async (req: Request, res: Response) => {
     ]);
     const todayRevenue = todayPayments[0]?.total || 0;
 
-    // Monthly revenue
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
     const monthPayments = await Payment.aggregate([
       { $match: { paidAt: { $gte: monthStart } } },
@@ -145,34 +149,32 @@ export const getDashboardStats = async (req: Request, res: Response) => {
     ]);
     const monthlyRevenue = monthPayments[0]?.total || 0;
 
-    // Pending Delivery Reminders
-    const pendingReminders = await Order.find({
-      ...orderQuery,
-      status: { $nin: ['Delivered', 'Cancelled'] },
-    })
-      .sort({ expectedDeliveryDate: 1 })
-      .limit(10);
-
-    // Recent matching Orders
-    const recentOrders = await Order.find(orderQuery)
-      .sort({ createdAt: -1 })
-      .limit(10);
-
     res.json({
       success: true,
       stats: {
+        totalOrders: totalOrdersCount,
+        paymentsReceived: periodRevenue,
+        activeOrders: activeOrdersCount,
+        newCustomers: newCustomersCount,
+        overdueOrders: overdueOrdersCount,
+        // legacy
         todayOrders: totalOrdersCount,
-        pendingOrders: pendingOrdersCount,
-        inProgress: inProgressCount,
-        readyForPickup: readyForPickupCount,
-        deliveredOrders: deliveredOrdersCount,
+        pendingOrders: overdueOrdersCount,
+        inProgress: activeOrdersCount,
+        readyForPickup: activeOrdersCount,
+        deliveredOrders: totalOrdersCount - activeOrdersCount,
         todayRevenue,
         monthlyRevenue,
         periodRevenue,
-        totalCustomers: totalCustomersCount,
+        totalCustomers: newCustomersCount,
       },
-      pendingReminders,
-      recentOrders,
+      ordersList,
+      paymentsList,
+      activeOrdersList,
+      newCustomersList,
+      overdueOrdersList,
+      pendingReminders: overdueOrdersList,
+      recentOrders: ordersList,
     });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });
@@ -193,7 +195,6 @@ export const getRevenueReport = async (req: Request, res: Response) => {
     }
     startDate.setHours(0, 0, 0, 0);
 
-    // Aggregate payments group by date YYYY-MM-DD
     const chartData = await Payment.aggregate([
       { $match: { paidAt: { $gte: startDate } } },
       {
@@ -206,7 +207,6 @@ export const getRevenueReport = async (req: Request, res: Response) => {
       { $sort: { _id: 1 } },
     ]);
 
-    // Service Breakdown
     const serviceBreakdown = await Order.aggregate([
       { $unwind: '$items' },
       {
@@ -219,7 +219,6 @@ export const getRevenueReport = async (req: Request, res: Response) => {
       { $sort: { totalAmount: -1 } },
     ]);
 
-    // Top Customers
     const topCustomers = await Customer.find().sort({ totalSpent: -1 }).limit(5);
 
     res.json({
