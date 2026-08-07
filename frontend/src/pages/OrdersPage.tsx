@@ -129,7 +129,7 @@ export const OrdersPage: React.FC = () => {
           <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
             <ShoppingBag className="w-6 h-6 text-brand-600" /> Laundry Orders ({totalOrdersCount})
           </h1>
-          <p className="text-xs text-slate-500">
+          <p className="hidden sm:block text-xs text-slate-500">
             Manage, track, and update active shop laundry orders
           </p>
         </div>

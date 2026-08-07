@@ -194,114 +194,94 @@ export const DashboardPage: React.FC = () => {
   const paginatedList = activeList.slice((dashPage - 1) * dashLimit, dashPage * dashLimit);
 
   return (
-    <div className="space-y-6 pb-12">
-      {/* Header Banner & Quick Action Buttons */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gradient-to-r from-brand-600 to-cyan-600 rounded-3xl p-6 text-white shadow-xl shadow-brand-600/20">
+    <div className="space-y-4 sm:space-y-6 pb-12">
+      {/* Header Banner & Quick Action Buttons (Optimized for Mobile) */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 bg-gradient-to-r from-brand-600 to-cyan-600 rounded-2xl sm:rounded-3xl p-3.5 sm:p-6 text-white shadow-lg shadow-brand-600/20">
         <div>
-          <h1 className="text-xl sm:text-2xl font-black tracking-tight">
+          <h1 className="text-sm sm:text-2xl font-black tracking-tight">
             Dashboard Overview
           </h1>
-          <p className="text-xs sm:text-sm text-brand-100 mt-1">
+          <p className="hidden sm:block text-xs sm:text-sm text-brand-100 mt-1">
             Welcome back! Click any key metric card below to filter live records.
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+        <div className="flex items-center gap-2 w-full sm:w-auto">
           <button
             onClick={() => navigate('/orders/new')}
-            className="flex-1 sm:flex-initial px-4 py-2.5 rounded-2xl bg-white text-brand-700 hover:bg-brand-50 text-xs font-extrabold shadow-md flex items-center justify-center gap-2 active:scale-95 transition-all"
+            className="flex-1 sm:flex-initial px-3 py-1.5 sm:px-4 sm:py-2.5 rounded-xl sm:rounded-2xl bg-white text-brand-700 hover:bg-brand-50 text-[11px] sm:text-xs font-extrabold shadow-md flex items-center justify-center gap-1.5 active:scale-95 transition-all"
           >
-            <PlusCircle className="w-4 h-4 text-brand-600" />
-            <span>New POS Order</span>
+            <PlusCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-brand-600" />
+            <span>New Order</span>
           </button>
           <button
             onClick={() => navigate('/customers')}
-            className="flex-1 sm:flex-initial px-3.5 py-2.5 rounded-2xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold backdrop-blur-md flex items-center justify-center gap-1.5 transition-all"
+            className="flex-1 sm:flex-initial px-3 py-1.5 sm:px-3.5 sm:py-2.5 rounded-xl sm:rounded-2xl bg-white/10 hover:bg-white/20 text-white text-[11px] sm:text-xs font-semibold backdrop-blur-md flex items-center justify-center gap-1.5 transition-all"
           >
-            <UserPlus className="w-4 h-4" />
-            <span>Add Customer</span>
+            <UserPlus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <span>Customer</span>
           </button>
           <button
             onClick={loadData}
             title="Refresh Dashboard"
-            className="p-2.5 rounded-2xl bg-white/10 hover:bg-white/20 text-white backdrop-blur-md transition-all"
+            className="p-1.5 sm:p-2.5 rounded-xl sm:rounded-2xl bg-white/10 hover:bg-white/20 text-white backdrop-blur-md transition-all shrink-0"
           >
-            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${isLoading ? 'animate-spin' : ''}`} />
           </button>
         </div>
       </div>
 
       {/* COLLAPSIBLE DASHBOARD FILTERS ACCORDION */}
-      <div className="glass-card p-4 sm:p-5 border-l-4 border-l-brand-600 space-y-3">
+      <div className="glass-card p-3 sm:p-5 border-l-4 border-l-brand-600 space-y-2.5">
         {/* Header Summary & Toggle Bar */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="flex items-center gap-2">
-              <Filter className="w-4 h-4 text-brand-600 dark:text-brand-400" />
-              <h2 className="font-extrabold text-sm text-slate-900 dark:text-white">
-                Dashboard Filters
-              </h2>
-            </div>
-
-            {/* Active Filter Chips */}
-            <div className="flex flex-wrap items-center gap-1.5 ml-1">
-              <span className="px-2.5 py-0.5 rounded-full bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300 font-bold text-[10px] border border-brand-200 dark:border-brand-800">
-                Preset: {dateFrom || dateTo ? 'Custom Range' : activePresetLabel}
-              </span>
-
-              {paymentStatus && (
-                <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 font-bold text-[10px] border border-emerald-200">
-                  Payment: {paymentStatus}
-                </span>
-              )}
-
-              {orderStatus && (
-                <span className="px-2.5 py-0.5 rounded-full bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-300 font-bold text-[10px] border border-purple-200">
-                  Status: {orderStatus}
-                </span>
-              )}
-            </div>
+        <div className="flex flex-row justify-between items-center gap-2">
+          <div className="flex items-center gap-1.5 overflow-hidden">
+            <Filter className="w-4 h-4 text-brand-600 dark:text-brand-400 shrink-0" />
+            <h2 className="font-extrabold text-xs sm:text-sm text-slate-900 dark:text-white truncate">
+              Filters
+            </h2>
+            <span className="px-2 py-0.5 rounded-full bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300 font-bold text-[10px] border border-brand-200 truncate">
+              {dateFrom || dateTo ? 'Custom' : activePresetLabel}
+            </span>
           </div>
 
-          {/* Action Buttons: Expand Toggle & Clear Filters */}
-          <div className="flex items-center gap-2 self-end sm:self-auto">
+          <div className="flex items-center gap-1.5 shrink-0">
             {(preset || paymentStatus || orderStatus || dateFrom || dateTo) && (
               <button
                 onClick={handleClearFilters}
-                className="text-xs font-semibold text-rose-600 dark:text-rose-400 hover:underline flex items-center gap-1 mr-1"
+                className="text-[11px] font-bold text-rose-600 dark:text-rose-400 hover:underline flex items-center gap-0.5"
               >
-                <X className="w-3.5 h-3.5" /> Clear All
+                <X className="w-3 h-3" /> Clear
               </button>
             )}
 
             <button
               onClick={() => setIsFilterExpanded((prev) => !prev)}
-              className="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-200 text-xs font-semibold flex items-center gap-1.5 transition-all"
+              className="px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-200 text-[11px] sm:text-xs font-semibold flex items-center gap-1 transition-all"
             >
-              <span>{isFilterExpanded ? 'Hide Filters' : 'Filter Dashboard'}</span>
-              {isFilterExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              <span>{isFilterExpanded ? 'Hide' : 'Filter'}</span>
+              {isFilterExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
             </button>
           </div>
         </div>
 
         {/* Collapsible Content Body */}
         {isFilterExpanded && (
-          <div className="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-4 animate-in fade-in zoom-in-95 duration-150">
-            {/* Quick Date Presets Scrollable Bar */}
+          <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-3 animate-in fade-in zoom-in-95 duration-150">
             <div>
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-2">
-                Quick Date Presets
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                Presets
               </span>
-              <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+              <div className="flex gap-1 overflow-x-auto pb-1 scrollbar-none">
                 {presetOptions.map((p) => {
                   const active = preset === p.id && !dateFrom && !dateTo;
                   return (
                     <button
                       key={p.id}
                       onClick={() => handlePresetSelect(p.id)}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+                      className={`px-2.5 py-1 rounded-xl text-[11px] font-semibold whitespace-nowrap transition-all ${
                         active
-                          ? 'bg-brand-600 text-white shadow-md shadow-brand-600/30'
-                          : 'bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                          ? 'bg-brand-600 text-white shadow-sm'
+                          : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
                       }`}
                     >
                       {p.label}
@@ -311,17 +291,13 @@ export const DashboardPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Detailed Controls Grid: Payment Status, Order Status, Date Type, From Date, To Date */}
-            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-              {/* Payment Status Dropdown */}
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
               <div>
-                <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
-                  Payment Status
-                </label>
+                <label className="block text-[10px] font-bold text-slate-500 mb-0.5">Payment</label>
                 <select
                   value={paymentStatus}
                   onChange={(e) => setPaymentStatus(e.target.value)}
-                  className="w-full px-2.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-brand-500"
+                  className="w-full px-2 py-1.5 text-[11px] rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none"
                 >
                   <option value="">All Payment</option>
                   <option value="Paid">Paid</option>
@@ -330,69 +306,49 @@ export const DashboardPage: React.FC = () => {
                 </select>
               </div>
 
-              {/* Order Status Dropdown */}
               <div>
-                <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
-                  Order Status
-                </label>
+                <label className="block text-[10px] font-bold text-slate-500 mb-0.5">Order Status</label>
                 <select
                   value={orderStatus}
                   onChange={(e) => setOrderStatus(e.target.value)}
-                  className="w-full px-2.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-brand-500"
+                  className="w-full px-2 py-1.5 text-[11px] rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none"
                 >
                   <option value="">All Statuses</option>
                   {statusOptions.map((st) => (
-                    <option key={st} value={st}>
-                      {st}
-                    </option>
+                    <option key={st} value={st}>{st}</option>
                   ))}
                 </select>
               </div>
 
-              {/* Date Type Selector */}
               <div>
-                <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
-                  Date Filter Type
-                </label>
+                <label className="block text-[10px] font-bold text-slate-500 mb-0.5">Date Type</label>
                 <select
                   value={dateType}
                   onChange={(e) => setDateType(e.target.value)}
-                  className="w-full px-2.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-brand-500"
+                  className="w-full px-2 py-1.5 text-[11px] rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none"
                 >
                   <option value="orderDate">Order Date</option>
                   <option value="expectedDeliveryDate">Delivery Date</option>
                 </select>
               </div>
 
-              {/* Custom From Date */}
               <div>
-                <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
-                  From Date
-                </label>
+                <label className="block text-[10px] font-bold text-slate-500 mb-0.5">From Date</label>
                 <input
                   type="date"
                   value={dateFrom}
-                  onChange={(e) => {
-                    setDateFrom(e.target.value);
-                    setPreset('');
-                  }}
-                  className="w-full px-2.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-brand-500"
+                  onChange={(e) => { setDateFrom(e.target.value); setPreset(''); }}
+                  className="w-full px-2 py-1.5 text-[11px] rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none"
                 />
               </div>
 
-              {/* Custom To Date */}
-              <div className="col-span-2 sm:col-span-1">
-                <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
-                  To Date
-                </label>
+              <div>
+                <label className="block text-[10px] font-bold text-slate-500 mb-0.5">To Date</label>
                 <input
                   type="date"
                   value={dateTo}
-                  onChange={(e) => {
-                    setDateTo(e.target.value);
-                    setPreset('');
-                  }}
-                  className="w-full px-2.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-brand-500"
+                  onChange={(e) => { setDateTo(e.target.value); setPreset(''); }}
+                  className="w-full px-2 py-1.5 text-[11px] rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none"
                 />
               </div>
             </div>
@@ -400,130 +356,120 @@ export const DashboardPage: React.FC = () => {
         )}
       </div>
 
-      {/* THE 5 DYNAMIC KEY METRIC CARDS */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+      {/* THE 5 DYNAMIC KEY METRIC CARDS (ALL 5 SIDE-BY-SIDE IN A CLEAN ROW ON MOBILE) */}
+      <div className="grid grid-cols-5 gap-1 sm:gap-4">
         {/* CARD 1: Orders */}
         <div
           onClick={() => setActiveCard('orders')}
-          className={`glass-card p-4 flex flex-col justify-between cursor-pointer transition-all duration-200 hover:scale-[1.02] ${
+          className={`glass-card p-2 sm:p-4 flex flex-col justify-between cursor-pointer transition-all duration-200 select-none ${
             activeCard === 'orders'
-              ? 'ring-2 ring-blue-500 border-blue-500 bg-blue-50/40 dark:bg-blue-950/40 shadow-lg shadow-blue-500/10'
+              ? 'ring-2 ring-blue-500 border-blue-500 bg-blue-50/50 dark:bg-blue-950/50 shadow-md'
               : 'hover:border-blue-300'
           }`}
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-600 dark:text-slate-300">Orders</span>
-            <div className="p-2 rounded-xl bg-blue-100 text-blue-600 dark:bg-blue-950 dark:text-blue-400">
-              <ShoppingBag className="w-5 h-5" />
+            <span className="text-[9px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 truncate">Orders</span>
+            <div className="p-1 sm:p-2 rounded-lg sm:rounded-xl bg-blue-100 text-blue-600 dark:bg-blue-950 dark:text-blue-400">
+              <ShoppingBag className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
             </div>
           </div>
-          <div className="mt-3">
-            <p className="text-2xl font-black text-slate-900 dark:text-white">
+          <div className="mt-1 sm:mt-3">
+            <p className="text-xs sm:text-2xl font-black text-slate-900 dark:text-white truncate">
               {stats?.orders ?? stats?.todayOrders ?? 0}
             </p>
-            <p className="text-[11px] font-semibold text-blue-600 dark:text-blue-400 mt-0.5">
-              Click to view orders
-            </p>
+            <p className="hidden sm:block text-[11px] font-semibold text-blue-600 mt-0.5">View orders</p>
           </div>
         </div>
 
         {/* CARD 2: Payments Received */}
         <div
           onClick={() => setActiveCard('payments')}
-          className={`glass-card p-4 flex flex-col justify-between cursor-pointer transition-all duration-200 hover:scale-[1.02] ${
+          className={`glass-card p-2 sm:p-4 flex flex-col justify-between cursor-pointer transition-all duration-200 select-none ${
             activeCard === 'payments'
-              ? 'ring-2 ring-emerald-500 border-emerald-500 bg-emerald-50/40 dark:bg-emerald-950/40 shadow-lg shadow-emerald-500/10'
+              ? 'ring-2 ring-emerald-500 border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/50 shadow-md'
               : 'hover:border-emerald-300'
           }`}
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-600 dark:text-slate-300">Payments Received</span>
-            <div className="p-2 rounded-xl bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400">
-              <DollarSign className="w-5 h-5" />
+            <span className="text-[9px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 truncate">Income</span>
+            <div className="p-1 sm:p-2 rounded-lg sm:rounded-xl bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400">
+              <DollarSign className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
             </div>
           </div>
-          <div className="mt-3">
-            <p className="text-2xl font-black text-emerald-600 dark:text-emerald-400">
+          <div className="mt-1 sm:mt-3">
+            <p className="text-xs sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 truncate">
               {currencySymbol}{stats?.paymentsReceived ?? stats?.periodRevenue ?? 0}
             </p>
-            <p className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 mt-0.5">
-              Click to view payments
-            </p>
+            <p className="hidden sm:block text-[11px] font-semibold text-emerald-600 mt-0.5">View income</p>
           </div>
         </div>
 
         {/* CARD 3: Active Orders */}
         <div
           onClick={() => setActiveCard('active')}
-          className={`glass-card p-4 flex flex-col justify-between cursor-pointer transition-all duration-200 hover:scale-[1.02] ${
+          className={`glass-card p-2 sm:p-4 flex flex-col justify-between cursor-pointer transition-all duration-200 select-none ${
             activeCard === 'active'
-              ? 'ring-2 ring-cyan-500 border-cyan-500 bg-cyan-50/40 dark:bg-cyan-950/40 shadow-lg shadow-cyan-500/10'
+              ? 'ring-2 ring-cyan-500 border-cyan-500 bg-cyan-50/50 dark:bg-cyan-950/50 shadow-md'
               : 'hover:border-cyan-300'
           }`}
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-600 dark:text-slate-300">Active Orders</span>
-            <div className="p-2 rounded-xl bg-cyan-100 text-cyan-600 dark:bg-cyan-950 dark:text-cyan-400">
-              <WashingMachine className="w-5 h-5" />
+            <span className="text-[9px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 truncate">Active</span>
+            <div className="p-1 sm:p-2 rounded-lg sm:rounded-xl bg-cyan-100 text-cyan-600 dark:bg-cyan-950 dark:text-cyan-400">
+              <WashingMachine className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
             </div>
           </div>
-          <div className="mt-3">
-            <p className="text-2xl font-black text-cyan-600 dark:text-cyan-400">
+          <div className="mt-1 sm:mt-3">
+            <p className="text-xs sm:text-2xl font-black text-cyan-600 dark:text-cyan-400 truncate">
               {stats?.activeOrders ?? stats?.pendingOrders ?? 0}
             </p>
-            <p className="text-[11px] font-semibold text-cyan-600 dark:text-cyan-400 mt-0.5">
-              Click to view active
-            </p>
+            <p className="hidden sm:block text-[11px] font-semibold text-cyan-600 mt-0.5">View active</p>
           </div>
         </div>
 
         {/* CARD 4: New Customers */}
         <div
           onClick={() => setActiveCard('customers')}
-          className={`glass-card p-4 flex flex-col justify-between cursor-pointer transition-all duration-200 hover:scale-[1.02] ${
+          className={`glass-card p-2 sm:p-4 flex flex-col justify-between cursor-pointer transition-all duration-200 select-none ${
             activeCard === 'customers'
-              ? 'ring-2 ring-indigo-500 border-indigo-500 bg-indigo-50/40 dark:bg-indigo-950/40 shadow-lg shadow-indigo-500/10'
+              ? 'ring-2 ring-indigo-500 border-indigo-500 bg-indigo-50/50 dark:bg-indigo-950/50 shadow-md'
               : 'hover:border-indigo-300'
           }`}
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-600 dark:text-slate-300">New Customers</span>
-            <div className="p-2 rounded-xl bg-indigo-100 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400">
-              <Users className="w-5 h-5" />
+            <span className="text-[9px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 truncate">Users</span>
+            <div className="p-1 sm:p-2 rounded-lg sm:rounded-xl bg-indigo-100 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400">
+              <Users className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
             </div>
           </div>
-          <div className="mt-3">
-            <p className="text-2xl font-black text-slate-900 dark:text-white">
+          <div className="mt-1 sm:mt-3">
+            <p className="text-xs sm:text-2xl font-black text-slate-900 dark:text-white truncate">
               {stats?.newCustomers ?? stats?.totalCustomers ?? 0}
             </p>
-            <p className="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 mt-0.5">
-              Click to view customers
-            </p>
+            <p className="hidden sm:block text-[11px] font-semibold text-indigo-600 mt-0.5">View users</p>
           </div>
         </div>
 
         {/* CARD 5: Overdue Orders */}
         <div
           onClick={() => setActiveCard('overdue')}
-          className={`glass-card p-4 col-span-2 sm:col-span-1 flex flex-col justify-between cursor-pointer transition-all duration-200 hover:scale-[1.02] ${
+          className={`glass-card p-2 sm:p-4 flex flex-col justify-between cursor-pointer transition-all duration-200 select-none ${
             activeCard === 'overdue'
-              ? 'ring-2 ring-rose-500 border-rose-500 bg-rose-50/40 dark:bg-rose-950/40 shadow-lg shadow-rose-500/10'
+              ? 'ring-2 ring-rose-500 border-rose-500 bg-rose-50/50 dark:bg-rose-950/50 shadow-md'
               : 'hover:border-rose-300'
           }`}
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-600 dark:text-slate-300">Overdue Orders</span>
-            <div className="p-2 rounded-xl bg-rose-100 text-rose-600 dark:bg-rose-950 dark:text-rose-400">
-              <Clock className="w-5 h-5" />
+            <span className="text-[9px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 truncate">Overdue</span>
+            <div className="p-1 sm:p-2 rounded-lg sm:rounded-xl bg-rose-100 text-rose-600 dark:bg-rose-950 dark:text-rose-400">
+              <Clock className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
             </div>
           </div>
-          <div className="mt-3">
-            <p className="text-2xl font-black text-rose-600 dark:text-rose-400">
+          <div className="mt-1 sm:mt-3">
+            <p className="text-xs sm:text-2xl font-black text-rose-600 dark:text-rose-400 truncate">
               {stats?.overdueOrders ?? stats?.pendingOrders ?? 0}
             </p>
-            <p className="text-[11px] font-semibold text-rose-600 dark:text-rose-400 mt-0.5">
-              Click to view overdue
-            </p>
+            <p className="hidden sm:block text-[11px] font-semibold text-rose-600 mt-0.5">View overdue</p>
           </div>
         </div>
       </div>
@@ -533,22 +479,22 @@ export const DashboardPage: React.FC = () => {
         {/* CONTAINER HEADER TITLE */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
           <div>
-            <h3 className="font-extrabold text-base text-slate-900 dark:text-white flex items-center gap-2">
-              {activeCard === 'orders' && <ShoppingBag className="w-5 h-5 text-blue-500" />}
-              {activeCard === 'payments' && <DollarSign className="w-5 h-5 text-emerald-500" />}
-              {activeCard === 'active' && <WashingMachine className="w-5 h-5 text-cyan-500" />}
-              {activeCard === 'customers' && <Users className="w-5 h-5 text-indigo-500" />}
-              {activeCard === 'overdue' && <AlertTriangle className="w-5 h-5 text-rose-500" />}
+            <h3 className="font-extrabold text-sm sm:text-base text-slate-900 dark:text-white flex items-center gap-2">
+              {activeCard === 'orders' && <ShoppingBag className="w-4 h-4 text-blue-500" />}
+              {activeCard === 'payments' && <DollarSign className="w-4 h-4 text-emerald-500" />}
+              {activeCard === 'active' && <WashingMachine className="w-4 h-4 text-cyan-500" />}
+              {activeCard === 'customers' && <Users className="w-4 h-4 text-indigo-500" />}
+              {activeCard === 'overdue' && <AlertTriangle className="w-4 h-4 text-rose-500" />}
 
               <span>
                 {activeCard === 'orders' && `All Filtered Orders (${totalDashRecords})`}
-                {activeCard === 'payments' && `Payments Collected Records (${totalDashRecords})`}
-                {activeCard === 'active' && `Active In-Progress Orders (${totalDashRecords})`}
-                {activeCard === 'customers' && `Registered Customers (${totalDashRecords})`}
-                {activeCard === 'overdue' && `Overdue & Pending Balance Orders (${totalDashRecords})`}
+                {activeCard === 'payments' && `Payments Collected (${totalDashRecords})`}
+                {activeCard === 'active' && `Active Orders (${totalDashRecords})`}
+                {activeCard === 'customers' && `Customers (${totalDashRecords})`}
+                {activeCard === 'overdue' && `Overdue Orders (${totalDashRecords})`}
               </span>
             </h3>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="hidden sm:block text-xs text-slate-500 mt-0.5">
               {activeCard === 'orders' && 'Showing all orders matching filter criteria.'}
               {activeCard === 'payments' && 'Showing payment collection receipts matching filter criteria.'}
               {activeCard === 'active' && 'Active orders currently in washing, drying, ironing, packing, or ready for pickup.'}

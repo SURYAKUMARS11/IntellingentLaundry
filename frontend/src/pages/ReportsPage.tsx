@@ -62,7 +62,7 @@ export const ReportsPage: React.FC = () => {
           <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
             <BarChart3 className="w-6 h-6 text-brand-600" /> Business Reports & Analytics
           </h1>
-          <p className="text-xs text-slate-500">
+          <p className="hidden sm:block text-xs text-slate-500">
             Export data, revenue trends, top customer performance & service insights
           </p>
         </div>

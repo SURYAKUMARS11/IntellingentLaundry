@@ -236,7 +236,7 @@ export const AccountsPage: React.FC = () => {
           <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
             <Wallet className="w-6 h-6 text-brand-600" /> Shop Accounts & Expenses
           </h1>
-          <p className="text-xs text-slate-500">
+          <p className="hidden sm:block text-xs text-slate-500">
             Track order incomes, shop operating expenses (EB, wages, detergent & custom categories) & cash balances
           </p>
         </div>
