@@ -356,120 +356,120 @@ export const DashboardPage: React.FC = () => {
         )}
       </div>
 
-      {/* THE 5 DYNAMIC KEY METRIC CARDS (ALL 5 SIDE-BY-SIDE IN A CLEAN ROW ON MOBILE) */}
-      <div className="grid grid-cols-5 gap-1 sm:gap-4">
+      {/* THE 5 DYNAMIC KEY METRIC CARDS (3 IN ROW 1 & 2 IN ROW 2 ON MOBILE) */}
+      <div className="grid grid-cols-6 lg:grid-cols-5 gap-2.5 sm:gap-4">
         {/* CARD 1: Orders */}
         <div
           onClick={() => setActiveCard('orders')}
-          className={`glass-card p-2 sm:p-4 flex flex-col justify-between cursor-pointer transition-all duration-200 select-none ${
+          className={`col-span-2 lg:col-span-1 glass-card p-3 sm:p-4 flex flex-col justify-between cursor-pointer transition-all duration-200 select-none ${
             activeCard === 'orders'
               ? 'ring-2 ring-blue-500 border-blue-500 bg-blue-50/50 dark:bg-blue-950/50 shadow-md'
               : 'hover:border-blue-300'
           }`}
         >
           <div className="flex items-center justify-between">
-            <span className="text-[9px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 truncate">Orders</span>
-            <div className="p-1 sm:p-2 rounded-lg sm:rounded-xl bg-blue-100 text-blue-600 dark:bg-blue-950 dark:text-blue-400">
-              <ShoppingBag className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
+            <span className="text-[11px] sm:text-xs font-bold text-slate-600 dark:text-slate-300 truncate">Orders</span>
+            <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-blue-100 text-blue-600 dark:bg-blue-950 dark:text-blue-400">
+              <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
           </div>
-          <div className="mt-1 sm:mt-3">
-            <p className="text-xs sm:text-2xl font-black text-slate-900 dark:text-white truncate">
+          <div className="mt-2 sm:mt-3">
+            <p className="text-base sm:text-2xl font-black text-slate-900 dark:text-white truncate">
               {stats?.orders ?? stats?.todayOrders ?? 0}
             </p>
-            <p className="hidden sm:block text-[11px] font-semibold text-blue-600 mt-0.5">View orders</p>
+            <p className="hidden sm:block text-[11px] font-semibold text-blue-600 mt-0.5">Click to view orders</p>
           </div>
         </div>
 
         {/* CARD 2: Payments Received */}
         <div
           onClick={() => setActiveCard('payments')}
-          className={`glass-card p-2 sm:p-4 flex flex-col justify-between cursor-pointer transition-all duration-200 select-none ${
+          className={`col-span-2 lg:col-span-1 glass-card p-3 sm:p-4 flex flex-col justify-between cursor-pointer transition-all duration-200 select-none ${
             activeCard === 'payments'
               ? 'ring-2 ring-emerald-500 border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/50 shadow-md'
               : 'hover:border-emerald-300'
           }`}
         >
           <div className="flex items-center justify-between">
-            <span className="text-[9px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 truncate">Income</span>
-            <div className="p-1 sm:p-2 rounded-lg sm:rounded-xl bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400">
-              <DollarSign className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
+            <span className="text-[11px] sm:text-xs font-bold text-slate-600 dark:text-slate-300 truncate">Income</span>
+            <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400">
+              <DollarSign className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
           </div>
-          <div className="mt-1 sm:mt-3">
-            <p className="text-xs sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 truncate">
+          <div className="mt-2 sm:mt-3">
+            <p className="text-base sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 truncate">
               {currencySymbol}{stats?.paymentsReceived ?? stats?.periodRevenue ?? 0}
             </p>
-            <p className="hidden sm:block text-[11px] font-semibold text-emerald-600 mt-0.5">View income</p>
+            <p className="hidden sm:block text-[11px] font-semibold text-emerald-600 mt-0.5">Click to view income</p>
           </div>
         </div>
 
         {/* CARD 3: Active Orders */}
         <div
           onClick={() => setActiveCard('active')}
-          className={`glass-card p-2 sm:p-4 flex flex-col justify-between cursor-pointer transition-all duration-200 select-none ${
+          className={`col-span-2 lg:col-span-1 glass-card p-3 sm:p-4 flex flex-col justify-between cursor-pointer transition-all duration-200 select-none ${
             activeCard === 'active'
               ? 'ring-2 ring-cyan-500 border-cyan-500 bg-cyan-50/50 dark:bg-cyan-950/50 shadow-md'
               : 'hover:border-cyan-300'
           }`}
         >
           <div className="flex items-center justify-between">
-            <span className="text-[9px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 truncate">Active</span>
-            <div className="p-1 sm:p-2 rounded-lg sm:rounded-xl bg-cyan-100 text-cyan-600 dark:bg-cyan-950 dark:text-cyan-400">
-              <WashingMachine className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
+            <span className="text-[11px] sm:text-xs font-bold text-slate-600 dark:text-slate-300 truncate">Active</span>
+            <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-cyan-100 text-cyan-600 dark:bg-cyan-950 dark:text-cyan-400">
+              <WashingMachine className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
           </div>
-          <div className="mt-1 sm:mt-3">
-            <p className="text-xs sm:text-2xl font-black text-cyan-600 dark:text-cyan-400 truncate">
+          <div className="mt-2 sm:mt-3">
+            <p className="text-base sm:text-2xl font-black text-cyan-600 dark:text-cyan-400 truncate">
               {stats?.activeOrders ?? stats?.pendingOrders ?? 0}
             </p>
-            <p className="hidden sm:block text-[11px] font-semibold text-cyan-600 mt-0.5">View active</p>
+            <p className="hidden sm:block text-[11px] font-semibold text-cyan-600 mt-0.5">Click to view active</p>
           </div>
         </div>
 
         {/* CARD 4: New Customers */}
         <div
           onClick={() => setActiveCard('customers')}
-          className={`glass-card p-2 sm:p-4 flex flex-col justify-between cursor-pointer transition-all duration-200 select-none ${
+          className={`col-span-3 lg:col-span-1 glass-card p-3 sm:p-4 flex flex-col justify-between cursor-pointer transition-all duration-200 select-none ${
             activeCard === 'customers'
               ? 'ring-2 ring-indigo-500 border-indigo-500 bg-indigo-50/50 dark:bg-indigo-950/50 shadow-md'
               : 'hover:border-indigo-300'
           }`}
         >
           <div className="flex items-center justify-between">
-            <span className="text-[9px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 truncate">Users</span>
-            <div className="p-1 sm:p-2 rounded-lg sm:rounded-xl bg-indigo-100 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400">
-              <Users className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
+            <span className="text-[11px] sm:text-xs font-bold text-slate-600 dark:text-slate-300 truncate">New Customers</span>
+            <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-indigo-100 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400">
+              <Users className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
           </div>
-          <div className="mt-1 sm:mt-3">
-            <p className="text-xs sm:text-2xl font-black text-slate-900 dark:text-white truncate">
+          <div className="mt-2 sm:mt-3">
+            <p className="text-base sm:text-2xl font-black text-slate-900 dark:text-white truncate">
               {stats?.newCustomers ?? stats?.totalCustomers ?? 0}
             </p>
-            <p className="hidden sm:block text-[11px] font-semibold text-indigo-600 mt-0.5">View users</p>
+            <p className="hidden sm:block text-[11px] font-semibold text-indigo-600 mt-0.5">Click to view customers</p>
           </div>
         </div>
 
         {/* CARD 5: Overdue Orders */}
         <div
           onClick={() => setActiveCard('overdue')}
-          className={`glass-card p-2 sm:p-4 flex flex-col justify-between cursor-pointer transition-all duration-200 select-none ${
+          className={`col-span-3 lg:col-span-1 glass-card p-3 sm:p-4 flex flex-col justify-between cursor-pointer transition-all duration-200 select-none ${
             activeCard === 'overdue'
               ? 'ring-2 ring-rose-500 border-rose-500 bg-rose-50/50 dark:bg-rose-950/50 shadow-md'
               : 'hover:border-rose-300'
           }`}
         >
           <div className="flex items-center justify-between">
-            <span className="text-[9px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 truncate">Overdue</span>
-            <div className="p-1 sm:p-2 rounded-lg sm:rounded-xl bg-rose-100 text-rose-600 dark:bg-rose-950 dark:text-rose-400">
-              <Clock className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
+            <span className="text-[11px] sm:text-xs font-bold text-slate-600 dark:text-slate-300 truncate">Overdue Orders</span>
+            <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-rose-100 text-rose-600 dark:bg-rose-950 dark:text-rose-400">
+              <Clock className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
           </div>
-          <div className="mt-1 sm:mt-3">
-            <p className="text-xs sm:text-2xl font-black text-rose-600 dark:text-rose-400 truncate">
+          <div className="mt-2 sm:mt-3">
+            <p className="text-base sm:text-2xl font-black text-rose-600 dark:text-rose-400 truncate">
               {stats?.overdueOrders ?? stats?.pendingOrders ?? 0}
             </p>
-            <p className="hidden sm:block text-[11px] font-semibold text-rose-600 mt-0.5">View overdue</p>
+            <p className="hidden sm:block text-[11px] font-semibold text-rose-600 mt-0.5">Click to view overdue</p>
           </div>
         </div>
       </div>
