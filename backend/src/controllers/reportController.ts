@@ -6,78 +6,169 @@ import Payment from '../models/Payment';
 
 export const getDashboardStats = async (req: Request, res: Response) => {
   try {
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
+    const {
+      preset,
+      paymentStatus,
+      status,
+      dateType = 'orderDate',
+      dateFrom,
+      dateTo,
+    } = req.query;
 
-    const todayEnd = new Date();
-    todayEnd.setHours(23, 59, 59, 999);
+    const now = new Date();
+    let startDate: Date | null = null;
+    let endDate: Date | null = null;
 
-    const monthStart = new Date();
-    monthStart.setDate(1);
-    monthStart.setHours(0, 0, 0, 0);
+    if (preset === 'today') {
+      startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+      endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+    } else if (preset === 'yesterday') {
+      const y = new Date(now);
+      y.setDate(y.getDate() - 1);
+      startDate = new Date(y.getFullYear(), y.getMonth(), y.getDate(), 0, 0, 0, 0);
+      endDate = new Date(y.getFullYear(), y.getMonth(), y.getDate(), 23, 59, 59, 999);
+    } else if (preset === 'current_week') {
+      const day = now.getDay();
+      const diff = now.getDate() - day + (day === 0 ? -6 : 1); // Monday start
+      startDate = new Date(now.getFullYear(), now.getMonth(), diff, 0, 0, 0, 0);
+      endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+    } else if (preset === 'current_month') {
+      startDate = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+      endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+    } else if (preset === 'current_year') {
+      startDate = new Date(now.getFullYear(), 0, 1, 0, 0, 0, 0);
+      endDate = new Date(now.getFullYear(), 11, 31, 23, 59, 59, 999);
+    } else if (preset === 'last_7_days') {
+      startDate = new Date();
+      startDate.setDate(startDate.getDate() - 7);
+      startDate.setHours(0, 0, 0, 0);
+      endDate = new Date();
+      endDate.setHours(23, 59, 59, 999);
+    } else if (preset === 'last_30_days') {
+      startDate = new Date();
+      startDate.setDate(startDate.getDate() - 30);
+      startDate.setHours(0, 0, 0, 0);
+      endDate = new Date();
+      endDate.setHours(23, 59, 59, 999);
+    } else if (preset === 'last_365_days') {
+      startDate = new Date();
+      startDate.setDate(startDate.getDate() - 365);
+      startDate.setHours(0, 0, 0, 0);
+      endDate = new Date();
+      endDate.setHours(23, 59, 59, 999);
+    } else if (dateFrom || dateTo) {
+      if (dateFrom) {
+        startDate = new Date(dateFrom as string);
+        startDate.setHours(0, 0, 0, 0);
+      }
+      if (dateTo) {
+        endDate = new Date(dateTo as string);
+        endDate.setHours(23, 59, 59, 999);
+      }
+    }
 
-    // Counts
-    const todayOrdersCount = await Order.countDocuments({
-      createdAt: { $gte: todayStart, $lte: todayEnd },
-    });
+    // Build filter query for orders
+    let orderQuery: any = {};
 
-    const pendingOrdersCount = await Order.countDocuments({
-      status: { $in: ['Received', 'Washing', 'Drying', 'Ironing', 'Packing'] },
-    });
+    if (paymentStatus) {
+      orderQuery.paymentStatus = paymentStatus;
+    }
 
-    const inProgressCount = await Order.countDocuments({
-      status: { $in: ['Washing', 'Drying', 'Ironing'] },
-    });
+    if (status) {
+      orderQuery.status = status;
+    }
 
-    const readyForPickupCount = await Order.countDocuments({
-      status: 'Ready for Pickup',
-    });
+    const field = dateType === 'expectedDeliveryDate' ? 'expectedDeliveryDate' : 'orderDate';
+    if (startDate || endDate) {
+      orderQuery[field] = {};
+      if (startDate) orderQuery[field].$gte = startDate;
+      if (endDate) orderQuery[field].$lte = endDate;
+    }
 
-    const deliveredOrdersCount = await Order.countDocuments({
-      status: 'Delivered',
-    });
+    // Order counts matching query
+    const totalOrdersCount = await Order.countDocuments(orderQuery);
+
+    const pendingQuery = { ...orderQuery };
+    if (!status) {
+      pendingQuery.status = { $in: ['Received', 'Washing', 'Drying', 'Ironing', 'Packing'] };
+    }
+    const pendingOrdersCount = await Order.countDocuments(pendingQuery);
+
+    const inProgressQuery = { ...orderQuery };
+    if (!status) {
+      inProgressQuery.status = { $in: ['Washing', 'Drying', 'Ironing'] };
+    }
+    const inProgressCount = await Order.countDocuments(inProgressQuery);
+
+    const readyQuery = { ...orderQuery };
+    if (!status) {
+      readyQuery.status = 'Ready for Pickup';
+    }
+    const readyForPickupCount = await Order.countDocuments(readyQuery);
+
+    const deliveredQuery = { ...orderQuery };
+    if (!status) {
+      deliveredQuery.status = 'Delivered';
+    }
+    const deliveredOrdersCount = await Order.countDocuments(deliveredQuery);
 
     const totalCustomersCount = await Customer.countDocuments();
 
-    // Today's Revenue (payments collected today)
+    // Period Revenue (Sum of payments collected in date range)
+    let paymentMatch: any = {};
+    if (startDate || endDate) {
+      paymentMatch.paidAt = {};
+      if (startDate) paymentMatch.paidAt.$gte = startDate;
+      if (endDate) paymentMatch.paidAt.$lte = endDate;
+    }
+
+    const periodPayments = await Payment.aggregate([
+      { $match: paymentMatch },
+      { $group: { _id: null, total: { $sum: '$amount' } } },
+    ]);
+    const periodRevenue = periodPayments[0]?.total || 0;
+
+    // Today's specific revenue
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+    const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
     const todayPayments = await Payment.aggregate([
       { $match: { paidAt: { $gte: todayStart, $lte: todayEnd } } },
       { $group: { _id: null, total: { $sum: '$amount' } } },
     ]);
     const todayRevenue = todayPayments[0]?.total || 0;
 
-    // Monthly Revenue (payments collected this month)
+    // Monthly revenue
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
     const monthPayments = await Payment.aggregate([
       { $match: { paidAt: { $gte: monthStart } } },
       { $group: { _id: null, total: { $sum: '$amount' } } },
     ]);
     const monthlyRevenue = monthPayments[0]?.total || 0;
 
-    // Pending Delivery Reminders (Overdue or expected today/tomorrow and not delivered/cancelled)
-    const tomorrowEnd = new Date();
-    tomorrowEnd.setDate(tomorrowEnd.getDate() + 1);
-    tomorrowEnd.setHours(23, 59, 59, 999);
-
+    // Pending Delivery Reminders
     const pendingReminders = await Order.find({
+      ...orderQuery,
       status: { $nin: ['Delivered', 'Cancelled'] },
-      expectedDeliveryDate: { $lte: tomorrowEnd },
     })
       .sort({ expectedDeliveryDate: 1 })
       .limit(10);
 
-    // Recent 5 Orders
-    const recentOrders = await Order.find().sort({ createdAt: -1 }).limit(5);
+    // Recent matching Orders
+    const recentOrders = await Order.find(orderQuery)
+      .sort({ createdAt: -1 })
+      .limit(10);
 
     res.json({
       success: true,
       stats: {
-        todayOrders: todayOrdersCount,
+        todayOrders: totalOrdersCount,
         pendingOrders: pendingOrdersCount,
         inProgress: inProgressCount,
         readyForPickup: readyForPickupCount,
         deliveredOrders: deliveredOrdersCount,
         todayRevenue,
         monthlyRevenue,
+        periodRevenue,
         totalCustomers: totalCustomersCount,
       },
       pendingReminders,

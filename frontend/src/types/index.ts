@@ -136,5 +136,6 @@ export interface DashboardStats {
   deliveredOrders: number;
   todayRevenue: number;
   monthlyRevenue: number;
+  periodRevenue?: number;
   totalCustomers: number;
 }

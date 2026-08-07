@@ -448,9 +448,17 @@ export const deleteOrderApi = async (id: string) => {
 };
 
 // --- Reports API ---
-export const fetchDashboardStats = async () => {
+export const fetchDashboardStats = async (params: {
+  preset?: string;
+  paymentStatus?: string;
+  status?: string;
+  dateType?: string;
+  dateFrom?: string;
+  dateTo?: string;
+} = {}) => {
+  const query = new URLSearchParams(params as any).toString();
   try {
-    return await fetchApi('/reports/dashboard');
+    return await fetchApi(`/reports/dashboard?${query}`);
   } catch (err) {
     const orders = getMockOrders();
     const stats: DashboardStats = {
@@ -461,6 +469,7 @@ export const fetchDashboardStats = async () => {
       deliveredOrders: orders.filter((o) => o.status === 'Delivered').length,
       todayRevenue: orders.reduce((acc, o) => acc + o.advancePaid, 0),
       monthlyRevenue: orders.reduce((acc, o) => acc + o.totalAmount, 0),
+      periodRevenue: orders.reduce((acc, o) => acc + o.advancePaid, 0),
       totalCustomers: getMockCustomers().length,
     };
     return {
