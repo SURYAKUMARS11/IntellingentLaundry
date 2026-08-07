@@ -2,6 +2,7 @@ import { Router } from 'express';
 import {
   getOrders,
   getOrderById,
+  getPublicOrderByNumber,
   createOrder,
   updateOrderStatus,
   recordOrderPayment,
@@ -11,6 +12,10 @@ import { authMiddleware } from '../middleware/auth';
 
 const router = Router();
 
+// Public route for customer digital receipt access
+router.get('/public/:orderNumber', getPublicOrderByNumber);
+
+// Protected routes (Admin Auth required)
 router.use(authMiddleware);
 
 router.get('/', getOrders);

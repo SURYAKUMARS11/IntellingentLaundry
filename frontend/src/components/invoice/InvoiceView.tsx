@@ -47,9 +47,10 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ order, setting, onClos
     // 1. Download PDF file for sending
     await handleDownloadPDF();
 
-    // 2. Open WhatsApp Web / App with message
+    // 2. Open WhatsApp Web / App with message & direct site receipt link
     const mobile = order.customerSnapshot.mobile.replace(/\D/g, '');
-    const text = `Hello *${order.customerSnapshot.name}*,\n\nYour official laundry invoice & receipt for Order *#${order.orderNumber}* from *${setting?.shopName || 'IntelligentLaundry'}* is ready!\n\n📋 *Invoice Details*:\n• Order Date: ${new Date(order.orderDate).toLocaleDateString('en-GB')}\n• Order Status: ${order.status}\n• Payment Status: ${order.paymentStatus}\n• Total Amount: ${currencySymbol}${order.totalAmount}\n• Advance Paid: ${currencySymbol}${order.advancePaid}\n• Remaining Balance: ${currencySymbol}${order.remainingBalance}\n\n📄 *PDF Invoice*: Your digital PDF invoice has been downloaded to attach.\n\nThank you for choosing ${setting?.shopName || 'IntelligentLaundry'}!`;
+    const receiptUrl = `${window.location.origin}/receipt/${order.orderNumber}`;
+    const text = `Hello *${order.customerSnapshot.name}*,\n\nYour official laundry invoice & receipt for Order *#${order.orderNumber}* from *${setting?.shopName || 'IntelligentLaundry'}* is ready!\n\n📋 *Invoice Summary*:\n• Order Date: ${new Date(order.orderDate).toLocaleDateString('en-GB')}\n• Status: ${order.status}\n• Payment: ${order.paymentStatus}\n• Total Amount: ${currencySymbol}${order.totalAmount}\n• Advance Paid: ${currencySymbol}${order.advancePaid}\n• Remaining Balance: ${currencySymbol}${order.remainingBalance}\n\n🔗 *View / Print / Download PDF Invoice Directly*:\n${receiptUrl}\n\nThank you for choosing ${setting?.shopName || 'IntelligentLaundry'}!`;
     const url = `https://wa.me/${mobile.length === 10 ? '91' + mobile : mobile}?text=${encodeURIComponent(text)}`;
     window.open(url, '_blank');
   };

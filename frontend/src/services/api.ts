@@ -290,6 +290,16 @@ export const deleteItemApi = async (id: string) => {
 };
 
 // --- Order API ---
+export const fetchPublicOrderByNumber = async (orderNumber: string) => {
+  try {
+    return await fetchApi(`/orders/public/${orderNumber}`);
+  } catch (err) {
+    const orders = getMockOrders();
+    const order = orders.find((o) => o.orderNumber === orderNumber) || orders[0];
+    return { success: true, order };
+  }
+};
+
 export const fetchOrders = async (params: { status?: string; paymentStatus?: string; search?: string } = {}) => {
   const query = new URLSearchParams(params as any).toString();
   try {

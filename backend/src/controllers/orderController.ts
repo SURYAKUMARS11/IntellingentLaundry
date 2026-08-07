@@ -5,6 +5,20 @@ import Payment from '../models/Payment';
 import { generateOrderNumber } from '../utils/orderNumberGenerator';
 import { generateQRCodeDataUrl } from '../utils/qrGenerator';
 
+export const getPublicOrderByNumber = async (req: Request, res: Response) => {
+  try {
+    const { orderNumber } = req.params;
+    const order = await Order.findOne({ orderNumber });
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Receipt not found' });
+    }
+    const payments = await Payment.find({ orderId: order._id }).sort({ paidAt: -1 });
+    res.json({ success: true, order, payments });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 export const getOrders = async (req: Request, res: Response) => {
   try {
     const { status, paymentStatus, search, dateFrom, dateTo, page = 1, limit = 20 } = req.query;

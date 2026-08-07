@@ -16,6 +16,7 @@ import { ServicesPage } from './pages/ServicesPage';
 import { ItemsPage } from './pages/ItemsPage';
 import { ReportsPage } from './pages/ReportsPage';
 import { SettingsPage } from './pages/SettingsPage';
+import { PublicReceiptPage } from './pages/PublicReceiptPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 
 const ProtectedLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -60,6 +61,7 @@ export const AppContent: React.FC = () => {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/receipt/:orderNumber" element={<PublicReceiptPage />} />
 
       <Route
         path="/dashboard"
