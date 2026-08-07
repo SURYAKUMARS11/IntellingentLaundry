@@ -2,14 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   fetchCustomers,
-  fetchServices,
-  fetchItems,
   createOrderApi,
   fetchSettings,
   createCustomerApi,
 } from '../services/api';
-import { Customer, Service, LaundryItem, Order, Setting } from '../types';
+import { Customer, Order, Setting } from '../types';
 import { InvoiceView } from '../components/invoice/InvoiceView';
+import {
+  mainServicesList,
+  posGroupCatalog,
+  POSCatalogItem,
+} from '../data/posCatalogData';
 import {
   User,
   Search,
@@ -22,15 +25,17 @@ import {
   ShoppingBag,
   Sparkles,
   Percent,
+  Scale,
+  Layers,
+  Tag,
+  Check,
 } from 'lucide-react';
 
 export const CreateOrderPage: React.FC = () => {
   const navigate = useNavigate();
 
-  // Data lists
+  // Reference data
   const [customers, setCustomers] = useState<Customer[]>([]);
-  const [services, setServices] = useState<Service[]>([]);
-  const [itemsList, setItemsList] = useState<LaundryItem[]>([]);
   const [setting, setSetting] = useState<Setting | undefined>(undefined);
 
   // Form State
@@ -44,7 +49,27 @@ export const CreateOrderPage: React.FC = () => {
   const [newCustAddress, setNewCustAddress] = useState('');
   const [newCustEmail, setNewCustEmail] = useState('');
 
-  // Selected Order Line Items
+  // 1. Order Mode: 'quantity' (Pcs) vs 'kg' (Weight)
+  const [orderMode, setOrderMode] = useState<'quantity' | 'kg'>('quantity');
+
+  // 2. Active Selected Service Category (Default: 'Wash and Fold')
+  const [selectedServiceCategory, setSelectedServiceCategory] = useState<string>('Wash and Fold');
+
+  // 3. Active Target Group (Default: 'Regular')
+  const [activeGroup, setActiveGroup] = useState<'Regular' | 'Men' | 'Women' | 'Kids' | 'Household' | 'Others'>('Regular');
+
+  // 4. Active Sub-category filter
+  const [activeSubCategory, setActiveSubCategory] = useState<string>('All');
+
+  // Search inside catalog
+  const [catalogSearch, setCatalogSearch] = useState<string>('');
+
+  // Kg Mode State
+  const [kgWeight, setKgWeight] = useState<string>('1');
+  const [kgRate, setKgRate] = useState<string>('60');
+  const [kgServiceName, setKgServiceName] = useState<string>('Wash & Fold per Kg');
+
+  // Selected Order Cart Items
   const [orderItems, setOrderItems] = useState<
     Array<{
       itemId: string;
@@ -54,11 +79,9 @@ export const CreateOrderPage: React.FC = () => {
       quantity: number;
       unitPrice: number;
       subtotal: number;
+      isKgMode?: boolean;
     }>
   >([]);
-
-  // Category filter for item catalog
-  const [activeCategory, setActiveCategory] = useState<string>('All');
 
   // Pricing & Discounts
   const [discount, setDiscount] = useState<number>(0);
@@ -77,16 +100,12 @@ export const CreateOrderPage: React.FC = () => {
   useEffect(() => {
     const loadInitial = async () => {
       try {
-        const [custRes, servRes, itemRes, setRes] = await Promise.all([
+        const [custRes, setRes] = await Promise.all([
           fetchCustomers(),
-          fetchServices(),
-          fetchItems(),
           fetchSettings(),
         ]);
 
         if (custRes.success) setCustomers(custRes.customers);
-        if (servRes.success) setServices(servRes.services);
-        if (itemRes.success) setItemsList(itemRes.items);
         if (setRes.success) {
           setSetting(setRes.setting);
           setTaxPercent(0);
@@ -100,12 +119,11 @@ export const CreateOrderPage: React.FC = () => {
 
   const currencySymbol = setting?.currencySymbol || '₹';
 
-  // Add Item to Cart
-  const addItemToCart = (item: LaundryItem, service: Service) => {
-    const unitPrice = service.price || item.defaultPrice;
+  // Add Item to Cart from Quantity Catalog
+  const addItemToCart = (item: POSCatalogItem, serviceName: string) => {
     setOrderItems((prev) => {
       const existingIdx = prev.findIndex(
-        (line) => line.itemId === item._id && line.serviceId === service._id
+        (line) => line.itemId === item.id && line.serviceName === serviceName
       );
       if (existingIdx !== -1) {
         const updated = [...prev];
@@ -117,16 +135,37 @@ export const CreateOrderPage: React.FC = () => {
       return [
         ...prev,
         {
-          itemId: item._id,
+          itemId: item.id,
           itemName: item.name,
-          serviceId: service._id,
-          serviceName: service.name,
+          serviceId: serviceName.toLowerCase().replace(/\s+/g, '-'),
+          serviceName,
           quantity: 1,
-          unitPrice,
-          subtotal: unitPrice,
+          unitPrice: item.price,
+          subtotal: item.price,
         },
       ];
     });
+  };
+
+  // Add Kg Item to Cart
+  const addKgItemToCart = () => {
+    const weightNum = parseFloat(kgWeight) || 1;
+    const rateNum = parseFloat(kgRate) || 0;
+    const itemSubtotal = Math.round(weightNum * rateNum);
+
+    setOrderItems((prev) => [
+      ...prev,
+      {
+        itemId: `kg-${Date.now()}`,
+        itemName: `${kgServiceName} (${weightNum} Kg @ ${currencySymbol}${rateNum}/Kg)`,
+        serviceId: 'service-kg',
+        serviceName: kgServiceName,
+        quantity: 1,
+        unitPrice: itemSubtotal,
+        subtotal: itemSubtotal,
+        isKgMode: true,
+      },
+    ]);
   };
 
   const updateItemQty = (index: number, newQty: number) => {
@@ -223,11 +262,28 @@ export const CreateOrderPage: React.FC = () => {
     }
   };
 
-  // Categories list
-  const categories = ['All', ...Array.from(new Set(itemsList.map((i) => i.category)))];
-  const filteredItems = itemsList.filter(
-    (item) => activeCategory === 'All' || item.category === activeCategory
-  );
+  // Current Group Object
+  const currentGroupObj = posGroupCatalog.find((g) => g.groupName === activeGroup) || posGroupCatalog[0];
+
+  // Available Sub-categories for active group
+  const subCategoriesList = [
+    'All',
+    ...currentGroupObj.subCategories.map((sc) => sc.name),
+  ];
+
+  // Flattened items list for current active group & subcategory filter & search
+  let displayItems: POSCatalogItem[] = [];
+  currentGroupObj.subCategories.forEach((sc) => {
+    if (activeSubCategory === 'All' || activeSubCategory === sc.name) {
+      displayItems.push(...sc.items);
+    }
+  });
+
+  if (catalogSearch.trim()) {
+    displayItems = displayItems.filter((i) =>
+      i.name.toLowerCase().includes(catalogSearch.toLowerCase())
+    );
+  }
 
   const filteredCustomers = customers.filter(
     (c) =>
@@ -240,20 +296,46 @@ export const CreateOrderPage: React.FC = () => {
   return (
     <div className="space-y-6 pb-20">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
             <ShoppingBag className="w-6 h-6 text-brand-600" /> Express POS Order Builder
           </h1>
-          <p className="text-xs text-slate-500">
-            Create new laundry order & generate instant digital receipt
+          <p className="hidden sm:block text-xs text-slate-500">
+            Select items by Quantity or Kg, pick services & generate instant digital receipt
           </p>
+        </div>
+
+        {/* ORDER MODE SWITCHER (Quantity Pcs vs Weight Kg) */}
+        <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl border border-slate-200 dark:border-slate-700">
+          <button
+            type="button"
+            onClick={() => setOrderMode('quantity')}
+            className={`px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 ${
+              orderMode === 'quantity'
+                ? 'bg-brand-600 text-white shadow-md'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+            }`}
+          >
+            <Layers className="w-4 h-4" /> By Quantity (Pcs)
+          </button>
+          <button
+            type="button"
+            onClick={() => setOrderMode('kg')}
+            className={`px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 ${
+              orderMode === 'kg'
+                ? 'bg-brand-600 text-white shadow-md'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+            }`}
+          >
+            <Scale className="w-4 h-4" /> By Weight (Kg)
+          </button>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left Column: Customer & Cart Summary (lg:col-span-7) */}
-        <div className="lg:col-span-7 space-y-6">
+        {/* Left Column: Customer & Cart Summary (lg:col-span-6) */}
+        <div className="lg:col-span-6 space-y-6">
           {/* Step 1: Customer Selection */}
           <div className="glass-card p-5 space-y-3">
             <div className="flex items-center justify-between">
@@ -283,7 +365,7 @@ export const CreateOrderPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setSelectedCustomerId('')}
-                  className="text-xs text-slate-400 hover:text-slate-600 underline"
+                  className="text-xs text-slate-400 hover:text-slate-600 underline font-bold"
                 >
                   Change
                 </button>
@@ -294,7 +376,7 @@ export const CreateOrderPage: React.FC = () => {
                   <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
                   <input
                     type="text"
-                    placeholder="Type customer name or mobile number..."
+                    placeholder="Search customer by name or mobile number..."
                     value={customerSearch}
                     onChange={(e) => setCustomerSearch(e.target.value)}
                     className="w-full pl-9 pr-4 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-brand-500"
@@ -313,7 +395,7 @@ export const CreateOrderPage: React.FC = () => {
                         <p className="font-bold text-slate-900 dark:text-white">{cust.name}</p>
                         <p className="text-slate-500 text-[11px]">+91 {cust.mobile}</p>
                       </div>
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold">
+                      <span className="text-[10px] px-2.5 py-1 rounded-full bg-brand-50 text-brand-600 font-bold">
                         Select
                       </span>
                     </button>
@@ -323,17 +405,17 @@ export const CreateOrderPage: React.FC = () => {
             )}
           </div>
 
-          {/* Step 2: Selected Order Items Table */}
+          {/* Step 2: Selected Cart Items Table */}
           <div className="glass-card p-5 space-y-4">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                <ShoppingBag className="w-4 h-4 text-brand-500" /> Step 2: Selected Items ({orderItems.length})
+                <ShoppingBag className="w-4 h-4 text-brand-500" /> Step 2: Order Items ({orderItems.length})
               </span>
               {orderItems.length > 0 && (
                 <button
                   type="button"
                   onClick={() => setOrderItems([])}
-                  className="text-xs text-rose-500 hover:underline"
+                  className="text-xs text-rose-500 font-bold hover:underline"
                 >
                   Clear Cart
                 </button>
@@ -343,52 +425,54 @@ export const CreateOrderPage: React.FC = () => {
             {orderItems.length === 0 ? (
               <div className="text-center py-8 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl">
                 <ShoppingBag className="w-10 h-10 mx-auto text-slate-300 dark:text-slate-700 mb-2" />
-                <p className="text-xs text-slate-500 font-medium">Cart is empty</p>
-                <p className="text-[11px] text-slate-400">Select clothing items & services from the catalog below</p>
+                <p className="text-xs text-slate-500 font-medium">Order Cart is empty</p>
+                <p className="text-[11px] text-slate-400">Select items from catalog on the right</p>
               </div>
             ) : (
               <div className="divide-y divide-slate-100 dark:divide-slate-800">
                 {orderItems.map((line, idx) => (
-                  <div key={idx} className="py-3 flex items-center justify-between gap-3 text-xs">
+                  <div key={idx} className="py-3 flex items-center justify-between gap-2 text-xs">
                     <div className="flex-1">
                       <p className="font-bold text-slate-900 dark:text-white">{line.itemName}</p>
-                      <p className="text-[11px] text-brand-600 dark:text-brand-400">{line.serviceName}</p>
+                      <p className="text-[11px] font-semibold text-brand-600 dark:text-brand-400">{line.serviceName}</p>
                     </div>
 
                     {/* Unit Price Editable */}
                     <div className="flex items-center gap-1">
-                      <span className="text-slate-400">{currencySymbol}</span>
+                      <span className="text-slate-400 font-bold">{currencySymbol}</span>
                       <input
                         type="number"
                         min="0"
                         value={line.unitPrice}
                         onChange={(e) => updateItemPrice(idx, Number(e.target.value))}
-                        className="w-16 px-1.5 py-1 text-center font-semibold rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"
+                        className="w-16 px-1.5 py-1 text-center font-bold rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"
                       />
                     </div>
 
                     {/* Qty Stepper */}
-                    <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 rounded-xl p-1">
-                      <button
-                        type="button"
-                        onClick={() => updateItemQty(idx, line.quantity - 1)}
-                        className="w-6 h-6 rounded-lg bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold flex items-center justify-center hover:bg-slate-200"
-                      >
-                        -
-                      </button>
-                      <span className="w-6 text-center font-bold text-slate-900 dark:text-white">
-                        {line.quantity}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => updateItemQty(idx, line.quantity + 1)}
-                        className="w-6 h-6 rounded-lg bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold flex items-center justify-center hover:bg-slate-200"
-                      >
-                        +
-                      </button>
-                    </div>
+                    {!line.isKgMode && (
+                      <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 rounded-xl p-1">
+                        <button
+                          type="button"
+                          onClick={() => updateItemQty(idx, line.quantity - 1)}
+                          className="w-6 h-6 rounded-lg bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold flex items-center justify-center hover:bg-slate-200"
+                        >
+                          -
+                        </button>
+                        <span className="w-5 text-center font-bold text-slate-900 dark:text-white">
+                          {line.quantity}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => updateItemQty(idx, line.quantity + 1)}
+                          className="w-6 h-6 rounded-lg bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold flex items-center justify-center hover:bg-slate-200"
+                        >
+                          +
+                        </button>
+                      </div>
+                    )}
 
-                    <div className="w-16 text-right font-extrabold text-slate-900 dark:text-white">
+                    <div className="w-16 text-right font-black text-slate-900 dark:text-white">
                       {currencySymbol}{line.subtotal}
                     </div>
 
@@ -405,205 +489,347 @@ export const CreateOrderPage: React.FC = () => {
             )}
           </div>
 
-          {/* Catalog Picker: Categories & Items Grid */}
+          {/* Step 3: Payment & Summary Panel */}
           <div className="glass-card p-5 space-y-4">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
-              Quick Item & Service Catalog
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+              <DollarSign className="w-4 h-4 text-emerald-500" /> Step 3: Payment Summary
             </h3>
 
-            {/* Category Pills */}
-            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-              {categories.map((cat) => (
-                <button
-                  key={cat}
-                  type="button"
-                  onClick={() => setActiveCategory(cat)}
-                  className={`px-3 py-1 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors ${
-                    activeCategory === cat
-                      ? 'bg-brand-600 text-white shadow-sm'
-                      : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
-                  }`}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
-
-            {/* Item Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {filteredItems.map((item) => (
-                <div
-                  key={item._id}
-                  className="p-3 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 flex flex-col justify-between hover:border-brand-500 transition-all"
-                >
-                  <div>
-                    <p className="font-bold text-xs text-slate-900 dark:text-white">{item.name}</p>
-                    <p className="text-[10px] text-slate-400">Default: {currencySymbol}{item.defaultPrice}</p>
-                  </div>
-
-                  <div className="mt-3 flex flex-col gap-1">
-                    {services.map((serv) => (
-                      <button
-                        key={serv._id}
-                        type="button"
-                        onClick={() => addItemToCart(item, serv)}
-                        className="w-full text-[10px] font-semibold py-1 px-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-brand-500 hover:text-white hover:border-brand-500 transition-colors flex justify-between items-center"
-                      >
-                        <span>{serv.name}</span>
-                        <span>{currencySymbol}{serv.price || item.defaultPrice}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Right Column: Order Calculation & Payment Summary (lg:col-span-5) */}
-        <div className="lg:col-span-5">
-          <div className="glass-card p-6 space-y-5 sticky top-20">
-            <h3 className="font-black text-base text-slate-900 dark:text-white pb-3 border-b border-slate-200 dark:border-slate-800 flex items-center gap-2">
-              <FileText className="w-5 h-5 text-brand-600" /> Order Summary & Payment
-            </h3>
-
-            {/* Schedule & Dates */}
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1.5">
-                <Calendar className="w-3.5 h-3.5 text-brand-500" /> Expected Delivery Date
-              </label>
-              <input
-                type="date"
-                value={expectedDeliveryDate}
-                onChange={(e) => setExpectedDeliveryDate(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-semibold outline-none focus:ring-2 focus:ring-brand-500"
-              />
-            </div>
-
-            {/* Calculations Breakdown */}
-            <div className="space-y-3 pt-2">
-              <div className="flex justify-between text-xs text-slate-600 dark:text-slate-400">
-                <span>Subtotal ({orderItems.reduce((acc, i) => acc + i.quantity, 0)} items):</span>
+            <div className="space-y-2 text-xs">
+              <div className="flex justify-between text-slate-600 dark:text-slate-400">
+                <span>Subtotal ({orderItems.length} items)</span>
                 <span className="font-bold text-slate-900 dark:text-white">{currencySymbol}{subtotal}</span>
               </div>
 
               {/* Discount Input */}
-              <div className="flex justify-between items-center text-xs">
-                <span className="text-slate-600 dark:text-slate-400">Discount ({currencySymbol}):</span>
+              <div className="flex justify-between items-center gap-2">
+                <span className="text-slate-600 dark:text-slate-400">Discount ({currencySymbol})</span>
                 <input
                   type="number"
                   min="0"
                   value={discount}
                   onChange={(e) => setDiscount(Math.max(0, Number(e.target.value)))}
-                  className="w-20 px-2 py-1 text-right font-semibold rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs outline-none"
+                  className="w-24 px-2 py-1 text-right font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none"
                 />
               </div>
 
-              {/* Tax Input */}
-              <div className="flex justify-between items-center text-xs">
-                <span className="text-slate-600 dark:text-slate-400 flex items-center gap-1">
-                  Tax GST (%):
-                </span>
+              {/* GST Tax % Input (Default 0%) */}
+              <div className="flex justify-between items-center gap-2">
+                <span className="text-slate-600 dark:text-slate-400">GST / Tax (%)</span>
                 <input
                   type="number"
                   min="0"
-                  max="100"
                   value={taxPercent}
                   onChange={(e) => setTaxPercent(Math.max(0, Number(e.target.value)))}
-                  className="w-20 px-2 py-1 text-right font-semibold rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs outline-none"
+                  className="w-24 px-2 py-1 text-right font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none"
                 />
               </div>
 
-              {/* Total Box */}
-              <div className="p-4 rounded-2xl bg-brand-500/10 border border-brand-500/30 flex justify-between items-center my-2">
-                <span className="font-extrabold text-sm text-slate-900 dark:text-white">Total Amount</span>
-                <span className="text-xl font-black text-brand-600 dark:text-brand-400">
-                  {currencySymbol}{totalAmount}
-                </span>
+              <div className="border-t border-slate-100 dark:border-slate-800 pt-2 flex justify-between items-center text-sm font-black">
+                <span className="text-slate-900 dark:text-white">Net Total Amount</span>
+                <span className="text-brand-600 dark:text-brand-400 text-lg">{currencySymbol}{totalAmount}</span>
               </div>
 
-              {/* Advance Paid & Payment Method */}
-              <div className="grid grid-cols-2 gap-3 pt-1">
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">
-                    Advance Paid ({currencySymbol})
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    max={totalAmount}
-                    value={advancePaid}
-                    onChange={(e) => setAdvancePaid(Math.max(0, Number(e.target.value)))}
-                    className="w-full px-3 py-2 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">
-                    Payment Method
-                  </label>
-                  <select
-                    value={paymentMethod}
-                    onChange={(e) => setPaymentMethod(e.target.value as any)}
-                    className="w-full px-3 py-2 text-xs font-semibold rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none"
-                  >
-                    <option value="Cash">Cash</option>
-                    <option value="UPI">UPI / QR</option>
-                    <option value="Card">Card</option>
-                  </select>
-                </div>
+              {/* Advance Paid */}
+              <div className="flex justify-between items-center gap-2 pt-1">
+                <span className="font-bold text-slate-700 dark:text-slate-300">Advance Collection ({currencySymbol})</span>
+                <input
+                  type="number"
+                  min="0"
+                  max={totalAmount}
+                  value={advancePaid}
+                  onChange={(e) => setAdvancePaid(Math.max(0, Number(e.target.value)))}
+                  className="w-28 px-2 py-1.5 text-right font-black rounded-xl border-2 border-emerald-500 bg-emerald-50/40 text-emerald-700 dark:text-emerald-300 outline-none"
+                />
               </div>
 
-              <div className="flex justify-between text-xs font-extrabold text-slate-900 dark:text-white pt-2 border-t border-slate-200 dark:border-slate-800">
-                <span>Remaining Balance:</span>
-                <span className={remainingBalance > 0 ? 'text-rose-600' : 'text-emerald-600'}>
+              <div className="flex justify-between items-center text-xs font-bold pt-1">
+                <span className="text-slate-500">Remaining Balance</span>
+                <span className={remainingBalance > 0 ? 'text-rose-500 font-extrabold' : 'text-emerald-600'}>
                   {currencySymbol}{remainingBalance}
                 </span>
               </div>
-            </div>
 
-            {/* Special Instructions Notes */}
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Notes / Special Instructions (Optional)
-              </label>
-              <textarea
-                rows={2}
-                placeholder="e.g. Remove stain on collar, steam press heavy"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-brand-500"
-              />
-            </div>
+              {/* Payment Method */}
+              <div className="pt-2">
+                <label className="block text-[11px] font-bold text-slate-500 mb-1">Payment Method</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {(['Cash', 'UPI', 'Card'] as const).map((m) => (
+                    <button
+                      key={m}
+                      type="button"
+                      onClick={() => setPaymentMethod(m)}
+                      className={`py-2 rounded-xl text-xs font-extrabold border transition-all ${
+                        paymentMethod === m
+                          ? 'bg-brand-600 text-white border-brand-600 shadow-sm'
+                          : 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700'
+                      }`}
+                    >
+                      {m}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-            {/* Submit Button */}
-            <button
-              type="button"
-              onClick={handleSubmitOrder}
-              disabled={isSubmitting}
-              className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-brand-600 to-cyan-600 hover:from-brand-500 hover:to-cyan-500 text-white font-extrabold text-sm shadow-xl shadow-brand-600/30 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
-            >
-              <CheckCircle className="w-5 h-5" />
-              <span>{isSubmitting ? 'Creating Order...' : 'Save Order & Print Receipt'}</span>
-            </button>
+              {/* Expected Delivery Date */}
+              <div className="pt-2">
+                <label className="block text-[11px] font-bold text-slate-500 mb-1">Expected Delivery Date</label>
+                <input
+                  type="date"
+                  value={expectedDeliveryDate}
+                  onChange={(e) => setExpectedDeliveryDate(e.target.value)}
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none"
+                />
+              </div>
+
+              {/* Submit Order Button */}
+              <button
+                type="button"
+                disabled={isSubmitting || orderItems.length === 0 || !selectedCustomerId}
+                onClick={handleSubmitOrder}
+                className="w-full mt-4 py-3.5 rounded-2xl bg-gradient-to-r from-brand-600 to-cyan-600 hover:from-brand-700 hover:to-cyan-700 text-white font-black text-sm shadow-lg shadow-brand-600/30 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 transition-all flex items-center justify-center gap-2"
+              >
+                <CheckCircle className="w-5 h-5" />
+                <span>Create Order & Open Invoice</span>
+              </button>
+            </div>
           </div>
+        </div>
+
+        {/* Right Column: Dynamic Item Catalog (lg:col-span-6) */}
+        <div className="lg:col-span-6 space-y-4">
+          {/* ========================================================================= */}
+          {/* MODE A: BY QUANTITY (Pcs) CATALOG */}
+          {/* ========================================================================= */}
+          {orderMode === 'quantity' && (
+            <div className="glass-card p-5 space-y-4">
+              {/* 1. Main Service Categories Selector */}
+              <div>
+                <label className="block text-xs font-extrabold uppercase tracking-wider text-slate-400 mb-2 flex items-center gap-1.5">
+                  <Tag className="w-4 h-4 text-brand-500" /> Select Service Category
+                </label>
+                <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+                  {mainServicesList.map((servName) => {
+                    const active = selectedServiceCategory === servName;
+                    return (
+                      <button
+                        key={servName}
+                        type="button"
+                        onClick={() => setSelectedServiceCategory(servName)}
+                        className={`px-3 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1 ${
+                          active
+                            ? 'bg-brand-600 text-white shadow-md shadow-brand-600/20'
+                            : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200'
+                        }`}
+                      >
+                        {active && <Check className="w-3.5 h-3.5" />}
+                        <span>{servName}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* 2. Target Group Tabs (Regular, Men, Women, Kids, Household, Others) */}
+              <div>
+                <span className="block text-xs font-extrabold uppercase tracking-wider text-slate-400 mb-2">
+                  Garment Category Groups
+                </span>
+                <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
+                  {posGroupCatalog.map((grp) => {
+                    const active = activeGroup === grp.groupName;
+                    return (
+                      <button
+                        key={grp.groupName}
+                        type="button"
+                        onClick={() => {
+                          setActiveGroup(grp.groupName);
+                          setActiveSubCategory('All');
+                        }}
+                        className={`py-2 rounded-xl text-xs font-extrabold transition-all text-center ${
+                          active
+                            ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-md'
+                            : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
+                        }`}
+                      >
+                        {grp.groupName}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* 3. Sub-Category Filter Pills & Catalog Search */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none flex-1">
+                    {subCategoriesList.map((sc) => (
+                      <button
+                        key={sc}
+                        type="button"
+                        onClick={() => setActiveSubCategory(sc)}
+                        className={`px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap transition-colors ${
+                          activeSubCategory === sc
+                            ? 'bg-brand-100 text-brand-700 dark:bg-brand-950 dark:text-brand-300 border border-brand-300'
+                            : 'bg-slate-50 dark:bg-slate-800 text-slate-500 hover:bg-slate-100'
+                        }`}
+                      >
+                        {sc}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="relative w-36 sm:w-44 shrink-0">
+                    <Search className="w-3.5 h-3.5 absolute left-2.5 top-2.5 text-slate-400" />
+                    <input
+                      type="text"
+                      placeholder="Filter items..."
+                      value={catalogSearch}
+                      onChange={(e) => setCatalogSearch(e.target.value)}
+                      className="w-full pl-8 pr-2 py-1.5 text-[11px] rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* 4. Garment Items Catalog Grid */}
+              <div className="max-h-[550px] overflow-y-auto pr-1">
+                {displayItems.length === 0 ? (
+                  <div className="text-center py-12 text-slate-400 text-xs">
+                    No clothing items found in selected category.
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                    {displayItems.map((item) => (
+                      <div
+                        key={item.id}
+                        className="p-3 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 flex flex-col justify-between hover:border-brand-500 hover:bg-white dark:hover:bg-slate-800 transition-all shadow-xs"
+                      >
+                        <div>
+                          <p className="font-bold text-xs text-slate-900 dark:text-white line-clamp-1">
+                            {item.name}
+                          </p>
+                          <p className="text-[10px] text-slate-400">{item.subCategory}</p>
+                          <p className="font-black text-brand-600 dark:text-brand-400 text-xs mt-1">
+                            {currencySymbol}{item.price}.00
+                          </p>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => addItemToCart(item, selectedServiceCategory)}
+                          className="w-full mt-2 py-1.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-[11px] shadow-sm flex items-center justify-center gap-1 active:scale-95 transition-all"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          <span>Add {selectedServiceCategory.split(' ')[0]}</span>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ========================================================================= */}
+          {/* MODE B: BY WEIGHT (Kg) CATALOG */}
+          {/* ========================================================================= */}
+          {orderMode === 'kg' && (
+            <div className="glass-card p-6 space-y-4 border-l-4 border-l-brand-600">
+              <div className="flex items-center gap-2">
+                <Scale className="w-5 h-5 text-brand-600" />
+                <h3 className="font-black text-base text-slate-900 dark:text-white">
+                  By Weight (Kg) Laundry Order
+                </h3>
+              </div>
+              <p className="text-xs text-slate-500">
+                Bulk laundry pricing by total weight in Kilograms (Kg).
+              </p>
+
+              <div className="space-y-4 pt-2">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    Select Laundry Service
+                  </label>
+                  <select
+                    value={kgServiceName}
+                    onChange={(e) => setKgServiceName(e.target.value)}
+                    className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none font-bold"
+                  >
+                    <option value="Wash & Fold per Kg">Wash & Fold per Kg</option>
+                    <option value="Wash & Iron per Kg">Wash & Iron per Kg</option>
+                    <option value="Premium Laundry per Kg">Premium Laundry per Kg</option>
+                  </select>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      Total Weight (Kg)
+                    </label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      min="0.1"
+                      value={kgWeight}
+                      onChange={(e) => setKgWeight(e.target.value)}
+                      className="w-full px-3 py-2 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      Rate per Kg ({currencySymbol}/Kg)
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={kgRate}
+                      onChange={(e) => setKgRate(e.target.value)}
+                      className="w-full px-3 py-2 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-brand-50 dark:bg-brand-950/50 border border-brand-200 dark:border-brand-900 flex justify-between items-center">
+                  <div>
+                    <p className="text-xs text-brand-700 dark:text-brand-300 font-semibold">Calculated Subtotal</p>
+                    <p className="text-[11px] text-slate-400">
+                      {kgWeight || 0} Kg × {currencySymbol}{kgRate || 0}/Kg
+                    </p>
+                  </div>
+                  <span className="text-xl font-black text-brand-600 dark:text-brand-400">
+                    {currencySymbol}{Math.round((parseFloat(kgWeight) || 0) * (parseFloat(kgRate) || 0))}
+                  </span>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={addKgItemToCart}
+                  className="w-full py-3 rounded-2xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs shadow-md shadow-brand-600/30 flex items-center justify-center gap-2 active:scale-95 transition-all"
+                >
+                  <Plus className="w-4 h-4 stroke-[2.5]" />
+                  <span>Add Kg Service to Order</span>
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* New Inline Customer Modal */}
+      {/* Inline Create Customer Modal */}
       {showNewCustModal && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl w-full max-w-md p-6 space-y-4">
-            <h3 className="font-bold text-base text-slate-900 dark:text-white">Add New Customer</h3>
+            <h3 className="font-bold text-base text-slate-900 dark:text-white">Register New Customer</h3>
             <form onSubmit={handleCreateInlineCustomer} className="space-y-3">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  Full Name *
+                  Customer Name *
                 </label>
                 <input
                   type="text"
                   required
-                  placeholder="Customer Full Name"
                   value={newCustName}
                   onChange={(e) => setNewCustName(e.target.value)}
                   className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none"
@@ -617,7 +843,6 @@ export const CreateOrderPage: React.FC = () => {
                 <input
                   type="text"
                   required
-                  placeholder="10-digit mobile number"
                   value={newCustMobile}
                   onChange={(e) => setNewCustMobile(e.target.value)}
                   className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none"
@@ -630,7 +855,6 @@ export const CreateOrderPage: React.FC = () => {
                 </label>
                 <input
                   type="text"
-                  placeholder="Street / House address"
                   value={newCustAddress}
                   onChange={(e) => setNewCustAddress(e.target.value)}
                   className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none"
@@ -647,7 +871,7 @@ export const CreateOrderPage: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-2 rounded-xl bg-brand-600 text-white text-xs font-semibold shadow-md"
+                  className="flex-1 py-2 rounded-xl bg-brand-600 text-white text-xs font-bold shadow-md"
                 >
                   Save & Select
                 </button>
@@ -657,7 +881,7 @@ export const CreateOrderPage: React.FC = () => {
         </div>
       )}
 
-      {/* Instant Digital Receipt Modal after saving */}
+      {/* Digital Receipt / Invoice Modal on Successful Creation */}
       {createdOrder && (
         <InvoiceView
           order={createdOrder}
