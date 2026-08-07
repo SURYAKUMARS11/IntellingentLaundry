@@ -31,6 +31,7 @@ import {
   Smartphone,
   Edit,
   Eye,
+  Calendar,
 } from 'lucide-react';
 
 export const DashboardPage: React.FC = () => {
@@ -151,6 +152,11 @@ export const DashboardPage: React.FC = () => {
     'Cancelled',
   ];
 
+  const formatDateTime = (dateStr: string) => {
+    const d = new Date(dateStr);
+    return `${d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}, ${d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`;
+  };
+
   return (
     <div className="space-y-6 pb-12">
       {/* Header Banner & Quick Action Buttons */}
@@ -163,17 +169,17 @@ export const DashboardPage: React.FC = () => {
             Welcome back! Monitor live shop activity, orders & performance metrics.
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
           <button
             onClick={() => navigate('/orders/new')}
-            className="px-4 py-2.5 rounded-2xl bg-white text-brand-700 hover:bg-brand-50 text-xs font-extrabold shadow-md flex items-center gap-2 active:scale-95 transition-all"
+            className="flex-1 sm:flex-initial px-4 py-2.5 rounded-2xl bg-white text-brand-700 hover:bg-brand-50 text-xs font-extrabold shadow-md flex items-center justify-center gap-2 active:scale-95 transition-all"
           >
             <PlusCircle className="w-4 h-4 text-brand-600" />
             <span>New POS Order</span>
           </button>
           <button
             onClick={() => navigate('/customers')}
-            className="px-3.5 py-2.5 rounded-2xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold backdrop-blur-md flex items-center gap-1.5 transition-all"
+            className="flex-1 sm:flex-initial px-3.5 py-2.5 rounded-2xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold backdrop-blur-md flex items-center justify-center gap-1.5 transition-all"
           >
             <UserPlus className="w-4 h-4" />
             <span>Add Customer</span>
@@ -189,7 +195,7 @@ export const DashboardPage: React.FC = () => {
       </div>
 
       {/* DASHBOARD FILTERS SECTION */}
-      <div className="glass-card p-5 space-y-4 border-l-4 border-l-brand-600">
+      <div className="glass-card p-4 sm:p-5 space-y-4 border-l-4 border-l-brand-600">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 pb-2 border-b border-slate-100 dark:border-slate-800">
           <div className="flex items-center gap-2">
             <Filter className="w-4 h-4 text-brand-600 dark:text-brand-400" />
@@ -200,7 +206,7 @@ export const DashboardPage: React.FC = () => {
           {(preset || paymentStatus || orderStatus || dateFrom || dateTo) && (
             <button
               onClick={handleClearFilters}
-              className="text-xs font-semibold text-rose-600 dark:text-rose-400 hover:underline flex items-center gap-1"
+              className="text-xs font-semibold text-rose-600 dark:text-rose-400 hover:underline flex items-center gap-1 self-end sm:self-auto"
             >
               <X className="w-3.5 h-3.5" /> Clear Filters
             </button>
@@ -233,7 +239,7 @@ export const DashboardPage: React.FC = () => {
         </div>
 
         {/* Detailed Controls Grid: Payment Status, Order Status, Date Type, From Date, To Date */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 pt-2">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-3 pt-2">
           {/* Payment Status Dropdown */}
           <div>
             <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
@@ -242,9 +248,9 @@ export const DashboardPage: React.FC = () => {
             <select
               value={paymentStatus}
               onChange={(e) => setPaymentStatus(e.target.value)}
-              className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-brand-500"
+              className="w-full px-2.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-brand-500"
             >
-              <option value="">All Payment Statuses</option>
+              <option value="">All Payment</option>
               <option value="Paid">Paid</option>
               <option value="Partially Paid">Partially Paid</option>
               <option value="Pending">Pending</option>
@@ -259,9 +265,9 @@ export const DashboardPage: React.FC = () => {
             <select
               value={orderStatus}
               onChange={(e) => setOrderStatus(e.target.value)}
-              className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-brand-500"
+              className="w-full px-2.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-brand-500"
             >
-              <option value="">All Order Statuses</option>
+              <option value="">All Statuses</option>
               {statusOptions.map((st) => (
                 <option key={st} value={st}>
                   {st}
@@ -278,10 +284,10 @@ export const DashboardPage: React.FC = () => {
             <select
               value={dateType}
               onChange={(e) => setDateType(e.target.value)}
-              className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-brand-500"
+              className="w-full px-2.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-brand-500"
             >
               <option value="orderDate">Order Date</option>
-              <option value="expectedDeliveryDate">Expected Delivery Date</option>
+              <option value="expectedDeliveryDate">Delivery Date</option>
             </select>
           </div>
 
@@ -297,12 +303,12 @@ export const DashboardPage: React.FC = () => {
                 setDateFrom(e.target.value);
                 setPreset('');
               }}
-              className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-brand-500"
+              className="w-full px-2.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-brand-500"
             />
           </div>
 
           {/* Custom To Date */}
-          <div>
+          <div className="col-span-2 sm:col-span-1">
             <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
               To Date
             </label>
@@ -313,7 +319,7 @@ export const DashboardPage: React.FC = () => {
                 setDateTo(e.target.value);
                 setPreset('');
               }}
-              className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-brand-500"
+              className="w-full px-2.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-brand-500"
             />
           </div>
         </div>
@@ -333,7 +339,7 @@ export const DashboardPage: React.FC = () => {
             <p className="text-2xl font-black text-slate-900 dark:text-white">
               {stats?.todayOrders ?? 0}
             </p>
-            <p className="text-[11px] text-slate-400 mt-0.5">Matching filter criteria</p>
+            <p className="text-[11px] text-slate-400 mt-0.5">Matching criteria</p>
           </div>
         </div>
 
@@ -451,7 +457,7 @@ export const DashboardPage: React.FC = () => {
       </div>
 
       {/* COMBINED UNIFIED ORDERS & REMINDERS CONTAINER */}
-      <div className="glass-card p-6 border-t-4 border-t-brand-600 space-y-4">
+      <div className="glass-card p-4 sm:p-6 border-t-4 border-t-brand-600 space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
             <h3 className="font-extrabold text-base text-slate-900 dark:text-white flex items-center gap-2">
@@ -459,7 +465,7 @@ export const DashboardPage: React.FC = () => {
               Active Orders & Pending Deliveries ({combinedOrders.length})
             </h3>
             <p className="text-xs text-slate-500">
-              Manage live status via dropdown, view amounts, payment status & quick actions (WhatsApp, Print, Edit)
+              Update order status via dropdown, view dates, times, amounts & quick actions (WhatsApp, Print, Edit)
             </p>
           </div>
           <button
@@ -484,9 +490,11 @@ export const DashboardPage: React.FC = () => {
                   <tr>
                     <th className="py-3 px-4">Order ID</th>
                     <th className="py-3 px-4">Customer</th>
+                    <th className="py-3 px-4">Order Date & Time</th>
+                    <th className="py-3 px-4">Delivery Due</th>
                     <th className="py-3 px-4">Amount</th>
                     <th className="py-3 px-4">Order Status (Dropdown)</th>
-                    <th className="py-3 px-4">Payment Status</th>
+                    <th className="py-3 px-4">Payment</th>
                     <th className="py-3 px-4 text-center">Actions</th>
                   </tr>
                 </thead>
@@ -494,7 +502,7 @@ export const DashboardPage: React.FC = () => {
                   {combinedOrders.map((ord) => (
                     <tr key={ord._id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
                       {/* Order ID */}
-                      <td className="py-3.5 px-4 font-bold text-brand-600 dark:text-brand-400">
+                      <td className="py-3.5 px-4 font-bold text-brand-600 dark:text-brand-400 whitespace-nowrap">
                         <button
                           onClick={() => setSelectedOrder(ord)}
                           className="hover:underline"
@@ -509,15 +517,29 @@ export const DashboardPage: React.FC = () => {
                         <p className="text-[10px] text-slate-400">+91 {ord.customerSnapshot.mobile}</p>
                       </td>
 
+                      {/* Order Date & Time */}
+                      <td className="py-3.5 px-4 text-slate-500 whitespace-nowrap">
+                        <p className="font-medium text-slate-700 dark:text-slate-300">
+                          {formatDateTime(ord.orderDate)}
+                        </p>
+                      </td>
+
+                      {/* Delivery Due */}
+                      <td className="py-3.5 px-4 text-slate-500 whitespace-nowrap">
+                        <p className="font-semibold text-slate-800 dark:text-slate-200">
+                          {new Date(ord.expectedDeliveryDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                        </p>
+                      </td>
+
                       {/* Amount */}
-                      <td className="py-3.5 px-4">
+                      <td className="py-3.5 px-4 whitespace-nowrap">
                         <p className="font-extrabold text-slate-900 dark:text-white">{currencySymbol}{ord.totalAmount}</p>
                         {ord.remainingBalance > 0 ? (
                           <p className="text-[10px] text-rose-500 font-semibold">
                             Bal: {currencySymbol}{ord.remainingBalance}
                           </p>
                         ) : (
-                          <p className="text-[10px] text-emerald-600 font-medium">Fully Paid</p>
+                          <p className="text-[10px] text-emerald-600 font-medium">Paid</p>
                         )}
                       </td>
 
@@ -581,35 +603,72 @@ export const DashboardPage: React.FC = () => {
               </table>
             </div>
 
-            {/* Mobile Touch Cards View */}
-            <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
+            {/* PERFECT MOBILE PHONE VIEW (md:hidden) */}
+            <div className="md:hidden space-y-3">
               {combinedOrders.map((ord) => (
-                <div key={ord._id} className="py-3 space-y-2">
+                <div
+                  key={ord._id}
+                  className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3"
+                >
+                  {/* Top Row: Order ID & Payment Status */}
+                  <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
+                    <button
+                      onClick={() => setSelectedOrder(ord)}
+                      className="font-black text-sm text-brand-600 dark:text-brand-400 tracking-tight"
+                    >
+                      #{ord.orderNumber}
+                    </button>
+                    <StatusBadge status={ord.paymentStatus} size="sm" />
+                  </div>
+
+                  {/* Customer Info & Amount */}
                   <div className="flex justify-between items-start">
                     <div>
-                      <button
-                        onClick={() => setSelectedOrder(ord)}
-                        className="font-black text-sm text-brand-600 dark:text-brand-400"
-                      >
-                        #{ord.orderNumber}
-                      </button>
-                      <p className="font-bold text-xs text-slate-900 dark:text-white mt-0.5">
+                      <p className="font-bold text-xs text-slate-900 dark:text-white">
                         {ord.customerSnapshot.name}
                       </p>
                       <p className="text-[11px] text-slate-500">+91 {ord.customerSnapshot.mobile}</p>
                     </div>
+
                     <div className="text-right">
-                      <p className="font-black text-sm text-slate-900 dark:text-white">{currencySymbol}{ord.totalAmount}</p>
-                      <StatusBadge status={ord.paymentStatus} size="sm" />
+                      <p className="font-black text-sm text-slate-900 dark:text-white">
+                        {currencySymbol}{ord.totalAmount}
+                      </p>
+                      {ord.remainingBalance > 0 ? (
+                        <p className="text-[10px] text-rose-500 font-bold">
+                          Bal: {currencySymbol}{ord.remainingBalance}
+                        </p>
+                      ) : (
+                        <p className="text-[10px] text-emerald-600 font-semibold">Fully Paid</p>
+                      )}
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between text-xs pt-1">
-                    <span className="text-slate-500 text-[11px]">Status:</span>
+                  {/* Date & Time Badges */}
+                  <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 text-[11px] text-slate-600 dark:text-slate-300 space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-400 font-medium">Placed Date & Time:</span>
+                      <span className="font-bold text-slate-800 dark:text-slate-200">
+                        {formatDateTime(ord.orderDate)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-400 font-medium">Expected Delivery:</span>
+                      <span className="font-bold text-brand-600 dark:text-brand-400">
+                        {new Date(ord.expectedDeliveryDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Order Status Select Input */}
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                      Update Order Status
+                    </label>
                     <select
                       value={ord.status}
                       onChange={(e) => handleQuickStatusUpdate(ord._id, e.target.value as OrderStatus)}
-                      className="text-xs font-semibold px-2 py-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 outline-none"
+                      className="w-full text-xs font-bold px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-brand-500"
                     >
                       {statusOptions.map((st) => (
                         <option key={st} value={st}>
@@ -619,12 +678,14 @@ export const DashboardPage: React.FC = () => {
                     </select>
                   </div>
 
-                  <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                  {/* Mobile Action Buttons Bar */}
+                  <div className="grid grid-cols-3 gap-2 pt-1 border-t border-slate-100 dark:border-slate-800">
                     <button
                       onClick={() => handleWhatsAppShare(ord)}
-                      className="px-2.5 py-1.5 rounded-xl bg-emerald-50 text-emerald-600 text-xs font-semibold flex items-center gap-1"
+                      className="py-2 px-1 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500 hover:text-white font-bold text-xs flex items-center justify-center gap-1 transition-colors"
                     >
-                      <Smartphone className="w-3.5 h-3.5" /> WhatsApp
+                      <Smartphone className="w-3.5 h-3.5 shrink-0" />
+                      <span>WhatsApp</span>
                     </button>
 
                     <button
@@ -632,16 +693,18 @@ export const DashboardPage: React.FC = () => {
                         setSelectedOrder(ord);
                         setShowInvoiceModal(true);
                       }}
-                      className="px-2.5 py-1.5 rounded-xl bg-brand-50 text-brand-600 text-xs font-semibold flex items-center gap-1"
+                      className="py-2 px-1 rounded-xl bg-brand-50 dark:bg-brand-950/60 text-brand-700 dark:text-brand-300 hover:bg-brand-600 hover:text-white font-bold text-xs flex items-center justify-center gap-1 transition-colors"
                     >
-                      <Printer className="w-3.5 h-3.5" /> Print
+                      <Printer className="w-3.5 h-3.5 shrink-0" />
+                      <span>Print</span>
                     </button>
 
                     <button
                       onClick={() => setSelectedOrder(ord)}
-                      className="px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold flex items-center gap-1"
+                      className="py-2 px-1 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 font-bold text-xs flex items-center justify-center gap-1 transition-colors"
                     >
-                      <Edit className="w-3.5 h-3.5" /> Edit
+                      <Edit className="w-3.5 h-3.5 shrink-0" />
+                      <span>Edit</span>
                     </button>
                   </div>
                 </div>

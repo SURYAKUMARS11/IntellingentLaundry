@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -11,6 +11,7 @@ import {
   Search,
   WashingMachine,
   Sparkles,
+  Clock,
 } from 'lucide-react';
 
 export const Header: React.FC = () => {
@@ -19,6 +20,12 @@ export const Header: React.FC = () => {
   const navigate = useNavigate();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [globalSearch, setGlobalSearch] = useState('');
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,7 +36,7 @@ export const Header: React.FC = () => {
 
   return (
     <header className="h-16 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-4 lg:px-8 flex items-center justify-between sticky top-0 z-20">
-      {/* Mobile Brand / Desktop Title */}
+      {/* Mobile Brand / Desktop Search & Live Clock */}
       <div className="flex items-center gap-3">
         <div className="lg:hidden flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-brand-600 text-white flex items-center justify-center shadow-sm">
@@ -41,7 +48,7 @@ export const Header: React.FC = () => {
         </div>
 
         {/* Global Search Bar (Desktop & Tablet) */}
-        <form onSubmit={handleSearchSubmit} className="hidden sm:flex items-center relative w-64 md:w-80">
+        <form onSubmit={handleSearchSubmit} className="hidden sm:flex items-center relative w-56 md:w-72">
           <Search className="w-4 h-4 absolute left-3 text-slate-400" />
           <input
             type="text"
@@ -51,6 +58,16 @@ export const Header: React.FC = () => {
             className="w-full pl-9 pr-4 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 transition-all"
           />
         </form>
+
+        {/* Live Date & Time Display */}
+        <div className="hidden lg:flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200/60 dark:border-slate-700/60 text-slate-600 dark:text-slate-300 text-xs font-semibold">
+          <Clock className="w-3.5 h-3.5 text-brand-500" />
+          <span>{currentTime.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}</span>
+          <span className="opacity-40">•</span>
+          <span className="font-mono text-brand-600 dark:text-brand-400">
+            {currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+          </span>
+        </div>
       </div>
 
       {/* Right Actions */}
