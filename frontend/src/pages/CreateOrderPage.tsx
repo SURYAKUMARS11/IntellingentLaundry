@@ -32,6 +32,7 @@ import {
   Tag,
   Check,
   Zap,
+  AlertCircle,
 } from 'lucide-react';
 
 export const CreateOrderPage: React.FC = () => {
@@ -231,16 +232,19 @@ export const CreateOrderPage: React.FC = () => {
   const totalAmount = Math.round(taxableAmount + taxAmount);
   const remainingBalance = Math.max(0, totalAmount - advancePaid);
 
+  const [posError, setPosError] = useState<string>('');
+
   // Submit Order
   const handleSubmitOrder = async (e: React.FormEvent) => {
     e.preventDefault();
+    setPosError('');
 
     if (!selectedCustomerId) {
-      alert('Please select a customer or add a new customer.');
+      setPosError('Please select a customer or add a new customer before creating order.');
       return;
     }
     if (orderItems.length === 0) {
-      alert('Please add at least one laundry item to the order.');
+      setPosError('Please add at least one garment or service item to the order.');
       return;
     }
 
@@ -277,7 +281,7 @@ export const CreateOrderPage: React.FC = () => {
         setCreatedOrder(res.order);
       }
     } catch (err: any) {
-      alert(err.message || 'Failed to create order');
+      setPosError(err.message || 'Failed to create order');
     } finally {
       setIsSubmitting(false);
     }
@@ -602,6 +606,13 @@ export const CreateOrderPage: React.FC = () => {
                   className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none"
                 />
               </div>
+
+              {posError && (
+                <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-900 text-rose-600 dark:text-rose-400 text-xs font-bold flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0 text-rose-500" />
+                  <span>{posError}</span>
+                </div>
+              )}
 
               {/* Submit Order Button */}
               <button

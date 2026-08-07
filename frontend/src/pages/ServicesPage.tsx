@@ -8,6 +8,7 @@ import {
   fetchSettings,
 } from '../services/api';
 import { Service, Setting } from '../types';
+import { ConfirmModal } from '../components/ui/ConfirmModal';
 import {
   WashingMachine,
   Plus,
@@ -93,13 +94,17 @@ export const ServicesPage: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm('Are you sure you want to delete this service?')) return;
+  const [deleteServId, setDeleteServId] = useState<string | null>(null);
+
+  const confirmDeleteService = async () => {
+    if (!deleteServId) return;
     try {
-      await deleteServiceApi(id);
+      await deleteServiceApi(deleteServId);
       loadData();
     } catch (err) {
       console.error('Failed to delete service', err);
+    } finally {
+      setDeleteServId(null);
     }
   };
 
@@ -153,7 +158,7 @@ export const ServicesPage: React.FC = () => {
                     <Edit className="w-4 h-4" />
                   </button>
                   <button
-                    onClick={() => handleDelete(serv._id)}
+                    onClick={() => setDeleteServId(serv._id)}
                     className="p-1.5 rounded-lg hover:bg-rose-50 text-rose-500"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -293,6 +298,17 @@ export const ServicesPage: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Delete Service Confirmation Modal */}
+      <ConfirmModal
+        isOpen={!!deleteServId}
+        title="Delete Service Category"
+        message="Are you sure you want to delete this service category?"
+        confirmText="Delete Service"
+        variant="danger"
+        onConfirm={confirmDeleteService}
+        onCancel={() => setDeleteServId(null)}
+      />
     </div>
   );
 };

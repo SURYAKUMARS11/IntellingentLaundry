@@ -13,6 +13,7 @@ import {
   AccountsTransaction,
   Setting,
 } from '../types';
+import { ConfirmModal } from '../components/ui/ConfirmModal';
 import {
   Wallet,
   Building2,
@@ -213,13 +214,17 @@ export const AccountsPage: React.FC = () => {
     }
   };
 
-  const handleDeleteExpense = async (id: string) => {
-    if (!window.confirm('Are you sure you want to delete this expense record?')) return;
+  const [deleteExpenseId, setDeleteExpenseId] = useState<string | null>(null);
+
+  const confirmDeleteExpense = async () => {
+    if (!deleteExpenseId) return;
     try {
-      await deleteExpenseApi(id);
+      await deleteExpenseApi(deleteExpenseId);
       loadData();
     } catch (err: any) {
-      alert(err.message || 'Could not delete expense');
+      console.error('Could not delete expense', err);
+    } finally {
+      setDeleteExpenseId(null);
     }
   };
 
@@ -658,7 +663,7 @@ export const AccountsPage: React.FC = () => {
                                 <Edit className="w-4 h-4" />
                               </button>
                               <button
-                                onClick={() => handleDeleteExpense(exp._id)}
+                                onClick={() => setDeleteExpenseId(exp._id)}
                                 className="p-1.5 rounded-lg hover:bg-rose-50 text-rose-500"
                               >
                                 <Trash2 className="w-4 h-4" />
@@ -866,6 +871,17 @@ export const AccountsPage: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Delete Expense Confirmation Modal */}
+      <ConfirmModal
+        isOpen={!!deleteExpenseId}
+        title="Delete Expense Record"
+        message="Are you sure you want to delete this expense record?"
+        confirmText="Delete Expense"
+        variant="danger"
+        onConfirm={confirmDeleteExpense}
+        onCancel={() => setDeleteExpenseId(null)}
+      />
     </div>
   );
 };

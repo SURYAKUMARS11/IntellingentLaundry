@@ -7,6 +7,7 @@ import {
   fetchSettings,
 } from '../services/api';
 import { LaundryItem, Setting } from '../types';
+import { ConfirmModal } from '../components/ui/ConfirmModal';
 import { Shirt, Plus, Edit, Trash2, X, Tag } from 'lucide-react';
 
 export const ItemsPage: React.FC = () => {
@@ -72,13 +73,17 @@ export const ItemsPage: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm('Are you sure you want to delete this clothing item?')) return;
+  const [deleteItemId, setDeleteItemId] = useState<string | null>(null);
+
+  const confirmDeleteItem = async () => {
+    if (!deleteItemId) return;
     try {
-      await deleteItemApi(id);
+      await deleteItemApi(deleteItemId);
       loadData();
     } catch (err) {
       console.error('Failed to delete item', err);
+    } finally {
+      setDeleteItemId(null);
     }
   };
 
@@ -133,7 +138,7 @@ export const ItemsPage: React.FC = () => {
                 <Edit className="w-4 h-4" />
               </button>
               <button
-                onClick={() => handleDelete(item._id)}
+                onClick={() => setDeleteItemId(item._id)}
                 className="p-1.5 rounded-lg hover:bg-rose-50 text-rose-500"
               >
                 <Trash2 className="w-4 h-4" />
@@ -221,6 +226,17 @@ export const ItemsPage: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Delete Item Confirmation Modal */}
+      <ConfirmModal
+        isOpen={!!deleteItemId}
+        title="Delete Garment Item"
+        message="Are you sure you want to delete this clothing item?"
+        confirmText="Delete Item"
+        variant="danger"
+        onConfirm={confirmDeleteItem}
+        onCancel={() => setDeleteItemId(null)}
+      />
     </div>
   );
 };

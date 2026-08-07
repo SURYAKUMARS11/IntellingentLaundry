@@ -9,6 +9,7 @@ import {
   fetchSettings,
 } from '../services/api';
 import { Customer, Order, Setting } from '../types';
+import { ConfirmModal } from '../components/ui/ConfirmModal';
 import { StatusBadge } from '../components/ui/Badge';
 import {
   Users,
@@ -39,20 +40,19 @@ export const CustomersPage: React.FC = () => {
   const [totalCustomers, setTotalCustomers] = useState<number>(0);
   const [totalPages, setTotalPages] = useState<number>(1);
 
-  // Form Modal State
+  // Form Modal & History States
   const [showModal, setShowModal] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
+  const [historyCustomer, setHistoryCustomer] = useState<Customer | null>(null);
+  const [customerOrders, setCustomerOrders] = useState<Order[]>([]);
+  const [deleteCustId, setDeleteCustId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     mobile: '',
-    address: '',
     email: '',
+    address: '',
     notes: '',
   });
-
-  // History Drawer State
-  const [historyCustomer, setHistoryCustomer] = useState<Customer | null>(null);
-  const [customerOrders, setCustomerOrders] = useState<Order[]>([]);
 
   const navigate = useNavigate();
 
@@ -117,19 +117,21 @@ export const CustomersPage: React.FC = () => {
       setShowModal(false);
       loadCustomers();
     } catch (err: any) {
-      alert(err.message || 'Failed to save customer');
+      console.error('Failed to save customer', err);
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm('Are you sure you want to delete this customer?')) return;
+  const confirmDeleteCustomer = async () => {
+    if (!deleteCustId) return;
     try {
-      const res = await deleteCustomerApi(id);
+      const res = await deleteCustomerApi(deleteCustId);
       if (res.success) {
         loadCustomers();
       }
     } catch (err: any) {
-      alert(err.message || 'Could not delete customer');
+      console.error('Could not delete customer', err);
+    } finally {
+      setDeleteCustId(null);
     }
   };
 
@@ -273,7 +275,7 @@ export const CustomersPage: React.FC = () => {
                           </button>
 
                           <button
-                            onClick={() => handleDelete(cust._id)}
+                            onClick={() => setDeleteCustId(cust._id)}
                             title="Delete Customer"
                             className="p-1.5 rounded-lg hover:bg-rose-50 text-rose-500"
                           >
@@ -326,7 +328,7 @@ export const CustomersPage: React.FC = () => {
                       <Edit className="w-3.5 h-3.5" /> Edit
                     </button>
                     <button
-                      onClick={() => handleDelete(cust._id)}
+                      onClick={() => setDeleteCustId(cust._id)}
                       className="px-2.5 py-1.5 rounded-xl bg-rose-50 text-rose-500 text-xs font-semibold"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -533,6 +535,17 @@ export const CustomersPage: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Customer Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={!!deleteCustId}
+        title="Delete Customer Profile"
+        message="Are you sure you want to permanently delete this customer profile? This action cannot be undone."
+        confirmText="Delete Customer"
+        variant="danger"
+        onConfirm={confirmDeleteCustomer}
+        onCancel={() => setDeleteCustId(null)}
+      />
     </div>
   );
 };

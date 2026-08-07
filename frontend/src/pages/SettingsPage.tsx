@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { fetchSettings, updateSettingsApi, updateProfile, clearAllDataApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { Setting } from '../types';
+import { ConfirmModal } from '../components/ui/ConfirmModal';
 import { Settings, Store, Receipt, Lock, CheckCircle, Save, Trash2 } from 'lucide-react';
 
 export const SettingsPage: React.FC = () => {
@@ -79,14 +80,15 @@ export const SettingsPage: React.FC = () => {
     }
   };
 
-  const handleResetAllData = async () => {
-    if (!window.confirm('Are you sure you want to delete ALL existing customers, orders, invoices, and expenses? This will wipe all data to test from scratch.')) return;
+  const [showResetModal, setShowResetModal] = useState(false);
+
+  const confirmResetAllData = async () => {
+    setShowResetModal(false);
     try {
       await clearAllDataApi();
-      alert('All orders, customers, invoices & expenses deleted successfully! Ready to test from scratch.');
       window.location.reload();
     } catch (err: any) {
-      alert(err.message || 'Failed to reset data');
+      console.error('Failed to reset data', err);
     }
   };
 
@@ -242,7 +244,7 @@ export const SettingsPage: React.FC = () => {
 
             <button
               type="button"
-              onClick={handleResetAllData}
+              onClick={() => setShowResetModal(true)}
               className="px-4 py-2.5 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white dark:bg-rose-950/50 dark:text-rose-400 font-extrabold text-xs transition-colors flex items-center gap-1.5"
             >
               <Trash2 className="w-4 h-4" /> Reset All Orders & Customers
@@ -411,6 +413,17 @@ export const SettingsPage: React.FC = () => {
           </div>
         </form>
       )}
+
+      {/* Reset Database Confirmation Modal */}
+      <ConfirmModal
+        isOpen={showResetModal}
+        title="Reset All Shop Database"
+        message="Are you sure you want to delete ALL existing customers, orders, invoices, and expenses? This will wipe all data to test 100% from scratch."
+        confirmText="Wipe & Reset Everything"
+        variant="danger"
+        onConfirm={confirmResetAllData}
+        onCancel={() => setShowResetModal(false)}
+      />
     </div>
   );
 };

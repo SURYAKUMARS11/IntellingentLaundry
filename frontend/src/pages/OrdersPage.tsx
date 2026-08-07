@@ -9,6 +9,7 @@ import {
 } from '../services/api';
 import { Order, OrderStatus, Setting } from '../types';
 import { StatusBadge } from '../components/ui/Badge';
+import { ConfirmModal } from '../components/ui/ConfirmModal';
 import { OrderDetailModal } from '../components/orders/OrderDetailModal';
 import { PaymentModal } from '../components/orders/PaymentModal';
 import { InvoiceView } from '../components/invoice/InvoiceView';
@@ -47,6 +48,7 @@ export const OrdersPage: React.FC = () => {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+  const [deleteOrderId, setDeleteOrderId] = useState<string | null>(null);
 
   const navigate = useNavigate();
 
@@ -100,10 +102,11 @@ export const OrdersPage: React.FC = () => {
     }
   };
 
-  const handleDeleteOrder = async (orderId: string) => {
-    if (!window.confirm('Are you sure you want to delete this order?')) return;
+  const confirmDeleteOrder = async () => {
+    if (!deleteOrderId) return;
     try {
-      await deleteOrderApi(orderId);
+      await deleteOrderApi(deleteOrderId);
+      setDeleteOrderId(null);
       loadOrders();
     } catch (err) {
       console.error('Failed to delete order', err);
@@ -318,7 +321,7 @@ export const OrdersPage: React.FC = () => {
                           )}
 
                           <button
-                            onClick={() => handleDeleteOrder(ord._id)}
+                            onClick={() => setDeleteOrderId(ord._id)}
                             title="Delete Order"
                             className="p-1.5 rounded-lg hover:bg-rose-50 text-rose-500"
                           >
@@ -486,6 +489,17 @@ export const OrdersPage: React.FC = () => {
           onClose={() => setShowInvoiceModal(false)}
         />
       )}
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={!!deleteOrderId}
+        title="Delete Order Record"
+        message="Are you sure you want to permanently delete this order record? This action cannot be undone."
+        confirmText="Delete Order"
+        variant="danger"
+        onConfirm={confirmDeleteOrder}
+        onCancel={() => setDeleteOrderId(null)}
+      />
     </div>
   );
 };
