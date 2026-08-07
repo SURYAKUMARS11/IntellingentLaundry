@@ -362,41 +362,102 @@ export const createOrderApi = async (orderData: any) => {
     });
   } catch (err) {
     const orders = getMockOrders();
+    const customers = getMockCustomers();
+
+    // Look up customer snapshot accurately
+    let customerName = 'Walk-in Customer';
+    let customerMobile = '9876543210';
+    let customerAddress = 'Local';
+    let customerEmail = '';
+
+    if (orderData.customerId) {
+      const found = customers.find((c) => c._id === orderData.customerId);
+      if (found) {
+        customerName = found.name;
+        customerMobile = found.mobile;
+        customerAddress = found.address || 'Local';
+        customerEmail = found.email || '';
+      }
+    } else if (orderData.newCustomer) {
+      customerName = orderData.newCustomer.name || customerName;
+      customerMobile = orderData.newCustomer.mobile || customerMobile;
+      customerAddress = orderData.newCustomer.address || customerAddress;
+      customerEmail = orderData.newCustomer.email || customerEmail;
+    }
+
+    const items = orderData.items || [];
+    const subtotal = items.reduce(
+      (acc: number, i: any) => acc + (Number(i.subtotal) || Number(i.quantity) * Number(i.unitPrice) || 0),
+      0
+    );
+    const disc = Number(orderData.discount) || 0;
+    const taxPct = Number(orderData.taxPercent) || 0;
+    const taxableAmount = Math.max(0, subtotal - disc);
+    const taxAmount = (taxableAmount * taxPct) / 100;
+    const totalAmount = Math.round(taxableAmount + taxAmount);
+
+    const advPaid = Number(orderData.advancePaid) || 0;
+    const remainingBalance = Math.max(0, totalAmount - advPaid);
+
+    let paymentStatus: any = 'Pending';
+    if (advPaid >= totalAmount && totalAmount > 0) {
+      paymentStatus = 'Paid';
+    } else if (advPaid > 0) {
+      paymentStatus = 'Partially Paid';
+    }
+
     const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+    const orderNum = `ORD-${dateStr}-` + String(orders.length + 1).padStart(4, '0');
+
     const newOrd: Order = {
       _id: 'ord-' + Date.now(),
-      orderNumber: `ORD-${dateStr}-` + String(orders.length + 1).padStart(4, '0'),
+      orderNumber: orderNum,
       customer: orderData.customerId || 'cust-1',
       customerSnapshot: {
-        name: orderData.newCustomer?.name || 'Rahul Sharma',
-        mobile: orderData.newCustomer?.mobile || '9876543210',
-        address: orderData.newCustomer?.address || 'Metro City',
+        name: customerName,
+        mobile: customerMobile,
+        address: customerAddress,
+        email: customerEmail,
       },
-      items: orderData.items || [],
+      items,
       status: 'Received',
       statusHistory: [
         {
           status: 'Received',
           timestamp: new Date().toISOString(),
-          note: 'Order created in offline mode',
+          note: 'Order created in shop POS',
         },
       ],
       orderDate: new Date().toISOString(),
       expectedDeliveryDate: orderData.expectedDeliveryDate || new Date(Date.now() + 86400000).toISOString(),
-      discount: Number(orderData.discount) || 0,
-      taxPercent: Number(orderData.taxPercent) || 0,
-      taxAmount: 0,
-      subtotal: 500,
-      totalAmount: 500 - (Number(orderData.discount) || 0),
-      advancePaid: Number(orderData.advancePaid) || 0,
-      remainingBalance: Math.max(0, 500 - (Number(orderData.advancePaid) || 0)),
-      paymentStatus: Number(orderData.advancePaid) >= 500 ? 'Paid' : Number(orderData.advancePaid) > 0 ? 'Partially Paid' : 'Pending',
-      paymentMethod: orderData.paymentMethod || 'Pending',
+      discount: disc,
+      taxPercent: taxPct,
+      taxAmount,
+      subtotal,
+      totalAmount,
+      advancePaid: advPaid,
+      remainingBalance,
+      paymentStatus,
+      paymentMethod: orderData.paymentMethod || 'Cash',
+      notes: orderData.notes || '',
+      qrCodeUrl: `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${orderNum}`,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
+
     orders.unshift(newOrd);
     saveMockOrders(orders);
+
+    // Also update customer stats in mock storage
+    if (orderData.customerId) {
+      const custIdx = customers.findIndex((c) => c._id === orderData.customerId);
+      if (custIdx !== -1) {
+        customers[custIdx].totalOrders = (customers[custIdx].totalOrders || 0) + 1;
+        customers[custIdx].totalSpent = (customers[custIdx].totalSpent || 0) + totalAmount;
+        saveMockCustomers(customers);
+      }
+    }
+
     return { success: true, order: newOrd };
   }
 };
