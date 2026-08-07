@@ -27,6 +27,18 @@ export const mainServicesList = [
   'Bag Cleaning',
 ] as const;
 
+export interface KgServiceRate {
+  name: string;
+  ratePerKg: number;
+}
+
+export const kgServicesList: KgServiceRate[] = [
+  { name: 'Wash & Iron', ratePerKg: 120 },
+  { name: 'Express Laundry', ratePerKg: 199 },
+  { name: 'Premium Laundry', ratePerKg: 159 },
+  { name: 'Premium Express Laundry', ratePerKg: 299 },
+];
+
 export const posGroupCatalog: POSGroup[] = [
   {
     groupName: 'Regular',

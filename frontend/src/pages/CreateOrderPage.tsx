@@ -10,8 +10,10 @@ import { Customer, Order, Setting } from '../types';
 import { InvoiceView } from '../components/invoice/InvoiceView';
 import {
   mainServicesList,
+  kgServicesList,
   posGroupCatalog,
   POSCatalogItem,
+  KgServiceRate,
 } from '../data/posCatalogData';
 import {
   User,
@@ -29,6 +31,7 @@ import {
   Layers,
   Tag,
   Check,
+  Zap,
 } from 'lucide-react';
 
 export const CreateOrderPage: React.FC = () => {
@@ -52,22 +55,21 @@ export const CreateOrderPage: React.FC = () => {
   // 1. Order Mode: 'quantity' (Pcs) vs 'kg' (Weight)
   const [orderMode, setOrderMode] = useState<'quantity' | 'kg'>('quantity');
 
-  // 2. Active Selected Service Category (Default: 'Wash and Fold')
+  // 2. Quantity Mode Active Service Category (Default: 'Wash and Fold')
   const [selectedServiceCategory, setSelectedServiceCategory] = useState<string>('Wash and Fold');
 
-  // 3. Active Target Group (Default: 'Regular')
+  // 3. Kg Mode Selected Service (Default: 'Wash & Iron', Rate: 120)
+  const [selectedKgService, setSelectedKgService] = useState<KgServiceRate>(kgServicesList[0]);
+  const [kgWeight, setKgWeight] = useState<string>('1');
+
+  // 4. Active Target Group (Default: 'Regular')
   const [activeGroup, setActiveGroup] = useState<'Regular' | 'Men' | 'Women' | 'Kids' | 'Household' | 'Others'>('Regular');
 
-  // 4. Active Sub-category filter
+  // 5. Active Sub-category filter
   const [activeSubCategory, setActiveSubCategory] = useState<string>('All');
 
   // Search inside catalog
   const [catalogSearch, setCatalogSearch] = useState<string>('');
-
-  // Kg Mode State
-  const [kgWeight, setKgWeight] = useState<string>('1');
-  const [kgRate, setKgRate] = useState<string>('60');
-  const [kgServiceName, setKgServiceName] = useState<string>('Wash & Fold per Kg');
 
   // Selected Order Cart Items
   const [orderItems, setOrderItems] = useState<
@@ -119,8 +121,11 @@ export const CreateOrderPage: React.FC = () => {
 
   const currencySymbol = setting?.currencySymbol || '₹';
 
-  // Add Item to Cart from Quantity Catalog
-  const addItemToCart = (item: POSCatalogItem, serviceName: string) => {
+  // Add Item to Cart (Clicking Card in Quantity or Kg mode)
+  const handleCardClick = (item: POSCatalogItem) => {
+    const serviceName = orderMode === 'quantity' ? selectedServiceCategory : selectedKgService.name;
+    const price = orderMode === 'quantity' ? item.price : selectedKgService.ratePerKg;
+
     setOrderItems((prev) => {
       const existingIdx = prev.findIndex(
         (line) => line.itemId === item.id && line.serviceName === serviceName
@@ -140,26 +145,26 @@ export const CreateOrderPage: React.FC = () => {
           serviceId: serviceName.toLowerCase().replace(/\s+/g, '-'),
           serviceName,
           quantity: 1,
-          unitPrice: item.price,
-          subtotal: item.price,
+          unitPrice: price,
+          subtotal: price,
         },
       ];
     });
   };
 
-  // Add Kg Item to Cart
-  const addKgItemToCart = () => {
+  // Add Direct Kg Weight Line Item to Cart
+  const addKgWeightItemToCart = () => {
     const weightNum = parseFloat(kgWeight) || 1;
-    const rateNum = parseFloat(kgRate) || 0;
+    const rateNum = selectedKgService.ratePerKg;
     const itemSubtotal = Math.round(weightNum * rateNum);
 
     setOrderItems((prev) => [
       ...prev,
       {
         itemId: `kg-${Date.now()}`,
-        itemName: `${kgServiceName} (${weightNum} Kg @ ${currencySymbol}${rateNum}/Kg)`,
+        itemName: `Bulk Laundry (${weightNum} Kg @ ${currencySymbol}${rateNum}/Kg)`,
         serviceId: 'service-kg',
-        serviceName: kgServiceName,
+        serviceName: selectedKgService.name,
         quantity: 1,
         unitPrice: itemSubtotal,
         subtotal: itemSubtotal,
@@ -302,7 +307,7 @@ export const CreateOrderPage: React.FC = () => {
             <ShoppingBag className="w-6 h-6 text-brand-600" /> Express POS Order Builder
           </h1>
           <p className="hidden sm:block text-xs text-slate-500">
-            Select items by Quantity or Kg, pick services & generate instant digital receipt
+            Click cards to select items by Quantity or Kg, pick services & generate receipt
           </p>
         </div>
 
@@ -334,8 +339,8 @@ export const CreateOrderPage: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left Column: Customer & Cart Summary (lg:col-span-6) */}
-        <div className="lg:col-span-6 space-y-6">
+        {/* Left Column: Customer & Cart Summary (lg:col-span-5) */}
+        <div className="lg:col-span-5 space-y-6">
           {/* Step 1: Customer Selection */}
           <div className="glass-card p-5 space-y-3">
             <div className="flex items-center justify-between">
@@ -426,7 +431,7 @@ export const CreateOrderPage: React.FC = () => {
               <div className="text-center py-8 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl">
                 <ShoppingBag className="w-10 h-10 mx-auto text-slate-300 dark:text-slate-700 mb-2" />
                 <p className="text-xs text-slate-500 font-medium">Order Cart is empty</p>
-                <p className="text-[11px] text-slate-400">Select items from catalog on the right</p>
+                <p className="text-[11px] text-slate-400">Click any card from the catalog on the right</p>
               </div>
             ) : (
               <div className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -596,8 +601,8 @@ export const CreateOrderPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Right Column: Dynamic Item Catalog (lg:col-span-6) */}
-        <div className="lg:col-span-6 space-y-4">
+        {/* Right Column: Dynamic Item Catalog (lg:col-span-7) */}
+        <div className="lg:col-span-7 space-y-4">
           {/* ========================================================================= */}
           {/* MODE A: BY QUANTITY (Pcs) CATALOG */}
           {/* ========================================================================= */}
@@ -692,8 +697,8 @@ export const CreateOrderPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* 4. Garment Items Catalog Grid */}
-              <div className="max-h-[550px] overflow-y-auto pr-1">
+              {/* 4. Garment Items Catalog Grid (CLICKING ANY CARD SELECTS ITEM!) */}
+              <div className="max-h-[520px] overflow-y-auto pr-1">
                 {displayItems.length === 0 ? (
                   <div className="text-center py-12 text-slate-400 text-xs">
                     No clothing items found in selected category.
@@ -703,26 +708,26 @@ export const CreateOrderPage: React.FC = () => {
                     {displayItems.map((item) => (
                       <div
                         key={item.id}
-                        className="p-3 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 flex flex-col justify-between hover:border-brand-500 hover:bg-white dark:hover:bg-slate-800 transition-all shadow-xs"
+                        onClick={() => handleCardClick(item)}
+                        className="p-3 sm:p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 hover:bg-brand-500 hover:border-brand-500 hover:text-white group cursor-pointer transition-all duration-150 shadow-xs active:scale-[0.98] select-none flex flex-col justify-between"
                       >
                         <div>
-                          <p className="font-bold text-xs text-slate-900 dark:text-white line-clamp-1">
+                          <p className="font-bold text-xs text-slate-900 dark:text-white group-hover:text-white line-clamp-1">
                             {item.name}
                           </p>
-                          <p className="text-[10px] text-slate-400">{item.subCategory}</p>
-                          <p className="font-black text-brand-600 dark:text-brand-400 text-xs mt-1">
-                            {currencySymbol}{item.price}.00
+                          <p className="text-[10px] text-slate-400 group-hover:text-brand-100">
+                            {item.subCategory}
                           </p>
                         </div>
 
-                        <button
-                          type="button"
-                          onClick={() => addItemToCart(item, selectedServiceCategory)}
-                          className="w-full mt-2 py-1.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-[11px] shadow-sm flex items-center justify-center gap-1 active:scale-95 transition-all"
-                        >
-                          <Plus className="w-3.5 h-3.5" />
-                          <span>Add {selectedServiceCategory.split(' ')[0]}</span>
-                        </button>
+                        <div className="mt-3 flex items-center justify-between">
+                          <span className="font-black text-brand-600 dark:text-brand-400 group-hover:text-white text-xs">
+                            {currencySymbol}{item.price}.00
+                          </span>
+                          <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-lg bg-brand-100 text-brand-700 dark:bg-brand-950 dark:text-brand-300 group-hover:bg-white/20 group-hover:text-white">
+                            Select
+                          </span>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -732,39 +737,63 @@ export const CreateOrderPage: React.FC = () => {
           )}
 
           {/* ========================================================================= */}
-          {/* MODE B: BY WEIGHT (Kg) CATALOG */}
+          {/* MODE B: BY WEIGHT (Kg) CATALOG WITH HIGHLIGHTED KG SERVICES */}
           {/* ========================================================================= */}
           {orderMode === 'kg' && (
-            <div className="glass-card p-6 space-y-4 border-l-4 border-l-brand-600">
-              <div className="flex items-center gap-2">
-                <Scale className="w-5 h-5 text-brand-600" />
-                <h3 className="font-black text-base text-slate-900 dark:text-white">
-                  By Weight (Kg) Laundry Order
-                </h3>
-              </div>
-              <p className="text-xs text-slate-500">
-                Bulk laundry pricing by total weight in Kilograms (Kg).
-              </p>
-
-              <div className="space-y-4 pt-2">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                    Select Laundry Service
-                  </label>
-                  <select
-                    value={kgServiceName}
-                    onChange={(e) => setKgServiceName(e.target.value)}
-                    className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none font-bold"
-                  >
-                    <option value="Wash & Fold per Kg">Wash & Fold per Kg</option>
-                    <option value="Wash & Iron per Kg">Wash & Iron per Kg</option>
-                    <option value="Premium Laundry per Kg">Premium Laundry per Kg</option>
-                  </select>
+            <div className="glass-card p-5 space-y-4 border-l-4 border-l-brand-600">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Scale className="w-5 h-5 text-brand-600" />
+                  <h3 className="font-black text-base text-slate-900 dark:text-white">
+                    By Weight (Kg) Laundry Builder
+                  </h3>
                 </div>
+                <span className="px-2.5 py-1 rounded-full bg-brand-50 text-brand-700 dark:bg-brand-950 text-xs font-bold">
+                  {selectedKgService.name} ({currencySymbol}{selectedKgService.ratePerKg}/Kg)
+                </span>
+              </div>
 
-                <div className="grid grid-cols-2 gap-3">
+              {/* 1. Top Highlight Cards for the 4 Kg Services */}
+              <div>
+                <label className="block text-xs font-extrabold uppercase tracking-wider text-slate-400 mb-2">
+                  Select Kg Service Rate Category
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {kgServicesList.map((kgServ) => {
+                    const active = selectedKgService.name === kgServ.name;
+                    return (
+                      <div
+                        key={kgServ.name}
+                        onClick={() => setSelectedKgService(kgServ)}
+                        className={`p-3 rounded-2xl border cursor-pointer transition-all duration-150 select-none flex flex-col justify-between ${
+                          active
+                            ? 'bg-brand-600 border-brand-600 text-white shadow-md shadow-brand-600/30'
+                            : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-brand-400 text-slate-800 dark:text-slate-200'
+                        }`}
+                      >
+                        <div>
+                          <p className="font-bold text-xs leading-snug line-clamp-1">{kgServ.name}</p>
+                          <p className={`text-[10px] mt-0.5 ${active ? 'text-brand-100' : 'text-slate-400'}`}>
+                            Laundry per Kg
+                          </p>
+                        </div>
+                        <div className="mt-2 text-right">
+                          <span className={`text-sm font-black ${active ? 'text-white' : 'text-brand-600 dark:text-brand-400'}`}>
+                            {currencySymbol}{kgServ.ratePerKg}.00
+                          </span>
+                          <span className={`text-[9px] block ${active ? 'text-brand-100' : 'text-slate-400'}`}>/ Kg</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* 2. Direct Kg Weight Input Bar */}
+              <div className="p-4 rounded-2xl bg-brand-50/70 dark:bg-brand-950/40 border border-brand-200 dark:border-brand-900 space-y-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 items-end">
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
                       Total Weight (Kg)
                     </label>
                     <input
@@ -773,44 +802,131 @@ export const CreateOrderPage: React.FC = () => {
                       min="0.1"
                       value={kgWeight}
                       onChange={(e) => setKgWeight(e.target.value)}
-                      className="w-full px-3 py-2 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none"
+                      className="w-full px-3 py-2 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white outline-none"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                      Rate per Kg ({currencySymbol}/Kg)
-                    </label>
-                    <input
-                      type="number"
-                      min="1"
-                      value={kgRate}
-                      onChange={(e) => setKgRate(e.target.value)}
-                      className="w-full px-3 py-2 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none"
-                    />
+                    <span className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      Rate per Kg
+                    </span>
+                    <div className="px-3 py-2 text-xs font-black rounded-xl bg-slate-100 dark:bg-slate-800 text-brand-600 dark:text-brand-400 border border-slate-200 dark:border-slate-700">
+                      {currencySymbol}{selectedKgService.ratePerKg}/Kg
+                    </div>
+                  </div>
+
+                  <div className="col-span-2 sm:col-span-1">
+                    <button
+                      type="button"
+                      onClick={addKgWeightItemToCart}
+                      className="w-full py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs shadow-md shadow-brand-600/30 flex items-center justify-center gap-1 active:scale-95 transition-all"
+                    >
+                      <Plus className="w-4 h-4 stroke-[2.5]" />
+                      <span>Add Bulk Kg</span>
+                    </button>
                   </div>
                 </div>
+              </div>
 
-                <div className="p-4 rounded-2xl bg-brand-50 dark:bg-brand-950/50 border border-brand-200 dark:border-brand-900 flex justify-between items-center">
-                  <div>
-                    <p className="text-xs text-brand-700 dark:text-brand-300 font-semibold">Calculated Subtotal</p>
-                    <p className="text-[11px] text-slate-400">
-                      {kgWeight || 0} Kg × {currencySymbol}{kgRate || 0}/Kg
-                    </p>
-                  </div>
-                  <span className="text-xl font-black text-brand-600 dark:text-brand-400">
-                    {currencySymbol}{Math.round((parseFloat(kgWeight) || 0) * (parseFloat(kgRate) || 0))}
+              {/* 3. Target Group Garment Items Selection for Kg Mode */}
+              <div className="pt-2 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="block text-xs font-extrabold uppercase tracking-wider text-slate-400">
+                    Add Garments under {selectedKgService.name}
                   </span>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={addKgItemToCart}
-                  className="w-full py-3 rounded-2xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs shadow-md shadow-brand-600/30 flex items-center justify-center gap-2 active:scale-95 transition-all"
-                >
-                  <Plus className="w-4 h-4 stroke-[2.5]" />
-                  <span>Add Kg Service to Order</span>
-                </button>
+                {/* Target Group Tabs */}
+                <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
+                  {posGroupCatalog.map((grp) => {
+                    const active = activeGroup === grp.groupName;
+                    return (
+                      <button
+                        key={grp.groupName}
+                        type="button"
+                        onClick={() => {
+                          setActiveGroup(grp.groupName);
+                          setActiveSubCategory('All');
+                        }}
+                        className={`py-1.5 rounded-xl text-xs font-extrabold transition-all text-center ${
+                          active
+                            ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-md'
+                            : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
+                        }`}
+                      >
+                        {grp.groupName}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Sub-Category Pills & Search */}
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none flex-1">
+                    {subCategoriesList.map((sc) => (
+                      <button
+                        key={sc}
+                        type="button"
+                        onClick={() => setActiveSubCategory(sc)}
+                        className={`px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap transition-colors ${
+                          activeSubCategory === sc
+                            ? 'bg-brand-100 text-brand-700 dark:bg-brand-950 dark:text-brand-300 border border-brand-300'
+                            : 'bg-slate-50 dark:bg-slate-800 text-slate-500 hover:bg-slate-100'
+                        }`}
+                      >
+                        {sc}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="relative w-36 shrink-0">
+                    <Search className="w-3.5 h-3.5 absolute left-2.5 top-2.5 text-slate-400" />
+                    <input
+                      type="text"
+                      placeholder="Filter..."
+                      value={catalogSearch}
+                      onChange={(e) => setCatalogSearch(e.target.value)}
+                      className="w-full pl-8 pr-2 py-1.5 text-[11px] rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none"
+                    />
+                  </div>
+                </div>
+
+                {/* Garment Cards for Kg mode (CLICKING CARD ADDS TO CART AT SELECTED KG RATE!) */}
+                <div className="max-h-[350px] overflow-y-auto pr-1">
+                  {displayItems.length === 0 ? (
+                    <div className="text-center py-8 text-slate-400 text-xs">
+                      No garments found in selected category.
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                      {displayItems.map((item) => (
+                        <div
+                          key={item.id}
+                          onClick={() => handleCardClick(item)}
+                          className="p-3 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 hover:bg-brand-500 hover:border-brand-500 hover:text-white group cursor-pointer transition-all duration-150 shadow-xs active:scale-[0.98] select-none flex flex-col justify-between"
+                        >
+                          <div>
+                            <p className="font-bold text-xs text-slate-900 dark:text-white group-hover:text-white line-clamp-1">
+                              {item.name}
+                            </p>
+                            <p className="text-[10px] text-slate-400 group-hover:text-brand-100">
+                              {item.subCategory}
+                            </p>
+                          </div>
+
+                          <div className="mt-2.5 flex items-center justify-between">
+                            <span className="font-black text-brand-600 dark:text-brand-400 group-hover:text-white text-xs">
+                              {currencySymbol}{selectedKgService.ratePerKg}/Kg
+                            </span>
+                            <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-lg bg-brand-100 text-brand-700 dark:bg-brand-950 dark:text-brand-300 group-hover:bg-white/20 group-hover:text-white">
+                              Select
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           )}
