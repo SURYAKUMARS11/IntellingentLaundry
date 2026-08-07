@@ -26,7 +26,7 @@ const SettingSchema: Schema = new Schema(
     email: { type: String, required: true, default: 'contact@intelligentlaundry.com' },
     address: { type: String, required: true, default: '123 Sparkle Avenue, Suite 4B, Commercial Hub' },
     gstNumber: { type: String, default: '22AAAAA0000A1Z5' },
-    gstPercentage: { type: Number, default: 18 },
+    gstPercentage: { type: Number, default: 0 },
     currencySymbol: { type: String, default: '₹' },
     currencyCode: { type: String, default: 'INR' },
     invoicePrefix: { type: String, default: 'ORD-' },

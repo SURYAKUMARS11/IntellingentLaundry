@@ -47,7 +47,7 @@ export const seedDatabase = async () => {
         email: 'support@intelligentlaundry.com',
         address: '42 Commercial Street, Sector 15, Metro City, 400001',
         gstNumber: '27AABCU9603R1ZM',
-        gstPercentage: 18,
+        gstPercentage: 0,
         currencySymbol: '₹',
         currencyCode: 'INR',
         invoicePrefix: 'ORD-',

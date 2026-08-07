@@ -89,9 +89,7 @@ export const CreateOrderPage: React.FC = () => {
         if (itemRes.success) setItemsList(itemRes.items);
         if (setRes.success) {
           setSetting(setRes.setting);
-          if (setRes.setting?.gstPercentage) {
-            setTaxPercent(setRes.setting.gstPercentage);
-          }
+          setTaxPercent(0);
         }
       } catch (err) {
         console.error('Failed to load POS reference data', err);
