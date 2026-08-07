@@ -25,9 +25,12 @@ import {
   BellRing,
   RefreshCw,
   Filter,
-  Calendar,
   X,
   CreditCard,
+  Printer,
+  Smartphone,
+  Edit,
+  Eye,
 } from 'lucide-react';
 
 export const DashboardPage: React.FC = () => {
@@ -111,6 +114,19 @@ export const DashboardPage: React.FC = () => {
     setDateFrom('');
     setDateTo('');
   };
+
+  const handleWhatsAppShare = (ord: Order) => {
+    const mobile = ord.customerSnapshot.mobile.replace(/\D/g, '');
+    const text = `Hello ${ord.customerSnapshot.name}, your laundry order #${ord.orderNumber} status: ${ord.status}.\nTotal: ${currencySymbol}${ord.totalAmount}\nAdvance Paid: ${currencySymbol}${ord.advancePaid}\nRemaining Balance: ${currencySymbol}${ord.remainingBalance}\nExpected Delivery: ${new Date(ord.expectedDeliveryDate).toLocaleDateString('en-GB')}.\nThank you for choosing ${setting?.shopName || 'IntelligentLaundry'}!`;
+    const url = `https://wa.me/${mobile.length === 10 ? '91' + mobile : mobile}?text=${encodeURIComponent(text)}`;
+    window.open(url, '_blank');
+  };
+
+  // Combine pending reminders and recent orders into a single unique array
+  const combinedOrdersMap = new Map<string, Order>();
+  pendingReminders.forEach((o) => combinedOrdersMap.set(o._id, o));
+  recentOrders.forEach((o) => combinedOrdersMap.set(o._id, o));
+  const combinedOrders = Array.from(combinedOrdersMap.values());
 
   const presetOptions = [
     { id: 'today', label: 'Today' },
@@ -303,7 +319,7 @@ export const DashboardPage: React.FC = () => {
         </div>
       </div>
 
-      {/* 8 Key Metric Cards Grid (Updated live according to filters) */}
+      {/* 8 Key Metric Cards Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-3 sm:gap-4">
         {/* Total Filtered Orders */}
         <div className="glass-card p-4 flex flex-col justify-between">
@@ -434,156 +450,203 @@ export const DashboardPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Pending Delivery Reminders Bar */}
-      {pendingReminders.length > 0 && (
-        <div className="glass-card p-5 border-l-4 border-l-amber-500">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <BellRing className="w-5 h-5 text-amber-500 animate-bounce" />
-              <h3 className="font-bold text-sm text-slate-900 dark:text-white">
-                Pending Delivery Reminders ({pendingReminders.length})
-              </h3>
-            </div>
-            <span className="text-xs text-slate-500">Due today or upcoming</span>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {pendingReminders.map((ord) => (
-              <div
-                key={ord._id}
-                className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 flex flex-col justify-between space-y-2"
-              >
-                <div className="flex justify-between items-start">
-                  <div>
-                    <button
-                      onClick={() => setSelectedOrder(ord)}
-                      className="font-bold text-xs text-brand-600 dark:text-brand-400 hover:underline"
-                    >
-                      #{ord.orderNumber}
-                    </button>
-                    <p className="font-semibold text-xs text-slate-800 dark:text-slate-200">
-                      {ord.customerSnapshot.name}
-                    </p>
-                    <p className="text-[11px] text-slate-500">Mobile: +91 {ord.customerSnapshot.mobile}</p>
-                  </div>
-                  <StatusBadge status={ord.status} size="sm" />
-                </div>
-
-                <div className="pt-2 border-t border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between">
-                  <span className="text-[11px] text-slate-500">
-                    Due: <strong>{new Date(ord.expectedDeliveryDate).toLocaleDateString('en-GB')}</strong>
-                  </span>
-
-                  {/* 1-click status bump */}
-                  {ord.status === 'Received' && (
-                    <button
-                      onClick={() => handleQuickStatusUpdate(ord._id, 'Washing')}
-                      className="px-2 py-1 rounded-lg bg-cyan-600 text-white text-[10px] font-bold"
-                    >
-                      Mark Washing
-                    </button>
-                  )}
-                  {ord.status === 'Washing' && (
-                    <button
-                      onClick={() => handleQuickStatusUpdate(ord._id, 'Ironing')}
-                      className="px-2 py-1 rounded-lg bg-purple-600 text-white text-[10px] font-bold"
-                    >
-                      Mark Ironing
-                    </button>
-                  )}
-                  {ord.status === 'Ironing' && (
-                    <button
-                      onClick={() => handleQuickStatusUpdate(ord._id, 'Ready for Pickup')}
-                      className="px-2 py-1 rounded-lg bg-emerald-600 text-white text-[10px] font-bold"
-                    >
-                      Mark Ready
-                    </button>
-                  )}
-                  {ord.status === 'Ready for Pickup' && (
-                    <button
-                      onClick={() => handleQuickStatusUpdate(ord._id, 'Delivered')}
-                      className="px-2 py-1 rounded-lg bg-green-600 text-white text-[10px] font-bold"
-                    >
-                      Mark Delivered
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Matching Orders Table */}
-      <div className="glass-card p-6">
-        <div className="flex items-center justify-between mb-4">
+      {/* COMBINED UNIFIED ORDERS & REMINDERS CONTAINER */}
+      <div className="glass-card p-6 border-t-4 border-t-brand-600 space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
-            <h3 className="font-extrabold text-sm text-slate-900 dark:text-white">
-              Recent Filtered Orders ({recentOrders.length})
+            <h3 className="font-extrabold text-base text-slate-900 dark:text-white flex items-center gap-2">
+              <BellRing className="w-5 h-5 text-amber-500 animate-pulse" />
+              Active Orders & Pending Deliveries ({combinedOrders.length})
             </h3>
-            <p className="text-xs text-slate-500">Active laundry orders matching current filter criteria</p>
+            <p className="text-xs text-slate-500">
+              Manage live status via dropdown, view amounts, payment status & quick actions (WhatsApp, Print, Edit)
+            </p>
           </div>
           <button
             onClick={() => navigate('/orders')}
-            className="text-xs font-bold text-brand-600 hover:text-brand-700 dark:text-brand-400 flex items-center gap-1"
+            className="text-xs font-bold text-brand-600 hover:text-brand-700 dark:text-brand-400 flex items-center gap-1 self-start sm:self-auto"
           >
             <span>View All Orders Page</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>
 
-        {recentOrders.length === 0 ? (
+        {combinedOrders.length === 0 ? (
           <div className="text-center py-8 text-slate-500 text-xs">
-            No orders match the selected dashboard filters. Try clearing or broadening filters.
+            No orders match the selected dashboard filters.
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50 dark:bg-slate-800/80 text-slate-500 font-semibold border-b border-slate-200 dark:border-slate-800">
-                <tr>
-                  <th className="py-3 px-4">Order #</th>
-                  <th className="py-3 px-4">Customer</th>
-                  <th className="py-3 px-4">Order Date</th>
-                  <th className="py-3 px-4">Delivery Date</th>
-                  <th className="py-3 px-4">Status</th>
-                  <th className="py-3 px-4">Payment</th>
-                  <th className="py-3 px-4 text-right">Total</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-slate-800 dark:text-slate-200">
-                {recentOrders.map((ord) => (
-                  <tr key={ord._id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
-                    <td className="py-3 px-4">
+          <div>
+            {/* Desktop & Tablet Table View */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 dark:bg-slate-800/80 text-slate-500 font-semibold border-b border-slate-200 dark:border-slate-800">
+                  <tr>
+                    <th className="py-3 px-4">Order ID</th>
+                    <th className="py-3 px-4">Customer</th>
+                    <th className="py-3 px-4">Amount</th>
+                    <th className="py-3 px-4">Order Status (Dropdown)</th>
+                    <th className="py-3 px-4">Payment Status</th>
+                    <th className="py-3 px-4 text-center">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-slate-800 dark:text-slate-200">
+                  {combinedOrders.map((ord) => (
+                    <tr key={ord._id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
+                      {/* Order ID */}
+                      <td className="py-3.5 px-4 font-bold text-brand-600 dark:text-brand-400">
+                        <button
+                          onClick={() => setSelectedOrder(ord)}
+                          className="hover:underline"
+                        >
+                          #{ord.orderNumber}
+                        </button>
+                      </td>
+
+                      {/* Customer */}
+                      <td className="py-3.5 px-4">
+                        <p className="font-bold">{ord.customerSnapshot.name}</p>
+                        <p className="text-[10px] text-slate-400">+91 {ord.customerSnapshot.mobile}</p>
+                      </td>
+
+                      {/* Amount */}
+                      <td className="py-3.5 px-4">
+                        <p className="font-extrabold text-slate-900 dark:text-white">{currencySymbol}{ord.totalAmount}</p>
+                        {ord.remainingBalance > 0 ? (
+                          <p className="text-[10px] text-rose-500 font-semibold">
+                            Bal: {currencySymbol}{ord.remainingBalance}
+                          </p>
+                        ) : (
+                          <p className="text-[10px] text-emerald-600 font-medium">Fully Paid</p>
+                        )}
+                      </td>
+
+                      {/* Order Status Dropdown */}
+                      <td className="py-3.5 px-4">
+                        <select
+                          value={ord.status}
+                          onChange={(e) => handleQuickStatusUpdate(ord._id, e.target.value as OrderStatus)}
+                          className="text-xs font-semibold px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-brand-500"
+                        >
+                          {statusOptions.map((st) => (
+                            <option key={st} value={st}>
+                              {st}
+                            </option>
+                          ))}
+                        </select>
+                      </td>
+
+                      {/* Payment Status */}
+                      <td className="py-3.5 px-4">
+                        <StatusBadge status={ord.paymentStatus} size="sm" />
+                      </td>
+
+                      {/* Actions: WhatsApp, Print, Edit */}
+                      <td className="py-3.5 px-4 text-center">
+                        <div className="flex items-center justify-center gap-1.5">
+                          {/* WhatsApp Share Button */}
+                          <button
+                            onClick={() => handleWhatsAppShare(ord)}
+                            title="Share Receipt on WhatsApp"
+                            className="p-2 rounded-xl bg-emerald-50 text-emerald-600 hover:bg-emerald-500 hover:text-white transition-colors"
+                          >
+                            <Smartphone className="w-4 h-4" />
+                          </button>
+
+                          {/* Print Receipt Button */}
+                          <button
+                            onClick={() => {
+                              setSelectedOrder(ord);
+                              setShowInvoiceModal(true);
+                            }}
+                            title="Print Digital Receipt"
+                            className="p-2 rounded-xl bg-brand-50 text-brand-600 hover:bg-brand-600 hover:text-white transition-colors"
+                          >
+                            <Printer className="w-4 h-4" />
+                          </button>
+
+                          {/* Edit / View Details Button */}
+                          <button
+                            onClick={() => setSelectedOrder(ord)}
+                            title="Edit / View Details"
+                            className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Touch Cards View */}
+            <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
+              {combinedOrders.map((ord) => (
+                <div key={ord._id} className="py-3 space-y-2">
+                  <div className="flex justify-between items-start">
+                    <div>
                       <button
                         onClick={() => setSelectedOrder(ord)}
-                        className="font-bold text-brand-600 dark:text-brand-400 hover:underline"
+                        className="font-black text-sm text-brand-600 dark:text-brand-400"
                       >
-                        {ord.orderNumber}
+                        #{ord.orderNumber}
                       </button>
-                    </td>
-                    <td className="py-3 px-4">
-                      <p className="font-semibold">{ord.customerSnapshot.name}</p>
-                      <p className="text-[10px] text-slate-400">+91 {ord.customerSnapshot.mobile}</p>
-                    </td>
-                    <td className="py-3 px-4 text-slate-500">
-                      {new Date(ord.orderDate).toLocaleDateString('en-GB')}
-                    </td>
-                    <td className="py-3 px-4 text-slate-500 font-medium">
-                      {new Date(ord.expectedDeliveryDate).toLocaleDateString('en-GB')}
-                    </td>
-                    <td className="py-3 px-4">
-                      <StatusBadge status={ord.status} size="sm" />
-                    </td>
-                    <td className="py-3 px-4">
+                      <p className="font-bold text-xs text-slate-900 dark:text-white mt-0.5">
+                        {ord.customerSnapshot.name}
+                      </p>
+                      <p className="text-[11px] text-slate-500">+91 {ord.customerSnapshot.mobile}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-black text-sm text-slate-900 dark:text-white">{currencySymbol}{ord.totalAmount}</p>
                       <StatusBadge status={ord.paymentStatus} size="sm" />
-                    </td>
-                    <td className="py-3 px-4 text-right font-extrabold text-slate-900 dark:text-white">
-                      {currencySymbol}{ord.totalAmount}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between text-xs pt-1">
+                    <span className="text-slate-500 text-[11px]">Status:</span>
+                    <select
+                      value={ord.status}
+                      onChange={(e) => handleQuickStatusUpdate(ord._id, e.target.value as OrderStatus)}
+                      className="text-xs font-semibold px-2 py-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 outline-none"
+                    >
+                      {statusOptions.map((st) => (
+                        <option key={st} value={st}>
+                          {st}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                    <button
+                      onClick={() => handleWhatsAppShare(ord)}
+                      className="px-2.5 py-1.5 rounded-xl bg-emerald-50 text-emerald-600 text-xs font-semibold flex items-center gap-1"
+                    >
+                      <Smartphone className="w-3.5 h-3.5" /> WhatsApp
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setSelectedOrder(ord);
+                        setShowInvoiceModal(true);
+                      }}
+                      className="px-2.5 py-1.5 rounded-xl bg-brand-50 text-brand-600 text-xs font-semibold flex items-center gap-1"
+                    >
+                      <Printer className="w-3.5 h-3.5" /> Print
+                    </button>
+
+                    <button
+                      onClick={() => setSelectedOrder(ord)}
+                      className="px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold flex items-center gap-1"
+                    >
+                      <Edit className="w-3.5 h-3.5" /> Edit
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>
