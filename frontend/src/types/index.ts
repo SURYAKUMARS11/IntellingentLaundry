@@ -145,15 +145,7 @@ export interface DashboardStats {
   totalCustomers?: number;
 }
 
-export type ExpenseCategory =
-  | 'Electricity Bill'
-  | 'Labour & Salaries'
-  | 'Detergents & Solvents'
-  | 'Machinery & Maintenance'
-  | 'Shop Rent'
-  | 'Transport & Fuel'
-  | 'Tea & Refreshments'
-  | 'Miscellaneous';
+export type ExpenseCategory = string;
 
 export interface Expense {
   _id: string;

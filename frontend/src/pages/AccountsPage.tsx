@@ -9,7 +9,6 @@ import {
 } from '../services/api';
 import {
   Expense,
-  ExpenseCategory,
   AccountsSummary,
   AccountsTransaction,
   Setting,
@@ -35,6 +34,7 @@ import {
   ChevronLeft,
   ChevronRight,
   CheckCircle,
+  Tag,
 } from 'lucide-react';
 
 export const AccountsPage: React.FC = () => {
@@ -69,8 +69,11 @@ export const AccountsPage: React.FC = () => {
   // Expense Modal State
   const [showExpModal, setShowExpModal] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+  const [isCustomCategory, setIsCustomCategory] = useState<boolean>(false);
+  const [customCategoryInput, setCustomCategoryInput] = useState<string>('');
+
   const [expFormData, setExpFormData] = useState({
-    category: 'Electricity Bill' as ExpenseCategory,
+    category: 'Electricity Bill',
     description: '',
     amount: '',
     paymentMethod: 'Cash' as 'Cash' | 'Bank / UPI' | 'Card',
@@ -79,7 +82,7 @@ export const AccountsPage: React.FC = () => {
     notes: '',
   });
 
-  const categoriesList: ExpenseCategory[] = [
+  const defaultCategories = [
     'Electricity Bill',
     'Labour & Salaries',
     'Detergents & Solvents',
@@ -89,6 +92,11 @@ export const AccountsPage: React.FC = () => {
     'Tea & Refreshments',
     'Miscellaneous',
   ];
+
+  // Dynamic Categories (Presets + Any Custom Categories in DB)
+  const allCategories = Array.from(
+    new Set([...defaultCategories, ...expenses.map((e) => e.category).filter(Boolean)])
+  );
 
   const loadData = async () => {
     setIsLoading(true);
@@ -139,6 +147,8 @@ export const AccountsPage: React.FC = () => {
 
   const handleOpenAddExpense = () => {
     setEditingExpense(null);
+    setIsCustomCategory(false);
+    setCustomCategoryInput('');
     setExpFormData({
       category: 'Electricity Bill',
       description: '',
@@ -153,8 +163,11 @@ export const AccountsPage: React.FC = () => {
 
   const handleOpenEditExpense = (exp: Expense) => {
     setEditingExpense(exp);
+    const isCustom = !defaultCategories.includes(exp.category);
+    setIsCustomCategory(isCustom);
+    setCustomCategoryInput(isCustom ? exp.category : '');
     setExpFormData({
-      category: exp.category,
+      category: isCustom ? 'CUSTOM' : exp.category,
       description: exp.description,
       amount: String(exp.amount),
       paymentMethod: exp.paymentMethod,
@@ -167,16 +180,31 @@ export const AccountsPage: React.FC = () => {
 
   const handleSaveExpense = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const finalCategory = isCustomCategory
+      ? customCategoryInput.trim()
+      : expFormData.category;
+
+    if (!finalCategory) {
+      alert('Please select or specify a category');
+      return;
+    }
+
     if (!expFormData.description || !expFormData.amount) {
       alert('Please fill description and valid amount');
       return;
     }
 
+    const payload = {
+      ...expFormData,
+      category: finalCategory,
+    };
+
     try {
       if (editingExpense) {
-        await updateExpenseApi(editingExpense._id, expFormData);
+        await updateExpenseApi(editingExpense._id, payload);
       } else {
-        await createExpenseApi(expFormData);
+        await createExpenseApi(payload);
       }
       setShowExpModal(false);
       loadData();
@@ -209,7 +237,7 @@ export const AccountsPage: React.FC = () => {
             <Wallet className="w-6 h-6 text-brand-600" /> Shop Accounts & Expenses
           </h1>
           <p className="text-xs text-slate-500">
-            Track order incomes, shop operating expenses (EB, wages, detergent) & cash balances
+            Track order incomes, shop operating expenses (EB, wages, detergent & custom categories) & cash balances
           </p>
         </div>
 
@@ -257,7 +285,7 @@ export const AccountsPage: React.FC = () => {
           }`}
         >
           <Building2 className="w-4 h-4" />
-          <span>Shop Expenses (EB, Wages, Detergents)</span>
+          <span>Shop Expenses (EB, Wages, Custom)</span>
         </button>
       </div>
 
@@ -316,7 +344,7 @@ export const AccountsPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Card 4: Bank / Online Balance */}
+            {/* Card 4: Bank / UPI Balance */}
             <div className="glass-card p-4 flex flex-col justify-between border-l-4 border-l-blue-500">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-slate-500">Bank / UPI Balance</span>
@@ -372,7 +400,7 @@ export const AccountsPage: React.FC = () => {
             </div>
           </div>
 
-          {/* TRANSACTIONS TABLE LIST (Date & No, Category, Description, Amount, Actions) */}
+          {/* TRANSACTIONS TABLE LIST */}
           <div className="glass-card overflow-hidden">
             {transactions.length === 0 ? (
               <div className="text-center py-12 text-slate-500 text-xs">
@@ -483,7 +511,7 @@ export const AccountsPage: React.FC = () => {
       )}
 
       {/* ========================================================================= */}
-      {/* SUB-SECTION 2: SHOP ACCOUNTS (EXPENSES) */}
+      {/* SUB-SECTION 2: SHOP ACCOUNTS (EXPENSES) WITH CUSTOM CATEGORIES */}
       {/* ========================================================================= */}
       {activeTab === 'shop' && (
         <div className="space-y-6">
@@ -494,7 +522,7 @@ export const AccountsPage: React.FC = () => {
               <p className="text-2xl font-black text-rose-600 dark:text-rose-400 mt-2">
                 {currencySymbol}{expenseSummary.totalExpenseAmount}
               </p>
-              <p className="text-[11px] text-slate-400 mt-0.5">Electricity, Wages, Solvent stock</p>
+              <p className="text-[11px] text-slate-400 mt-0.5">Electricity, Wages, Solvents & Custom bills</p>
             </div>
 
             <div className="glass-card p-4 border-l-4 border-l-amber-500">
@@ -541,7 +569,7 @@ export const AccountsPage: React.FC = () => {
                   className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none"
                 >
                   <option value="">All Expense Categories</option>
-                  {categoriesList.map((cat) => (
+                  {allCategories.map((cat) => (
                     <option key={cat} value={cat}>
                       {cat}
                     </option>
@@ -598,8 +626,9 @@ export const AccountsPage: React.FC = () => {
                           </td>
 
                           <td className="py-3.5 px-4 whitespace-nowrap">
-                            <span className="px-2.5 py-1 rounded-full bg-rose-50 dark:bg-rose-950 text-rose-700 dark:text-rose-300 font-bold text-[10px]">
-                              {exp.category}
+                            <span className="px-2.5 py-1 rounded-full bg-rose-50 dark:bg-rose-950 text-rose-700 dark:text-rose-300 font-bold text-[10px] flex items-center gap-1 w-fit">
+                              <Tag className="w-3 h-3 text-rose-500" />
+                              <span>{exp.category}</span>
                             </span>
                           </td>
 
@@ -690,7 +719,7 @@ export const AccountsPage: React.FC = () => {
         </div>
       )}
 
-      {/* ADD / EDIT SHOP EXPENSE MODAL */}
+      {/* ADD / EDIT SHOP EXPENSE MODAL WITH CUSTOM CATEGORY OPTION */}
       {showExpModal && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl w-full max-w-md p-6 space-y-4">
@@ -709,17 +738,43 @@ export const AccountsPage: React.FC = () => {
                   Expense Category *
                 </label>
                 <select
-                  value={expFormData.category}
-                  onChange={(e) => setExpFormData({ ...expFormData, category: e.target.value as ExpenseCategory })}
+                  value={isCustomCategory ? 'CUSTOM' : expFormData.category}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === 'CUSTOM') {
+                      setIsCustomCategory(true);
+                    } else {
+                      setIsCustomCategory(false);
+                      setExpFormData({ ...expFormData, category: val });
+                    }
+                  }}
                   className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none"
                 >
-                  {categoriesList.map((cat) => (
+                  {defaultCategories.map((cat) => (
                     <option key={cat} value={cat}>
                       {cat}
                     </option>
                   ))}
+                  <option value="CUSTOM">+ Add Custom Category...</option>
                 </select>
               </div>
+
+              {/* Custom Category Input Field (Shows when user selects + Add Custom Category) */}
+              {isCustomCategory && (
+                <div className="animate-in fade-in zoom-in-95 duration-150">
+                  <label className="block text-xs font-semibold text-brand-600 dark:text-brand-400 mb-1 flex items-center gap-1">
+                    <Tag className="w-3.5 h-3.5" /> Enter Custom Category Name *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={customCategoryInput}
+                    onChange={(e) => setCustomCategoryInput(e.target.value)}
+                    placeholder="e.g. Water Bill, Packaging Covers, Internet"
+                    className="w-full px-3 py-2 text-xs rounded-xl border-2 border-brand-500 bg-brand-50/30 dark:bg-brand-950/30 text-slate-900 dark:text-white outline-none font-bold"
+                  />
+                </div>
+              )}
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">

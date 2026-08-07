@@ -30,16 +30,6 @@ const ExpenseSchema: Schema = new Schema(
     category: {
       type: String,
       required: true,
-      enum: [
-        'Electricity Bill',
-        'Labour & Salaries',
-        'Detergents & Solvents',
-        'Machinery & Maintenance',
-        'Shop Rent',
-        'Transport & Fuel',
-        'Tea & Refreshments',
-        'Miscellaneous',
-      ],
       default: 'Miscellaneous',
     },
     description: { type: String, required: true },
