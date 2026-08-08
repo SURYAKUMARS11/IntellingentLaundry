@@ -100,13 +100,17 @@ export const exportMasterExcelBackup = async (req: Request, res: Response) => {
     XLSX.utils.book_append_sheet(workbook, paymentsSheet, 'Payments');
     XLSX.utils.book_append_sheet(workbook, expensesSheet, 'Expenses');
 
-    // 7. Save copy to server disk
-    const backupDir = path.join(__dirname, '../../backups');
-    if (!fs.existsSync(backupDir)) {
-      fs.mkdirSync(backupDir, { recursive: true });
+    // 7. Save copy to server disk (if filesystem is writable)
+    try {
+      const backupDir = path.join(__dirname, '../../backups');
+      if (!fs.existsSync(backupDir)) {
+        fs.mkdirSync(backupDir, { recursive: true });
+      }
+      const serverFilePath = path.join(backupDir, 'laundry_master_backup.xlsx');
+      XLSX.writeFile(workbook, serverFilePath);
+    } catch (fsErr) {
+      console.warn('[BACKUP] Server disk write skipped (read-only cloud environment)');
     }
-    const serverFilePath = path.join(backupDir, 'laundry_master_backup.xlsx');
-    XLSX.writeFile(workbook, serverFilePath);
 
     // 8. Stream Excel file to client browser as download
     const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
