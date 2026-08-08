@@ -8,7 +8,7 @@ import {
 } from '../services/api';
 import { LaundryItem, Setting } from '../types';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
-import { getItemPriceForService, mainServicesList } from '../data/posCatalogData';
+import { getItemPriceForService, mainServicesList, posGroupCatalog } from '../data/posCatalogData';
 import { Shirt, Plus, Edit, Trash2, X, Tag, Search, Sparkles, Check } from 'lucide-react';
 
 export const ItemsPage: React.FC = () => {
@@ -97,11 +97,34 @@ export const ItemsPage: React.FC = () => {
 
   const categories = ['All', 'Regular', 'Men', 'Women', 'Kids', 'Household', 'Others'];
 
-  const filteredItems = items.filter((item) => {
-    const matchesSearch = item.name.toLowerCase().includes(search.toLowerCase());
-    const matchesCat = selectedCategory === 'All' || item.category === selectedCategory;
-    return matchesSearch && matchesCat;
+  // Build exact catalog item order map matching New Order page sequence
+  const catalogOrderIds: string[] = [];
+  const catalogOrderNames: string[] = [];
+
+  posGroupCatalog.forEach((group) => {
+    group.subCategories.forEach((sub) => {
+      sub.items.forEach((item) => {
+        catalogOrderIds.push(item.id);
+        catalogOrderNames.push(item.name.toLowerCase());
+      });
+    });
   });
+
+  const getItemRank = (item: LaundryItem) => {
+    const idIndex = catalogOrderIds.indexOf(item._id);
+    if (idIndex !== -1) return idIndex;
+    const nameIndex = catalogOrderNames.indexOf(item.name.toLowerCase());
+    if (nameIndex !== -1) return nameIndex;
+    return 9999;
+  };
+
+  const filteredItems = items
+    .filter((item) => {
+      const matchesSearch = item.name.toLowerCase().includes(search.toLowerCase());
+      const matchesCat = selectedCategory === 'All' || item.category === selectedCategory;
+      return matchesSearch && matchesCat;
+    })
+    .sort((a, b) => getItemRank(a) - getItemRank(b));
 
   return (
     <div className="space-y-6 pb-20">
