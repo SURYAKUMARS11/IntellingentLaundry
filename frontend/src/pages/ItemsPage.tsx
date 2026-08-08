@@ -8,7 +8,8 @@ import {
 } from '../services/api';
 import { LaundryItem, Setting } from '../types';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
-import { Shirt, Plus, Edit, Trash2, X, Tag, Search } from 'lucide-react';
+import { getItemPriceForService, mainServicesList } from '../data/posCatalogData';
+import { Shirt, Plus, Edit, Trash2, X, Tag, Search, Sparkles, Check } from 'lucide-react';
 
 export const ItemsPage: React.FC = () => {
   const [items, setItems] = useState<LaundryItem[]>([]);
@@ -16,10 +17,17 @@ export const ItemsPage: React.FC = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingItem, setEditingItem] = useState<LaundryItem | null>(null);
 
+  // Active Service Category Filter (Default: 'Wash and Fold')
+  const [selectedService, setSelectedService] = useState<string>('Wash and Fold');
+
+  // Active Garment Category Filter (Default: 'All')
+  const [selectedCategory, setSelectedCategory] = useState<string>('All');
+  const [search, setSearch] = useState<string>('');
+
   const [formData, setFormData] = useState({
     name: '',
-    defaultPrice: 40,
-    category: 'Clothes',
+    defaultPrice: 15,
+    category: 'Regular',
     icon: 'Shirt',
     isActive: true,
   });
@@ -42,7 +50,7 @@ export const ItemsPage: React.FC = () => {
 
   const handleOpenAdd = () => {
     setEditingItem(null);
-    setFormData({ name: '', defaultPrice: 40, category: 'Clothes', icon: 'Shirt', isActive: true });
+    setFormData({ name: '', defaultPrice: 15, category: 'Regular', icon: 'Shirt', isActive: true });
     setShowModal(true);
   };
 
@@ -51,7 +59,7 @@ export const ItemsPage: React.FC = () => {
     setFormData({
       name: item.name,
       defaultPrice: item.defaultPrice,
-      category: item.category,
+      category: item.category || 'Regular',
       icon: item.icon || 'Shirt',
       isActive: item.isActive,
     });
@@ -87,9 +95,6 @@ export const ItemsPage: React.FC = () => {
     }
   };
 
-  const [search, setSearch] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('All');
-
   const categories = ['All', 'Regular', 'Men', 'Women', 'Kids', 'Household', 'Others'];
 
   const filteredItems = items.filter((item) => {
@@ -107,7 +112,7 @@ export const ItemsPage: React.FC = () => {
             <Shirt className="w-6 h-6 text-brand-600" /> Clothing & Item Price Catalog
           </h1>
           <p className="hidden sm:block text-xs text-slate-500">
-            Manage garment items, categories ({items.length} items loaded), and customize default rates
+            Select service & garment category to view and edit service-specific prices ({items.length} items catalog)
           </p>
         </div>
 
@@ -120,7 +125,34 @@ export const ItemsPage: React.FC = () => {
         </button>
       </div>
 
-      {/* Search & Category Filter Bar */}
+      {/* SERVICE CATEGORIES FILTER BAR AT TOP */}
+      <div className="glass-card p-4 space-y-2">
+        <span className="block text-xs font-extrabold uppercase tracking-wider text-slate-400">
+          Select Service Category for Price Lookup
+        </span>
+        <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-11 gap-1.5">
+          {mainServicesList.map((sName) => {
+            const active = selectedService === sName;
+            return (
+              <button
+                key={sName}
+                type="button"
+                onClick={() => setSelectedService(sName)}
+                className={`px-2.5 py-2 rounded-xl text-[11px] font-extrabold transition-all flex items-center justify-center gap-1 text-center truncate ${
+                  active
+                    ? 'bg-brand-600 text-white shadow-md shadow-brand-600/20'
+                    : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200'
+                }`}
+              >
+                {active && <Check className="w-3 h-3 shrink-0" />}
+                <span className="truncate">{sName}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* SEARCH & GARMENT CATEGORY FILTER BAR */}
       <div className="glass-card p-4 space-y-3">
         <div className="flex flex-col sm:flex-row items-center gap-3">
           <div className="relative flex-1 w-full">
@@ -135,74 +167,102 @@ export const ItemsPage: React.FC = () => {
           </div>
 
           <div className="text-xs font-bold text-slate-500 shrink-0">
-            Showing {filteredItems.length} of {items.length} items
+            Active Service: <span className="text-brand-600 dark:text-brand-400 font-black">{selectedService}</span> ({filteredItems.length} items)
           </div>
         </div>
 
-        {/* Category Pills */}
-        <div className="flex flex-wrap gap-1.5 pt-1">
-          {categories.map((cat) => {
-            const active = selectedCategory === cat;
-            return (
-              <button
-                key={cat}
-                type="button"
-                onClick={() => setSelectedCategory(cat)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                  active
-                    ? 'bg-brand-600 text-white shadow-md shadow-brand-600/20'
-                    : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200'
-                }`}
-              >
-                {cat}
-              </button>
-            );
-          })}
+        {/* Garment Category Pills */}
+        <div>
+          <span className="block text-[11px] font-bold text-slate-400 mb-1.5 uppercase tracking-wider">
+            Garment Category Groups
+          </span>
+          <div className="flex flex-wrap gap-1.5">
+            {categories.map((cat) => {
+              const active = selectedCategory === cat;
+              return (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => setSelectedCategory(cat)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                    active
+                      ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-md'
+                      : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200'
+                  }`}
+                >
+                  {cat}
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
 
-      {/* Items Table & Cards Grid */}
+      {/* Items Grid */}
       {filteredItems.length === 0 ? (
         <div className="glass-card p-8 text-center text-xs text-slate-500">
           No garment items found matching your search or category filter.
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredItems.map((item) => (
-          <div
-            key={item._id}
-            className="glass-card p-5 space-y-3 flex items-center justify-between hover:border-brand-500 transition-all"
-          >
-            <div>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400 px-2 py-0.5 rounded-full bg-brand-50 dark:bg-brand-950/60 border border-brand-200 dark:border-brand-900">
-                {item.category}
-              </span>
-              <h3 className="font-extrabold text-sm text-slate-900 dark:text-white mt-1.5">
-                {item.name}
-              </h3>
-              <p className="text-xs text-slate-500 font-semibold">
-                Default Rate: <span className="text-slate-900 dark:text-white font-bold">{currencySymbol}{item.defaultPrice}</span>
-              </p>
-            </div>
+          {filteredItems.map((item) => {
+            const activeServicePrice = getItemPriceForService(
+              { name: item.name, price: item.defaultPrice, category: item.category },
+              selectedService
+            );
+            return (
+              <div
+                key={item._id}
+                className="glass-card p-5 space-y-3 flex items-center justify-between hover:border-brand-500 transition-all group"
+              >
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400 px-2 py-0.5 rounded-full bg-brand-50 dark:bg-brand-950/60 border border-brand-200 dark:border-brand-900">
+                      {item.category || 'Regular'}
+                    </span>
+                    <span className="text-[10px] font-extrabold text-slate-400">
+                      {selectedService}
+                    </span>
+                  </div>
 
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => handleOpenEdit(item)}
-                className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500"
-              >
-                <Edit className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => setDeleteItemId(item._id)}
-                className="p-1.5 rounded-lg hover:bg-rose-50 text-rose-500"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-    )}
+                  <h3 className="font-extrabold text-sm text-slate-900 dark:text-white mt-1.5">
+                    {item.name}
+                  </h3>
+
+                  <div className="mt-1 flex items-baseline gap-2">
+                    <span className="text-xs text-slate-500 font-semibold">Service Price:</span>
+                    <span className="text-base font-black text-emerald-600 dark:text-emerald-400">
+                      {currencySymbol}{activeServicePrice}
+                    </span>
+                    {selectedService !== 'Wash and Fold' && (
+                      <span className="text-[10px] text-slate-400 line-through">
+                        {currencySymbol}{item.defaultPrice}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => handleOpenEdit(item)}
+                    title="Edit Item & Pricing"
+                    className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-brand-600 hover:text-white transition-all"
+                  >
+                    <Edit className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => setDeleteItemId(item._id)}
+                    title="Delete Item"
+                    className="p-2 rounded-xl bg-rose-50 text-rose-500 hover:bg-rose-600 hover:text-white transition-all"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Add / Edit Modal */}
       {showModal && (
@@ -210,7 +270,7 @@ export const ItemsPage: React.FC = () => {
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl w-full max-w-md p-6 space-y-4">
             <div className="flex justify-between items-center pb-2 border-b border-slate-100 dark:border-slate-800">
               <h3 className="font-bold text-base text-slate-900 dark:text-white">
-                {editingItem ? 'Edit Laundry Item' : 'Add New Laundry Item'}
+                {editingItem ? 'Edit Laundry Item & Base Rate' : 'Add New Laundry Item'}
               </h3>
               <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-slate-600">
                 <X className="w-5 h-5" />
@@ -234,14 +294,14 @@ export const ItemsPage: React.FC = () => {
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  Category *
+                  Garment Category Group *
                 </label>
                 <select
                   value={formData.category}
                   onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none"
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none font-bold"
                 >
-                  {categories.map((cat) => (
+                  {categories.filter((c) => c !== 'All').map((cat) => (
                     <option key={cat} value={cat}>
                       {cat}
                     </option>
@@ -251,7 +311,7 @@ export const ItemsPage: React.FC = () => {
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  Default Base Price ({currencySymbol}) *
+                  Base Wash & Fold Price ({currencySymbol}) *
                 </label>
                 <input
                   type="number"
@@ -259,8 +319,11 @@ export const ItemsPage: React.FC = () => {
                   required
                   value={formData.defaultPrice}
                   onChange={(e) => setFormData({ ...formData, defaultPrice: Number(e.target.value) })}
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none"
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none font-bold text-emerald-600"
                 />
+                <p className="text-[10px] text-slate-400 mt-1">
+                  Updating base price scales all 11 service prices (Ironing, Dry Cleaning, Laundry, etc.) proportionally.
+                </p>
               </div>
 
               <div className="pt-2 flex gap-3">
