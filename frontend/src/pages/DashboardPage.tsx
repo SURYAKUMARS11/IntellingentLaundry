@@ -392,9 +392,13 @@ export const DashboardPage: React.FC = () => {
             </div>
           </div>
           <div className="mt-2 sm:mt-3">
-            <p className="text-base sm:text-2xl font-black text-slate-900 dark:text-white truncate">
-              {ordersList.length}
-            </p>
+            {isLoading ? (
+              <div className="h-6 sm:h-7 w-16 bg-slate-200 dark:bg-slate-700 animate-pulse rounded-lg mt-1" />
+            ) : (
+              <p className="text-base sm:text-2xl font-black text-slate-900 dark:text-white truncate">
+                {ordersList.length}
+              </p>
+            )}
             <p className="hidden sm:block text-[11px] font-semibold text-blue-600 mt-0.5">Click to view orders</p>
           </div>
         </div>
@@ -415,9 +419,13 @@ export const DashboardPage: React.FC = () => {
             </div>
           </div>
           <div className="mt-2 sm:mt-3">
-            <p className="text-base sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 truncate">
-              {currencySymbol}{stats?.paymentsReceived ?? (paymentsList.length > 0 ? paymentsList : ordersList).reduce((acc, o: any) => acc + (o.amount || o.advancePaid || o.totalAmount || 0), 0)}
-            </p>
+            {isLoading ? (
+              <div className="h-6 sm:h-7 w-20 bg-slate-200 dark:bg-slate-700 animate-pulse rounded-lg mt-1" />
+            ) : (
+              <p className="text-base sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 truncate">
+                {currencySymbol}{stats?.paymentsReceived ?? (paymentsList.length > 0 ? paymentsList : ordersList).reduce((acc, o: any) => acc + (o.amount || o.advancePaid || 0), 0)}
+              </p>
+            )}
             <p className="hidden sm:block text-[11px] font-semibold text-emerald-600 mt-0.5">Click to view income</p>
           </div>
         </div>
@@ -438,9 +446,13 @@ export const DashboardPage: React.FC = () => {
             </div>
           </div>
           <div className="mt-2 sm:mt-3">
-            <p className="text-base sm:text-2xl font-black text-cyan-600 dark:text-cyan-400 truncate">
-              {activeOrdersList.length}
-            </p>
+            {isLoading ? (
+              <div className="h-6 sm:h-7 w-16 bg-slate-200 dark:bg-slate-700 animate-pulse rounded-lg mt-1" />
+            ) : (
+              <p className="text-base sm:text-2xl font-black text-cyan-600 dark:text-cyan-400 truncate">
+                {activeOrdersList.length}
+              </p>
+            )}
             <p className="hidden sm:block text-[11px] font-semibold text-cyan-600 mt-0.5">Click to view active</p>
           </div>
         </div>
@@ -461,9 +473,13 @@ export const DashboardPage: React.FC = () => {
             </div>
           </div>
           <div className="mt-2 sm:mt-3">
-            <p className="text-base sm:text-2xl font-black text-slate-900 dark:text-white truncate">
-              {newCustomersList.length}
-            </p>
+            {isLoading ? (
+              <div className="h-6 sm:h-7 w-16 bg-slate-200 dark:bg-slate-700 animate-pulse rounded-lg mt-1" />
+            ) : (
+              <p className="text-base sm:text-2xl font-black text-slate-900 dark:text-white truncate">
+                {newCustomersList.length}
+              </p>
+            )}
             <p className="hidden sm:block text-[11px] font-semibold text-indigo-600 mt-0.5">Click to view customers</p>
           </div>
         </div>
@@ -484,9 +500,13 @@ export const DashboardPage: React.FC = () => {
             </div>
           </div>
           <div className="mt-2 sm:mt-3">
-            <p className="text-base sm:text-2xl font-black text-rose-600 dark:text-rose-400 truncate">
-              {overdueOrdersList.length}
-            </p>
+            {isLoading ? (
+              <div className="h-6 sm:h-7 w-16 bg-slate-200 dark:bg-slate-700 animate-pulse rounded-lg mt-1" />
+            ) : (
+              <p className="text-base sm:text-2xl font-black text-rose-600 dark:text-rose-400 truncate">
+                {overdueOrdersList.length}
+              </p>
+            )}
             <p className="hidden sm:block text-[11px] font-semibold text-rose-600 mt-0.5">Click to view overdue</p>
           </div>
         </div>
@@ -530,6 +550,31 @@ export const DashboardPage: React.FC = () => {
           </button>
         </div>
 
+        {/* SKELETON TABLE SHIMMER LOADER WHEN FETCHING BACKEND DATA */}
+        {isLoading ? (
+          <div className="py-4 space-y-3 animate-pulse">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+              <div className="h-4 w-44 bg-slate-200 dark:bg-slate-700 rounded-md" />
+              <div className="h-4 w-24 bg-slate-200 dark:bg-slate-700 rounded-md" />
+            </div>
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50/70 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-slate-200 dark:bg-slate-700" />
+                  <div className="space-y-1.5">
+                    <div className="h-3.5 w-28 bg-slate-200 dark:bg-slate-700 rounded-md" />
+                    <div className="h-3 w-40 bg-slate-100 dark:bg-slate-800 rounded-md" />
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="h-5 w-16 bg-slate-200 dark:bg-slate-700 rounded-full" />
+                  <div className="h-7 w-20 bg-slate-200 dark:bg-slate-700 rounded-xl" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <>
         {/* --- VIEW 1: ORDERS LIST (activeCard === 'orders') --- */}
         {activeCard === 'orders' && (
           <div>
@@ -1038,7 +1083,9 @@ export const DashboardPage: React.FC = () => {
             </div>
           </div>
         )}
-      </div>
+      </>
+    )}
+  </div>
 
       {/* Modals */}
       {selectedOrder && !showInvoiceModal && !showPaymentModal && (
