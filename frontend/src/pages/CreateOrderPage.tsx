@@ -14,6 +14,7 @@ import {
   posGroupCatalog,
   POSCatalogItem,
   KgServiceRate,
+  getItemPriceForService,
 } from '../data/posCatalogData';
 import {
   User,
@@ -125,7 +126,7 @@ export const CreateOrderPage: React.FC = () => {
   // Add Item to Cart (Clicking Card in Quantity or Kg mode)
   const handleCardClick = (item: POSCatalogItem) => {
     const serviceName = orderMode === 'quantity' ? selectedServiceCategory : selectedKgService.name;
-    const price = orderMode === 'quantity' ? item.price : selectedKgService.ratePerKg;
+    const price = orderMode === 'quantity' ? getItemPriceForService(item, selectedServiceCategory) : selectedKgService.ratePerKg;
 
     setOrderItems((prev) => {
       const existingIdx = prev.findIndex(
@@ -752,7 +753,7 @@ export const CreateOrderPage: React.FC = () => {
 
                         <div className="mt-3 flex items-center justify-between">
                           <span className="font-black text-brand-600 dark:text-brand-400 group-hover:text-white text-xs">
-                            {currencySymbol}{item.price}.00
+                            {currencySymbol}{getItemPriceForService(item, selectedServiceCategory)}
                           </span>
                           <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-lg bg-brand-100 text-brand-700 dark:bg-brand-950 dark:text-brand-300 group-hover:bg-white/20 group-hover:text-white">
                             Select

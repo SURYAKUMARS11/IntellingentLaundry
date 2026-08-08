@@ -1,0 +1,1890 @@
+[
+  {
+    "id": "1",
+    "name": "T shirt",
+    "type": "order_per_kg",
+    "group": "Regular",
+    "category": "Clothing",
+    "price": 150.0
+  },
+  {
+    "id": "2",
+    "name": "Shirt",
+    "type": "order_per_kg",
+    "group": "Regular",
+    "category": "Clothing",
+    "price": 2.0
+  },
+  {
+    "id": "3",
+    "name": "Shorts",
+    "type": "order_per_qty",
+    "group": "Regular",
+    "category": "Clothing",
+    "price": 10.0
+  },
+  {
+    "id": "4",
+    "name": "T-shirt",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Men - Upper Wear",
+    "price": 13.0
+  },
+  {
+    "id": "5",
+    "name": "White Shirt",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Men - Upper Wear",
+    "price": 15.0
+  },
+  {
+    "id": "6",
+    "name": "Shirt (Formal / Casual)",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Men - Upper Wear",
+    "price": 12.0
+  },
+  {
+    "id": "7",
+    "name": "Branded Shirt",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Men - Upper Wear",
+    "price": 15.0
+  },
+  {
+    "id": "8",
+    "name": "Sweatshirt",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Men - Upper Wear",
+    "price": 15.0
+  },
+  {
+    "id": "9",
+    "name": "Hoodie",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Men - Upper Wear",
+    "price": 15.0
+  },
+  {
+    "id": "10",
+    "name": "Sweater",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Men - Upper Wear",
+    "price": 15.0
+  },
+  {
+    "id": "11",
+    "name": "Jacket",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Men - Upper Wear",
+    "price": 15.0
+  },
+  {
+    "id": "12",
+    "name": "Blazer",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Men - Upper Wear",
+    "price": 25.0
+  },
+  {
+    "id": "13",
+    "name": "Coat / Overcoat",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Men - Upper Wear",
+    "price": 20.0
+  },
+  {
+    "id": "14",
+    "name": "Kurta top",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Men - Ethnic",
+    "price": 25.0
+  },
+  {
+    "id": "15",
+    "name": "Sherwani",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Men - Ethnic",
+    "price": 25.0
+  },
+  {
+    "id": "16",
+    "name": "Jeans",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Men - Lower Wear",
+    "price": 15.0
+  },
+  {
+    "id": "17",
+    "name": "Pant",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Men - Lower Wear",
+    "price": 12.0
+  },
+  {
+    "id": "18",
+    "name": "Chinos",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Men - Lower Wear",
+    "price": 12.0
+  },
+  {
+    "id": "19",
+    "name": "Shorts",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Men - Lower Wear",
+    "price": 10.0
+  },
+  {
+    "id": "20",
+    "name": "Track Pants / Joggers",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Men - Lower Wear",
+    "price": 12.0
+  },
+  {
+    "id": "21",
+    "name": "Single Dhoti",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Men - Lower Wear",
+    "price": 20.0
+  },
+  {
+    "id": "22",
+    "name": "Double Dhoti",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Men - Lower Wear",
+    "price": 25.0
+  },
+  {
+    "id": "23",
+    "name": "Lungi",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Men - Lower Wear",
+    "price": 20.0
+  },
+  {
+    "id": "24",
+    "name": "Pajama",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Men - Ethnic",
+    "price": 15.0
+  },
+  {
+    "id": "27",
+    "name": "Pathani Suit",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Men - Ethnic",
+    "price": 50.0
+  },
+  {
+    "id": "29",
+    "name": "Briefs",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Men - Inner/Night",
+    "price": 5.0
+  },
+  {
+    "id": "30",
+    "name": "Boxers",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Men - Inner/Night",
+    "price": 5.0
+  },
+  {
+    "id": "31",
+    "name": "Trunks",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Men - Inner/Night",
+    "price": 5.0
+  },
+  {
+    "id": "32",
+    "name": "Vest",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Men - Inner/Night",
+    "price": 10.0
+  },
+  {
+    "id": "33",
+    "name": "Night suit",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Men - Inner/Night",
+    "price": 15.0
+  },
+  {
+    "id": "34",
+    "name": "Bathrobe",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Men - Inner/Night",
+    "price": 20.0
+  },
+  {
+    "id": "35",
+    "name": "Track Pant",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Men - Active/Sports",
+    "price": 12.0
+  },
+  {
+    "id": "36",
+    "name": "Sports T-shirt",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Men - Active/Sports",
+    "price": 10.0
+  },
+  {
+    "id": "38",
+    "name": "Compression wear",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Men - Active/Sports",
+    "price": 10.0
+  },
+  {
+    "id": "39",
+    "name": "Swim Suit",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Men - Active/Sports",
+    "price": 20.0
+  },
+  {
+    "id": "40",
+    "name": "Tie",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Men - Inner/Night",
+    "price": 10.0
+  },
+  {
+    "id": "43",
+    "name": "Muffler / Scarf",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Men - Inner/Night",
+    "price": 10.0
+  },
+  {
+    "id": "46",
+    "name": "Handkerchief",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Men - Upper Wear",
+    "price": 5.0
+  },
+  {
+    "id": "47",
+    "name": "Top",
+    "type": "order_per_qty",
+    "group": "Women",
+    "category": "Women - Upper Wear",
+    "price": 15.0
+  },
+  {
+    "id": "48",
+    "name": "T-shirt",
+    "type": "order_per_qty",
+    "group": "Women",
+    "category": "Women - Upper Wear",
+    "price": 12.0
+  },
+  {
+    "id": "49",
+    "name": "Shirt",
+    "type": "order_per_qty",
+    "group": "Women",
+    "category": "Women - Upper Wear",
+    "price": 12.0
+  },
+  {
+    "id": "50",
+    "name": "Blouse",
+    "type": "order_per_qty",
+    "group": "Women",
+    "category": "Women - Upper Wear",
+    "price": 10.0
+  },
+  {
+    "id": "51",
+    "name": "Tunic",
+    "type": "order_per_qty",
+    "group": "Women",
+    "category": "Women - Upper Wear",
+    "price": 0.0
+  },
+  {
+    "id": "52",
+    "name": "Crop top",
+    "type": "order_per_qty",
+    "group": "Women",
+    "category": "Women - Upper Wear",
+    "price": 15.0
+  },
+  {
+    "id": "53",
+    "name": "Sweater",
+    "type": "order_per_qty",
+    "group": "Women",
+    "category": "Women - Upper Wear",
+    "price": 0.0
+  },
+  {
+    "id": "54",
+    "name": "Sweatshirt",
+    "type": "order_per_qty",
+    "group": "Women",
+    "category": "Women - Upper Wear",
+    "price": 0.0
+  },
+  {
+    "id": "55",
+    "name": "Hoodie",
+    "type": "order_per_qty",
+    "group": "Women",
+    "category": "Women - Upper Wear",
+    "price": 0.0
+  },
+  {
+    "id": "56",
+    "name": "Jacket",
+    "type": "order_per_qty",
+    "group": "Women",
+    "category": "Women - Upper Wear",
+    "price": 0.0
+  },
+  {
+    "id": "57",
+    "name": "Blazer",
+    "type": "order_per_qty",
+    "group": "Women",
+    "category": "Women - Upper Wear",
+    "price": 0.0
+  },
+  {
+    "id": "58",
+    "name": "Cardigan",
+    "type": "order_per_qty",
+    "group": "Women",
+    "category": "Women - Upper Wear",
+    "price": 0.0
+  },
+  {
+    "id": "59",
+    "name": "Jeans",
+    "type": "order_per_qty",
+    "group": "Women",
+    "category": "Women - Lower Wear",
+    "price": 0.0
+  },
+  {
+    "id": "60",
+    "name": "Leggings",
+    "type": "order_per_qty",
+    "group": "Women",
+    "category": "Women - Lower Wear",
+    "price": 12.0
+  },
+  {
+    "id": "61",
+    "name": "Trousers",
+    "type": "order_per_qty",
+    "group": "Women",
+    "category": "Women - Lower Wear",
+    "price": 0.0
+  },
+  {
+    "id": "62",
+    "name": "Palazzo",
+    "type": "order_per_qty",
+    "group": "Women",
+    "category": "Women - Lower Wear",
+    "price": 12.0
+  },
+  {
+    "id": "63",
+    "name": "Skirt",
+    "type": "order_per_qty",
+    "group": "Women",
+    "category": "Women - Lower Wear",
+    "price": 40.0
+  },
+  {
+    "id": "64",
+    "name": "Shorts",
+    "type": "order_per_qty",
+    "group": "Women",
+    "category": "Women - Lower Wear",
+    "price": 0.0
+  },
+  {
+    "id": "65",
+    "name": "Jeggings",
+    "type": "order_per_qty",
+    "group": "Women",
+    "category": "Women - Lower Wear",
+    "price": 0.0
+  },
+  {
+    "id": "66",
+    "name": "Culottes",
+    "type": "order_per_qty",
+    "group": "Women",
+    "category": "Women - Lower Wear",
+    "price": 0.0
+  },
+  {
+    "id": "67",
+    "name": "Dress",
+    "type": "order_per_qty",
+    "group": "Women",
+    "category": "Women - Sets",
+    "price": 0.0
+  },
+  {
+    "id": "68",
+    "name": "Gown",
+    "type": "order_per_qty",
+    "group": "Women",
+    "category": "Women - Sets",
+    "price": 0.0
+  },
+  {
+    "id": "69",
+    "name": "Jumpsuit",
+    "type": "order_per_qty",
+    "group": "Women",
+    "category": "Women - Sets",
+    "price": 0.0
+  },
+  {
+    "id": "70",
+    "name": "Playsuit",
+    "type": "order_per_qty",
+    "group": "Women",
+    "category": "Women - Sets",
+    "price": 0.0
+  },
+  {
+    "id": "71",
+    "name": "Co-ord set",
+    "type": "order_per_qty",
+    "group": "Women",
+    "category": "Women - Sets",
+    "price": 0.0
+  },
+  {
+    "id": "72",
+    "name": "Silk Saree",
+    "type": "order_per_qty",
+    "group": "Women",
+    "category": "Women - Ethnic",
+    "price": 40.0
+  },
+  {
+    "id": "73",
+    "name": "Blouse",
+    "type": "order_per_qty",
+    "group": "Women",
+    "category": "Women - Ethnic",
+    "price": 12.0
+  },
+  {
+    "id": "74",
+    "name": "Lehenga",
+    "type": "order_per_qty",
+    "group": "Women",
+    "category": "Women - Ethnic",
+    "price": 0.0
+  },
+  {
+    "id": "75",
+    "name": "Choli",
+    "type": "order_per_qty",
+    "group": "Women",
+    "category": "Women - Ethnic",
+    "price": 0.0
+  },
+  {
+    "id": "76",
+    "name": "Salwar suit",
+    "type": "order_per_qty",
+    "group": "Women",
+    "category": "Women - Ethnic",
+    "price": 0.0
+  },
+  {
+    "id": "77",
+    "name": "Churidar suit",
+    "type": "order_per_qty",
+    "group": "Women",
+    "category": "Women - Ethnic",
+    "price": 0.0
+  },
+  {
+    "id": "78",
+    "name": "Anarkali suit",
+    "type": "order_per_qty",
+    "group": "Women",
+    "category": "Women - Ethnic",
+    "price": 0.0
+  },
+  {
+    "id": "79",
+    "name": "Kurti",
+    "type": "order_per_qty",
+    "group": "Women",
+    "category": "Women - Ethnic",
+    "price": 1.0
+  },
+  {
+    "id": "80",
+    "name": "Dupatta",
+    "type": "order_per_qty",
+    "group": "Women",
+    "category": "Women - Ethnic",
+    "price": 0.0
+  },
+  {
+    "id": "81",
+    "name": "Ghagra",
+    "type": "order_per_qty",
+    "group": "Women",
+    "category": "Women - Ethnic",
+    "price": 0.0
+  },
+  {
+    "id": "82",
+    "name": "Sharara suit",
+    "type": "order_per_qty",
+    "group": "Women",
+    "category": "Women - Ethnic",
+    "price": 0.0
+  },
+  {
+    "id": "83",
+    "name": "Bra",
+    "type": "order_per_qty",
+    "group": "Women",
+    "category": "Women - Inner/Night",
+    "price": 0.0
+  },
+  {
+    "id": "84",
+    "name": "Panties",
+    "type": "order_per_qty",
+    "group": "Women",
+    "category": "Women - Inner/Night",
+    "price": 0.0
+  },
+  {
+    "id": "85",
+    "name": "Camisole",
+    "type": "order_per_qty",
+    "group": "Women",
+    "category": "Women - Inner/Night",
+    "price": 0.0
+  },
+  {
+    "id": "86",
+    "name": "Shapewear",
+    "type": "order_per_qty",
+    "group": "Women",
+    "category": "Women - Inner/Night",
+    "price": 0.0
+  },
+  {
+    "id": "87",
+    "name": "Nighty",
+    "type": "order_per_qty",
+    "group": "Women",
+    "category": "Women - Inner/Night",
+    "price": 0.0
+  },
+  {
+    "id": "88",
+    "name": "Night suit",
+    "type": "order_per_qty",
+    "group": "Women",
+    "category": "Women - Inner/Night",
+    "price": 0.0
+  },
+  {
+    "id": "89",
+    "name": "Robe",
+    "type": "order_per_qty",
+    "group": "Women",
+    "category": "Women - Inner/Night",
+    "price": 0.0
+  },
+  {
+    "id": "90",
+    "name": "Sports bra",
+    "type": "order_per_qty",
+    "group": "Women",
+    "category": "Women - Active/Sports",
+    "price": 0.0
+  },
+  {
+    "id": "91",
+    "name": "Track pants",
+    "type": "order_per_qty",
+    "group": "Women",
+    "category": "Women - Active/Sports",
+    "price": 0.0
+  },
+  {
+    "id": "92",
+    "name": "Gym leggings",
+    "type": "order_per_qty",
+    "group": "Women",
+    "category": "Women - Active/Sports",
+    "price": 0.0
+  },
+  {
+    "id": "93",
+    "name": "Sports T-shirt",
+    "type": "order_per_qty",
+    "group": "Women",
+    "category": "Women - Active/Sports",
+    "price": 0.0
+  },
+  {
+    "id": "94",
+    "name": "Swimwear",
+    "type": "order_per_qty",
+    "group": "Women",
+    "category": "Women - Active/Sports",
+    "price": 0.0
+  },
+  {
+    "id": "95",
+    "name": "Yoga pants",
+    "type": "order_per_qty",
+    "group": "Women",
+    "category": "Women - Active/Sports",
+    "price": 0.0
+  },
+  {
+    "id": "96",
+    "name": "Scarf",
+    "type": "order_per_qty",
+    "group": "Women",
+    "category": "Women - Accessories",
+    "price": 1.0
+  },
+  {
+    "id": "97",
+    "name": "Stole",
+    "type": "order_per_qty",
+    "group": "Women",
+    "category": "Women - Accessories",
+    "price": 0.0
+  },
+  {
+    "id": "98",
+    "name": "Shawl",
+    "type": "order_per_qty",
+    "group": "Women",
+    "category": "Women - Accessories",
+    "price": 10.0
+  },
+  {
+    "id": "99",
+    "name": "Gloves",
+    "type": "order_per_qty",
+    "group": "Women",
+    "category": "Women - Accessories",
+    "price": 0.0
+  },
+  {
+    "id": "100",
+    "name": "Socks",
+    "type": "order_per_qty",
+    "group": "Women",
+    "category": "Women - Accessories",
+    "price": 10.0
+  },
+  {
+    "id": "101",
+    "name": "Cap",
+    "type": "order_per_qty",
+    "group": "Women",
+    "category": "Women - Accessories",
+    "price": 0.0
+  },
+  {
+    "id": "102",
+    "name": "Handkerchief",
+    "type": "order_per_qty",
+    "group": "Women",
+    "category": "Women - Accessories",
+    "price": 5.0
+  },
+  {
+    "id": "103",
+    "name": "Bedsheet Single",
+    "type": "order_per_qty",
+    "group": "Household",
+    "category": "Household - Bedroom",
+    "price": 30.0
+  },
+  {
+    "id": "104",
+    "name": "Pillow cover",
+    "type": "order_per_qty",
+    "group": "Household",
+    "category": "Household - Bedroom",
+    "price": 10.0
+  },
+  {
+    "id": "105",
+    "name": "Pillow",
+    "type": "order_per_qty",
+    "group": "Household",
+    "category": "Household - Bedroom",
+    "price": 0.0
+  },
+  {
+    "id": "106",
+    "name": "Cushion cover",
+    "type": "order_per_qty",
+    "group": "Household",
+    "category": "Household - Bedroom",
+    "price": 20.0
+  },
+  {
+    "id": "107",
+    "name": "Cushion",
+    "type": "order_per_qty",
+    "group": "Household",
+    "category": "Household - Bedroom",
+    "price": 0.0
+  },
+  {
+    "id": "108",
+    "name": "Blanket Single",
+    "type": "order_per_qty",
+    "group": "Household",
+    "category": "Household - Bedroom",
+    "price": 0.0
+  },
+  {
+    "id": "109",
+    "name": "Quilt / Razai Single",
+    "type": "order_per_qty",
+    "group": "Household",
+    "category": "Household - Bedroom",
+    "price": 0.0
+  },
+  {
+    "id": "110",
+    "name": "Comforter King",
+    "type": "order_per_qty",
+    "group": "Household",
+    "category": "Household - Bedroom",
+    "price": 0.0
+  },
+  {
+    "id": "111",
+    "name": "Mattress protector",
+    "type": "order_per_qty",
+    "group": "Household",
+    "category": "Household - Bedroom",
+    "price": 0.0
+  },
+  {
+    "id": "112",
+    "name": "Bedspread",
+    "type": "order_per_qty",
+    "group": "Household",
+    "category": "Household - Bedroom",
+    "price": 0.0
+  },
+  {
+    "id": "113",
+    "name": "Bedsheet Double",
+    "type": "order_per_qty",
+    "group": "Household",
+    "category": "Household - Bedroom",
+    "price": 75.0
+  },
+  {
+    "id": "114",
+    "name": "Bath towel",
+    "type": "order_per_qty",
+    "group": "Household",
+    "category": "Household - Bathroom",
+    "price": 20.0
+  },
+  {
+    "id": "115",
+    "name": "Hand towel",
+    "type": "order_per_qty",
+    "group": "Household",
+    "category": "Household - Bathroom",
+    "price": 10.0
+  },
+  {
+    "id": "116",
+    "name": "Face towel",
+    "type": "order_per_qty",
+    "group": "Household",
+    "category": "Household - Bathroom",
+    "price": 10.0
+  },
+  {
+    "id": "117",
+    "name": "Bath mat",
+    "type": "order_per_qty",
+    "group": "Household",
+    "category": "Household - Bathroom",
+    "price": 0.0
+  },
+  {
+    "id": "118",
+    "name": "Bathrobe",
+    "type": "order_per_qty",
+    "group": "Household",
+    "category": "Household - Bathroom",
+    "price": 0.0
+  },
+  {
+    "id": "119",
+    "name": "Table cloth",
+    "type": "order_per_qty",
+    "group": "Household",
+    "category": "Household - Dining",
+    "price": 0.0
+  },
+  {
+    "id": "120",
+    "name": "Table mat / Placemat",
+    "type": "order_per_qty",
+    "group": "Household",
+    "category": "Household - Dining",
+    "price": 0.0
+  },
+  {
+    "id": "121",
+    "name": "Table runner",
+    "type": "order_per_qty",
+    "group": "Household",
+    "category": "Household - Dining",
+    "price": 0.0
+  },
+  {
+    "id": "122",
+    "name": "Napkin",
+    "type": "order_per_qty",
+    "group": "Household",
+    "category": "Household - Dining",
+    "price": 0.0
+  },
+  {
+    "id": "123",
+    "name": "Apron",
+    "type": "order_per_qty",
+    "group": "Household",
+    "category": "Household - Dining",
+    "price": 0.0
+  },
+  {
+    "id": "124",
+    "name": "Kitchen towel",
+    "type": "order_per_qty",
+    "group": "Household",
+    "category": "Household - Dining",
+    "price": 0.0
+  },
+  {
+    "id": "125",
+    "name": "Oven mitt",
+    "type": "order_per_qty",
+    "group": "Household",
+    "category": "Household - Dining",
+    "price": 1.0
+  },
+  {
+    "id": "126",
+    "name": "Curtains Large",
+    "type": "order_per_qty",
+    "group": "Household",
+    "category": "Household - Living",
+    "price": 100.0
+  },
+  {
+    "id": "127",
+    "name": "Door curtains XL",
+    "type": "order_per_qty",
+    "group": "Household",
+    "category": "Household - Living",
+    "price": 150.0
+  },
+  {
+    "id": "128",
+    "name": "Sofa cover",
+    "type": "order_per_qty",
+    "group": "Household",
+    "category": "Household - Living",
+    "price": 0.0
+  },
+  {
+    "id": "129",
+    "name": "Chair cover",
+    "type": "order_per_qty",
+    "group": "Household",
+    "category": "Household - Living",
+    "price": 0.0
+  },
+  {
+    "id": "130",
+    "name": "Cushion",
+    "type": "order_per_qty",
+    "group": "Household",
+    "category": "Household - Living",
+    "price": 0.0
+  },
+  {
+    "id": "131",
+    "name": "Carpet per sq ft",
+    "type": "order_per_qty",
+    "group": "Household",
+    "category": "Household - Living",
+    "price": 35.0
+  },
+  {
+    "id": "132",
+    "name": "Rug",
+    "type": "order_per_qty",
+    "group": "Household",
+    "category": "Household - Living",
+    "price": 0.0
+  },
+  {
+    "id": "133",
+    "name": "Floor mat",
+    "type": "order_per_qty",
+    "group": "Household",
+    "category": "Household - Living",
+    "price": 30.0
+  },
+  {
+    "id": "134",
+    "name": "Bag",
+    "type": "order_per_qty",
+    "group": "Household",
+    "category": "Household - Misc",
+    "price": 0.0
+  },
+  {
+    "id": "135",
+    "name": "Ironing board cover",
+    "type": "order_per_qty",
+    "group": "Household",
+    "category": "Household - Misc",
+    "price": 0.0
+  },
+  {
+    "id": "136",
+    "name": "Mosquito net",
+    "type": "order_per_qty",
+    "group": "Household",
+    "category": "Household - Misc",
+    "price": 0.0
+  },
+  {
+    "id": "137",
+    "name": "Dust cover",
+    "type": "order_per_qty",
+    "group": "Household",
+    "category": "Household - Misc",
+    "price": 1.0
+  },
+  {
+    "id": "138",
+    "name": "Bottom",
+    "type": "order_per_qty",
+    "group": "Women",
+    "category": "Clothing",
+    "price": 0.0
+  },
+  {
+    "id": "139",
+    "name": "Swim suit",
+    "type": "order_per_qty",
+    "group": "Regular",
+    "category": "Clothing",
+    "price": 20.0
+  },
+  {
+    "id": "140",
+    "name": "kurta bottom",
+    "type": "order_per_qty",
+    "group": "Regular",
+    "category": "Clothing",
+    "price": 0.0
+  },
+  {
+    "id": "141",
+    "name": "kurta bottom",
+    "type": "order_per_qty",
+    "group": "Regular",
+    "category": "Clothing",
+    "price": 0.0
+  },
+  {
+    "id": "142",
+    "name": "kurta bottom",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Men - Ethnic",
+    "price": 25.0
+  },
+  {
+    "id": "143",
+    "name": "silk shirt",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Men - Upper Wear",
+    "price": 18.0
+  },
+  {
+    "id": "144",
+    "name": "chudi top",
+    "type": "order_per_qty",
+    "group": "Women",
+    "category": "Women - Upper Wear",
+    "price": 15.0
+  },
+  {
+    "id": "145",
+    "name": "chudi bottom",
+    "type": "order_per_qty",
+    "group": "Women",
+    "category": "Women - Lower Wear",
+    "price": 15.0
+  },
+  {
+    "id": "146",
+    "name": "designer fancy top",
+    "type": "order_per_qty",
+    "group": "Women",
+    "category": "Women - Upper Wear",
+    "price": 30.0
+  },
+  {
+    "id": "147",
+    "name": "Shirt",
+    "type": "order_per_qty",
+    "group": "Regular",
+    "category": "Regular - Cloths",
+    "price": 15.0
+  },
+  {
+    "id": "149",
+    "name": "Pant",
+    "type": "order_per_qty",
+    "group": "Regular",
+    "category": "Regular - Cloths",
+    "price": 15.0
+  },
+  {
+    "id": "150",
+    "name": "Dhoti",
+    "type": "order_per_qty",
+    "group": "Regular",
+    "category": "Regular - Cloths",
+    "price": 20.0
+  },
+  {
+    "id": "151",
+    "name": "Top",
+    "type": "order_per_qty",
+    "group": "Regular",
+    "category": "Regular - Cloths",
+    "price": 20.0
+  },
+  {
+    "id": "152",
+    "name": "Bottom",
+    "type": "order_per_qty",
+    "group": "Regular",
+    "category": "Regular - Cloths",
+    "price": 20.0
+  },
+  {
+    "id": "153",
+    "name": "Shawl",
+    "type": "order_per_qty",
+    "group": "Regular",
+    "category": "Regular - Cloths",
+    "price": 10.0
+  },
+  {
+    "id": "154",
+    "name": "Saree",
+    "type": "order_per_qty",
+    "group": "Regular",
+    "category": "Regular - Cloths",
+    "price": 40.0
+  },
+  {
+    "id": "155",
+    "name": "Blouse",
+    "type": "order_per_qty",
+    "group": "Regular",
+    "category": "Regular - Cloths",
+    "price": 10.0
+  },
+  {
+    "id": "156",
+    "name": "T Shirt",
+    "type": "order_per_qty",
+    "group": "Regular",
+    "category": "Regular - Cloths",
+    "price": 15.0
+  },
+  {
+    "id": "157",
+    "name": "Track Pant",
+    "type": "order_per_qty",
+    "group": "Regular",
+    "category": "Regular - Cloths",
+    "price": 10.0
+  },
+  {
+    "id": "158",
+    "name": "Shorts",
+    "type": "order_per_qty",
+    "group": "Regular",
+    "category": "Regular - Cloths",
+    "price": 10.0
+  },
+  {
+    "id": "159",
+    "name": "Gown",
+    "type": "order_per_qty",
+    "group": "Regular",
+    "category": "Clothing",
+    "price": 25.0
+  },
+  {
+    "id": "160",
+    "name": "Skirt",
+    "type": "order_per_qty",
+    "group": "Regular",
+    "category": "Regular - Cloths",
+    "price": 20.0
+  },
+  {
+    "id": "161",
+    "name": "Gown",
+    "type": "order_per_qty",
+    "group": "Regular",
+    "category": "Regular - Cloths",
+    "price": 25.0
+  },
+  {
+    "id": "162",
+    "name": "Towel",
+    "type": "order_per_qty",
+    "group": "Regular",
+    "category": "Regular - Cloths",
+    "price": 10.0
+  },
+  {
+    "id": "163",
+    "name": "Blanket",
+    "type": "order_per_qty",
+    "group": "Regular",
+    "category": "Regular - Cloths",
+    "price": 30.0
+  },
+  {
+    "id": "164",
+    "name": "School Uniform",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Men - Lower Wear",
+    "price": 20.0
+  },
+  {
+    "id": "165",
+    "name": "Sports Uniform",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Men - Upper Wear",
+    "price": 20.0
+  },
+  {
+    "id": "166",
+    "name": "Lab Coat",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Men - Upper Wear",
+    "price": 20.0
+  },
+  {
+    "id": "167",
+    "name": "Scrub",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Institutional - Upper Wear",
+    "price": 20.0
+  },
+  {
+    "id": "168",
+    "name": "Patient Gown",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Institutional - Upper Wear",
+    "price": 20.0
+  },
+  {
+    "id": "169",
+    "name": "Doctor Coat",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Institutional - Upper Wear",
+    "price": 20.0
+  },
+  {
+    "id": "170",
+    "name": "Nurse Uniform",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Institutional - Upper Wear",
+    "price": 20.0
+  },
+  {
+    "id": "171",
+    "name": "Safety Jacket",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Institutional - Upper Wear",
+    "price": 20.0
+  },
+  {
+    "id": "172",
+    "name": "Coverall",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Institutional - Upper Wear",
+    "price": 20.0
+  },
+  {
+    "id": "173",
+    "name": "Boiler Suit",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Institutional - Upper Wear",
+    "price": 20.0
+  },
+  {
+    "id": "174",
+    "name": "Reflective Vest",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Institutional - Upper Wear",
+    "price": 20.0
+  },
+  {
+    "id": "175",
+    "name": "Office Shirt",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Institutional - Upper Wear",
+    "price": 20.0
+  },
+  {
+    "id": "176",
+    "name": "Formal Trouser",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Institutional - Upper Wear",
+    "price": 20.0
+  },
+  {
+    "id": "177",
+    "name": "Blazer",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Institutional - Upper Wear",
+    "price": 20.0
+  },
+  {
+    "id": "178",
+    "name": "ID Jacket",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Institutional - Upper Wear",
+    "price": 20.0
+  },
+  {
+    "id": "179",
+    "name": "Chef Coat",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Institutional - Upper Wear",
+    "price": 20.0
+  },
+  {
+    "id": "180",
+    "name": "Chef Apron",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Institutional - Upper Wear",
+    "price": 20.0
+  },
+  {
+    "id": "181",
+    "name": "Housekeeping Uniform",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Institutional - Upper Wear",
+    "price": 20.0
+  },
+  {
+    "id": "182",
+    "name": "Reception Uniform",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Institutional - Upper Wear",
+    "price": 20.0
+  },
+  {
+    "id": "183",
+    "name": "Unisex Wear",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Others - Upper Wear",
+    "price": 20.0
+  },
+  {
+    "id": "184",
+    "name": "Plus Size Garment",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Others - Upper Wear",
+    "price": 20.0
+  },
+  {
+    "id": "185",
+    "name": "Winter Wear",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Others - Upper Wear",
+    "price": 20.0
+  },
+  {
+    "id": "186",
+    "name": "Sweater",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Others - Upper Wear",
+    "price": 20.0
+  },
+  {
+    "id": "187",
+    "name": "Cardigan",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Others - Upper Wear",
+    "price": 20.0
+  },
+  {
+    "id": "188",
+    "name": "Shawl",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Others - Upper Wear",
+    "price": 20.0
+  },
+  {
+    "id": "189",
+    "name": "Monkey Cap",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Others - Upper Wear",
+    "price": 20.0
+  },
+  {
+    "id": "190",
+    "name": "Raincoat",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Others - Upper Wear",
+    "price": 20.0
+  },
+  {
+    "id": "191",
+    "name": "Swimwear",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Others - Upper Wear",
+    "price": 20.0
+  },
+  {
+    "id": "192",
+    "name": "Socks",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Others - Upper Wear",
+    "price": 20.0
+  },
+  {
+    "id": "193",
+    "name": "Glove",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Others - Upper Wear",
+    "price": 20.0
+  },
+  {
+    "id": "194",
+    "name": "Scarf",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Others - Upper Wear",
+    "price": 20.0
+  },
+  {
+    "id": "195",
+    "name": "Stole",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Others - Upper Wear",
+    "price": 20.0
+  },
+  {
+    "id": "196",
+    "name": "Belt",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Others - Upper Wear",
+    "price": 20.0
+  },
+  {
+    "id": "197",
+    "name": "Cap",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Others - Upper Wear",
+    "price": 20.0
+  },
+  {
+    "id": "198",
+    "name": "Mask",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Others - Upper Wear",
+    "price": 20.0
+  },
+  {
+    "id": "199",
+    "name": "Bed Sheet King Six\\ze",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Men - Upper Wear",
+    "price": 35.0
+  },
+  {
+    "id": "200",
+    "name": "Pillow Cover",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Household - Misc",
+    "price": 23.0
+  },
+  {
+    "id": "201",
+    "name": "Cushion Cover",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Household - Misc",
+    "price": 23.0
+  },
+  {
+    "id": "202",
+    "name": "Blanket",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Household - Misc",
+    "price": 23.0
+  },
+  {
+    "id": "203",
+    "name": "Quilt",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Household - Misc",
+    "price": 23.0
+  },
+  {
+    "id": "204",
+    "name": "Comforter",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Household - Misc",
+    "price": 23.0
+  },
+  {
+    "id": "205",
+    "name": "Mattress Protector",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Household - Misc",
+    "price": 23.0
+  },
+  {
+    "id": "206",
+    "name": "Towel",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Household - Misc",
+    "price": 23.0
+  },
+  {
+    "id": "207",
+    "name": "Bath Towel",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Household - Misc",
+    "price": 23.0
+  },
+  {
+    "id": "208",
+    "name": "Hand Towel",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Household - Misc",
+    "price": 23.0
+  },
+  {
+    "id": "209",
+    "name": "Face Towel",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Household - Misc",
+    "price": 23.0
+  },
+  {
+    "id": "210",
+    "name": "Bathrobe",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Household - Misc",
+    "price": 23.0
+  },
+  {
+    "id": "211",
+    "name": "Apron",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Household - Misc",
+    "price": 23.0
+  },
+  {
+    "id": "212",
+    "name": "Kitchen Towel",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Household - Misc",
+    "price": 23.0
+  },
+  {
+    "id": "213",
+    "name": "Table Cloth",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Household - Misc",
+    "price": 23.0
+  },
+  {
+    "id": "214",
+    "name": "Table Runner",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Household - Misc",
+    "price": 23.0
+  },
+  {
+    "id": "215",
+    "name": "Napkin",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Household - Misc",
+    "price": 23.0
+  },
+  {
+    "id": "216",
+    "name": "Curtain",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Household - Misc",
+    "price": 23.0
+  },
+  {
+    "id": "217",
+    "name": "Sofa Cover",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Household - Misc",
+    "price": 23.0
+  },
+  {
+    "id": "218",
+    "name": "Door Curtain",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Household - Misc",
+    "price": 23.0
+  },
+  {
+    "id": "219",
+    "name": "T-Shirt",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Men - Lower Wear",
+    "price": 12.0
+  },
+  {
+    "id": "220",
+    "name": "Shirt",
+    "type": "order_per_qty",
+    "group": "Kids",
+    "category": "Kids - Premium Wash",
+    "price": 20.0
+  },
+  {
+    "id": "221",
+    "name": "Short",
+    "type": "order_per_qty",
+    "group": "Kids",
+    "category": "Kids - Premium Wash",
+    "price": 20.0
+  },
+  {
+    "id": "222",
+    "name": "Jean",
+    "type": "order_per_qty",
+    "group": "Kids",
+    "category": "Kids - Premium Wash",
+    "price": 20.0
+  },
+  {
+    "id": "223",
+    "name": "Track Pant",
+    "type": "order_per_qty",
+    "group": "Kids",
+    "category": "Kids - Premium Wash",
+    "price": 20.0
+  },
+  {
+    "id": "224",
+    "name": "Kurta",
+    "type": "order_per_qty",
+    "group": "Kids",
+    "category": "Kids - Premium Wash",
+    "price": 20.0
+  },
+  {
+    "id": "225",
+    "name": "Dhoti Set",
+    "type": "order_per_qty",
+    "group": "Kids",
+    "category": "Kids - Premium Wash",
+    "price": 20.0
+  },
+  {
+    "id": "226",
+    "name": "School Uniform",
+    "type": "order_per_qty",
+    "group": "Men",
+    "category": "Men - Lower Wear",
+    "price": 20.0
+  },
+  {
+    "id": "227",
+    "name": "Frock",
+    "type": "order_per_qty",
+    "group": "Kids",
+    "category": "Kids - Premium Wash",
+    "price": 20.0
+  },
+  {
+    "id": "228",
+    "name": "Top",
+    "type": "order_per_qty",
+    "group": "Kids",
+    "category": "Kids - Premium Wash",
+    "price": 20.0
+  },
+  {
+    "id": "229",
+    "name": "Legging",
+    "type": "order_per_qty",
+    "group": "Kids",
+    "category": "Kids - Premium Wash",
+    "price": 20.0
+  },
+  {
+    "id": "230",
+    "name": "Skirt",
+    "type": "order_per_qty",
+    "group": "Kids",
+    "category": "Kids - Premium Wash",
+    "price": 20.0
+  },
+  {
+    "id": "231",
+    "name": "Silk Skirt",
+    "type": "order_per_qty",
+    "group": "Kids",
+    "category": "Kids - Premium Wash",
+    "price": 20.0
+  },
+  {
+    "id": "232",
+    "name": "Half Saree",
+    "type": "order_per_qty",
+    "group": "Kids",
+    "category": "Kids - Premium Wash",
+    "price": 20.0
+  },
+  {
+    "id": "233",
+    "name": "Ethnic Gown",
+    "type": "order_per_qty",
+    "group": "Kids",
+    "category": "Kids - Premium Wash",
+    "price": 20.0
+  },
+  {
+    "id": "234",
+    "name": "Romper",
+    "type": "order_per_qty",
+    "group": "Kids",
+    "category": "Kids - Premium Wash",
+    "price": 20.0
+  },
+  {
+    "id": "235",
+    "name": "Bodysuit",
+    "type": "order_per_qty",
+    "group": "Kids",
+    "category": "Kids - Premium Wash",
+    "price": 20.0
+  },
+  {
+    "id": "236",
+    "name": "Onesie",
+    "type": "order_per_qty",
+    "group": "Kids",
+    "category": "Kids - Premium Wash",
+    "price": 20.0
+  },
+  {
+    "id": "237",
+    "name": "Jabla",
+    "type": "order_per_qty",
+    "group": "Kids",
+    "category": "Kids - Premium Wash",
+    "price": 20.0
+  },
+  {
+    "id": "238",
+    "name": "Baby Frock",
+    "type": "order_per_qty",
+    "group": "Kids",
+    "category": "Kids - Premium Wash",
+    "price": 20.0
+  },
+  {
+    "id": "239",
+    "name": "Diaper Short",
+    "type": "order_per_qty",
+    "group": "Kids",
+    "category": "Kids - Premium Wash",
+    "price": 20.0
+  },
+  {
+    "id": "240",
+    "name": "Cap",
+    "type": "order_per_qty",
+    "group": "Kids",
+    "category": "Kids - Premium Wash",
+    "price": 20.0
+  },
+  {
+    "id": "241",
+    "name": "Mitten",
+    "type": "order_per_qty",
+    "group": "Kids",
+    "category": "Kids - Premium Wash",
+    "price": 20.0
+  },
+  {
+    "id": "242",
+    "name": "washing only",
+    "type": "order_per_qty",
+    "group": "Regular",
+    "category": "Clothing",
+    "price": 25.0
+  },
+  {
+    "id": "243",
+    "name": "SHOES CLEAN ",
+    "type": "order_per_qty",
+    "group": "Regular",
+    "category": "Regular - Cloths",
+    "price": 200.0
+  },
+  {
+    "id": "244",
+    "name": "wasing only ",
+    "type": "order_per_qty",
+    "group": "Regular",
+    "category": "Clothing",
+    "price": 25.0
+  },
+  {
+    "id": "245",
+    "name": "Wasing only",
+    "type": "order_per_qty",
+    "group": "Regular",
+    "category": "Clothing",
+    "price": 25.0
+  }
+]

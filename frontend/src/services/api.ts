@@ -1050,7 +1050,7 @@ const getMockItems = (): LaundryItem[] => {
   if (stored) {
     try {
       const list = JSON.parse(stored);
-      if (Array.isArray(list) && list.length >= 50) return list;
+      if (Array.isArray(list) && list.length >= 200) return list;
     } catch (e) {}
   }
   const initial: LaundryItem[] = [];
