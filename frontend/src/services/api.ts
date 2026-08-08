@@ -826,7 +826,7 @@ export const fetchAccountsSummary = async (params: { dateFrom?: string; dateTo?:
   }
 
   orders.forEach((o) => {
-    const amt = o.advancePaid > 0 ? o.advancePaid : o.totalAmount;
+    const amt = o.advancePaid > 0 ? o.advancePaid : 0;
     if (amt > 0) {
       const ref = `#${o.orderNumber}`;
       if (!incomeMap.has(o._id) && !incomeMap.has(ref)) {

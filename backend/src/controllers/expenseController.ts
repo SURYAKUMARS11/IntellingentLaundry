@@ -205,7 +205,7 @@ export const getAccountsSummary = async (req: Request, res: Response) => {
     });
 
     orders.forEach((o: any) => {
-      const amt = o.advancePaid > 0 ? o.advancePaid : o.totalAmount;
+      const amt = o.advancePaid > 0 ? o.advancePaid : 0;
       const ref = `#${o.orderNumber}`;
       if (amt > 0 && !incomeMap.has(o._id.toString())) {
         incomeMap.set(o._id.toString(), {
