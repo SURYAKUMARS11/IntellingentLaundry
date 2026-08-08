@@ -17,7 +17,7 @@ export const SettingsPage: React.FC = () => {
   const [setting, setSetting] = useState<Setting>({
     shopName: 'IntelligentLaundry & Dry Cleaners',
     shopTagline: 'Smart & Premium Laundry Management',
-    logoUrl: 'https://images.unsplash.com/photo-1545173168-9f1947eebb7f?w=200&auto=format&fit=crop&q=80',
+    logoUrl: '/logo.jpg',
     phone: '+91 98765 43210',
     email: 'contact@intelligentlaundry.com',
     address: '123 Sparkle Avenue, Suite 4B, Commercial Hub',

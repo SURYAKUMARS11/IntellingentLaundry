@@ -40,11 +40,11 @@ export const LoginPage: React.FC = () => {
       <div className="w-full max-w-md bg-white/10 dark:bg-slate-900/80 backdrop-blur-xl border border-white/20 dark:border-slate-800 rounded-3xl shadow-2xl p-8 relative z-10">
         {/* Header Logo */}
         <div className="text-center mb-8">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-brand-600 to-cyan-500 text-white mx-auto flex items-center justify-center shadow-lg shadow-brand-500/30 mb-3">
-            <WashingMachine className="w-8 h-8 animate-pulse" />
+          <div className="w-20 h-20 rounded-2xl bg-white p-1 mx-auto flex items-center justify-center shadow-xl shadow-brand-500/20 ring-4 ring-brand-500/30 mb-3 overflow-hidden">
+            <img src="/logo.jpg" alt="Intelligent Laundry Logo" className="w-full h-full object-cover rounded-xl" />
           </div>
           <h1 className="text-2xl font-extrabold text-white tracking-tight flex items-center justify-center gap-1.5">
-            IntelligentLaundry <Sparkles className="w-4 h-4 text-brand-400 fill-brand-400" />
+            Intelligent Laundry <Sparkles className="w-4 h-4 text-brand-400 fill-brand-400" />
           </h1>
           <p className="text-xs text-slate-400 mt-1">
             Laundry Shop Admin Management System

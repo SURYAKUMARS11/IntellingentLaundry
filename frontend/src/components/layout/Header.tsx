@@ -56,8 +56,8 @@ export const Header: React.FC<HeaderProps> = ({ isSidebarCollapsed, onToggleSide
         )}
 
         <div className="lg:hidden flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-brand-600 text-white flex items-center justify-center shadow-sm">
-            <WashingMachine className="w-5 h-5" />
+          <div className="w-8 h-8 rounded-lg bg-white p-0.5 border border-slate-200 dark:border-slate-700 shadow-sm shrink-0 overflow-hidden">
+            <img src="/logo.jpg" alt="Logo" className="w-full h-full object-cover rounded-md" />
           </div>
           <span className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-1">
             IntelligentLaundry <Sparkles className="w-3 h-3 text-brand-500 fill-brand-500" />

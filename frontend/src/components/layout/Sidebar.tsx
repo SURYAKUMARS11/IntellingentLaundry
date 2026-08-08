@@ -64,8 +64,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed = false, onToggleC
       {/* Brand Header */}
       <div className="h-16 px-4 flex items-center justify-between border-b border-slate-200 dark:border-slate-800">
         <div className="flex items-center gap-3 overflow-hidden">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-cyan-500 flex items-center justify-center text-white shadow-md shadow-brand-500/20 shrink-0">
-            <WashingMachine className="w-6 h-6 animate-pulse" />
+          <div className="w-10 h-10 rounded-xl bg-white p-0.5 border border-slate-200 dark:border-slate-700 shadow-md shrink-0 overflow-hidden">
+            <img src="/logo.jpg" alt="Logo" className="w-full h-full object-cover rounded-lg" />
           </div>
           {!isCollapsed && (
             <div className="truncate">
