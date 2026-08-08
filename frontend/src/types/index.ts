@@ -137,6 +137,8 @@ export interface Setting {
   currencyCode: string;
   invoicePrefix: string;
   termsAndConditions?: string;
+  upiId?: string;
+  gpayNumber?: string;
 }
 
 export interface DashboardStats {

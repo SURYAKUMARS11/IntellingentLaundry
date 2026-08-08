@@ -14,6 +14,13 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ order, setting, onClos
   const receiptRef = useRef<HTMLDivElement>(null);
   const currencySymbol = setting?.currencySymbol || '₹';
 
+  // UPI Payment Details & QR Code Generator
+  const shopUpiId = setting?.upiId || '9876543210@paytm';
+  const shopGPayPhone = setting?.gpayNumber || setting?.phone || '9876543210';
+  const shopName = setting?.shopName || 'IntelligentLaundry';
+  const dueAmount = order.remainingBalance > 0 ? order.remainingBalance : order.totalAmount;
+  const upiPaymentUrl = `upi://pay?pa=${encodeURIComponent(shopUpiId)}&pn=${encodeURIComponent(shopName)}&am=${dueAmount}&cu=INR&tn=${encodeURIComponent('Order #' + order.orderNumber)}`;
+
   // Handle standard browser printing
   const handlePrint = () => {
     window.print();
@@ -200,20 +207,41 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ order, setting, onClos
 
           {/* Calculation Breakdown & QR Verification */}
           <div className="border-t border-slate-200 pt-5 flex flex-col sm:flex-row justify-between items-start gap-6">
-            {/* QR Verification Badge */}
-            <div className="w-full sm:w-auto flex items-center justify-between sm:justify-start gap-3 bg-slate-50 p-3 rounded-2xl border border-slate-200">
-              <QRCodeSVG
-                value={JSON.stringify({
-                  orderNumber: order.orderNumber,
-                  customer: order.customerSnapshot.name,
-                  total: order.totalAmount,
-                })}
-                size={70}
-              />
-              <div className="text-[11px]">
-                <p className="font-bold text-slate-900">Digital QR Verification</p>
-                <p className="text-slate-500 mt-0.5">Scan to verify receipt</p>
-                <p className="text-brand-600 font-extrabold font-mono mt-1">#{order.orderNumber}</p>
+            {/* UPI Payment Scan & Pay Box */}
+            <div className="w-full sm:w-auto flex items-start gap-3 bg-slate-50 p-3.5 rounded-2xl border border-slate-200 shadow-xs">
+              <div className="bg-white p-1.5 rounded-xl border border-slate-200 shadow-xs shrink-0">
+                <QRCodeSVG
+                  value={upiPaymentUrl}
+                  size={85}
+                  level="M"
+                />
+              </div>
+
+              <div className="text-xs space-y-1">
+                <div className="flex items-center gap-1.5">
+                  <span className="font-extrabold text-slate-900">Scan & Pay via UPI</span>
+                  <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800">
+                    GPay / PhonePe
+                  </span>
+                </div>
+
+                <p className="text-[11px] text-slate-600">
+                  Amount Due: <strong className="text-emerald-700 font-extrabold">{setting?.currencySymbol || '₹'}{dueAmount}</strong>
+                </p>
+
+                {shopGPayPhone && (
+                  <p className="text-[11px] font-semibold text-slate-800">
+                    GPay No: <span className="font-extrabold text-slate-900">{shopGPayPhone}</span>
+                  </p>
+                )}
+
+                <p className="text-[10px] font-mono font-bold text-brand-600 truncate max-w-[170px]">
+                  UPI: {shopUpiId}
+                </p>
+
+                <p className="text-[9px] text-slate-400 font-semibold">
+                  GPay • PhonePe • Paytm • BHIM
+                </p>
               </div>
             </div>
 

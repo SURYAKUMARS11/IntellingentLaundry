@@ -315,6 +315,36 @@ export const SettingsPage: React.FC = () => {
             />
           </div>
 
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-slate-100 dark:border-slate-800">
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                GPay / PhonePe Mobile Number
+              </label>
+              <input
+                type="text"
+                value={setting.gpayNumber || ''}
+                onChange={(e) => setSetting({ ...setting, gpayNumber: e.target.value })}
+                placeholder="e.g. 9876543210"
+                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none font-bold"
+              />
+              <p className="text-[10px] text-slate-400 mt-1">Displayed on customer invoice for GPay / PhonePe transfers.</p>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                Shop UPI ID / VPA Address
+              </label>
+              <input
+                type="text"
+                value={setting.upiId || ''}
+                onChange={(e) => setSetting({ ...setting, upiId: e.target.value })}
+                placeholder="e.g. 9876543210@paytm or shopname@okicici"
+                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none font-bold text-brand-600"
+              />
+              <p className="text-[10px] text-slate-400 mt-1">Generates instant UPI scan & pay QR code on invoice receipts.</p>
+            </div>
+          </div>
+
           <div>
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
               Receipt Terms & Conditions

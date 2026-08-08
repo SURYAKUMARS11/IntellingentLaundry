@@ -13,6 +13,8 @@ export interface ISetting extends Document {
   currencyCode: string;
   invoicePrefix: string;
   termsAndConditions?: string;
+  upiId?: string;
+  gpayNumber?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -31,6 +33,8 @@ const SettingSchema: Schema = new Schema(
     currencyCode: { type: String, default: 'INR' },
     invoicePrefix: { type: String, default: 'ORD-' },
     termsAndConditions: { type: String, default: 'Items not collected within 30 days are subject to storage charges. Please report any discrepancy within 24 hours of pickup.' },
+    upiId: { type: String, default: '9876543210@paytm' },
+    gpayNumber: { type: String, default: '9876543210' },
   },
   { timestamps: true }
 );
