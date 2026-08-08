@@ -20,8 +20,8 @@ export const ItemsPage: React.FC = () => {
   // Active Service Category Filter (Default: 'Wash and Fold')
   const [selectedService, setSelectedService] = useState<string>('Wash and Fold');
 
-  // Active Garment Category Filter (Default: 'All')
-  const [selectedCategory, setSelectedCategory] = useState<string>('All');
+  // Active Garment Category Filter (Default: 'Regular')
+  const [selectedCategory, setSelectedCategory] = useState<string>('Regular');
   const [search, setSearch] = useState<string>('');
 
   const [formData, setFormData] = useState({
@@ -95,7 +95,7 @@ export const ItemsPage: React.FC = () => {
     }
   };
 
-  const categories = ['All', 'Regular', 'Men', 'Women', 'Kids', 'Household', 'Others'];
+  const categories = ['Regular', 'Men', 'Women', 'Kids', 'Household', 'Others'];
 
   // Build exact catalog item order map matching New Order page sequence
   const catalogOrderIds: string[] = [];
@@ -121,7 +121,7 @@ export const ItemsPage: React.FC = () => {
   const filteredItems = items
     .filter((item) => {
       const matchesSearch = item.name.toLowerCase().includes(search.toLowerCase());
-      const matchesCat = selectedCategory === 'All' || item.category === selectedCategory;
+      const matchesCat = item.category === selectedCategory;
       return matchesSearch && matchesCat;
     })
     .sort((a, b) => getItemRank(a) - getItemRank(b));
