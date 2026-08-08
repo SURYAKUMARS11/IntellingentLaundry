@@ -4,6 +4,7 @@ import {
   fetchDashboardStats,
   fetchSettings,
   updateOrderStatusApi,
+  recordOrderPaymentApi,
 } from '../services/api';
 import { DashboardStats, Order, OrderStatus, Setting, Customer, Payment } from '../types';
 import { StatusBadge } from '../components/ui/Badge';
@@ -1059,10 +1060,15 @@ export const DashboardPage: React.FC = () => {
           order={selectedOrder}
           setting={setting}
           onClose={() => setShowPaymentModal(false)}
-          onSuccess={async () => {
-            setShowPaymentModal(false);
-            loadData();
-            setSelectedOrder(null);
+          onSuccess={async (paymentData) => {
+            try {
+              await recordOrderPaymentApi(selectedOrder._id, paymentData);
+              setShowPaymentModal(false);
+              loadData();
+              setSelectedOrder(null);
+            } catch (err: any) {
+              alert(err.message || 'Failed to record payment');
+            }
           }}
         />
       )}
