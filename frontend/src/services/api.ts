@@ -451,15 +451,20 @@ export const deleteGarmentCategoryApi = async (id: string) => {
   }
 };
 
-// --- Order API ---
 export const fetchPublicOrderByNumber = async (orderNumber: string) => {
   try {
-    return await fetchApi(`/orders/public/${orderNumber}`);
-  } catch (err) {
-    const orders = getMockOrders();
-    const order = orders.find((o) => o.orderNumber === orderNumber) || orders[0];
+    const res = await fetchApi(`/orders/public/${orderNumber}`);
+    if (res.success && res.order) {
+      return res;
+    }
+  } catch (err) {}
+
+  const orders = getMockOrders();
+  const order = orders.find((o) => o.orderNumber === orderNumber);
+  if (order) {
     return { success: true, order };
   }
+  return { success: false, message: 'Receipt not found' };
 };
 
 export const fetchOrders = async (
