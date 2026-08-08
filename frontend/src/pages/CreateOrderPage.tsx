@@ -47,7 +47,8 @@ export const CreateOrderPage: React.FC = () => {
 
   // Form State
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>('');
-  const [customerSearch, setCustomerSearch] = useState('');
+  const [customerSearch, setCustomerSearch] = useState<string>('');
+  const [isCustDropdownOpen, setIsCustDropdownOpen] = useState<boolean>(false);
   const [showNewCustModal, setShowNewCustModal] = useState(false);
 
   // New inline customer form
@@ -412,54 +413,87 @@ export const CreateOrderPage: React.FC = () => {
 
             {/* Selected Customer Card or Search Selector */}
             {selectedCustomerObj ? (
-              <div className="p-4 rounded-2xl bg-brand-50 dark:bg-brand-950/50 border border-brand-200 dark:border-brand-900 flex items-center justify-between">
+              <div className="p-4 rounded-2xl bg-brand-50 dark:bg-brand-950/50 border border-brand-200 dark:border-brand-900 flex items-center justify-between shadow-xs">
                 <div>
-                  <h3 className="font-extrabold text-sm text-brand-900 dark:text-brand-100">
-                    {selectedCustomerObj.name}
+                  <h3 className="font-extrabold text-sm text-brand-900 dark:text-brand-100 flex items-center gap-1.5">
+                    <User className="w-4 h-4 text-brand-600 dark:text-brand-400" />
+                    <span>{selectedCustomerObj.name}</span>
                   </h3>
-                  <p className="text-xs text-brand-700 dark:text-brand-300">
-                    Mobile: +91 {selectedCustomerObj.mobile} | {selectedCustomerObj.address}
+                  <p className="text-xs text-brand-700 dark:text-brand-300 mt-0.5 font-medium">
+                    Mobile: +91 {selectedCustomerObj.mobile} {selectedCustomerObj.address ? `| ${selectedCustomerObj.address}` : ''}
                   </p>
                 </div>
                 <button
                   type="button"
-                  onClick={() => setSelectedCustomerId('')}
-                  className="text-xs text-slate-400 hover:text-slate-600 underline font-bold"
+                  onClick={() => {
+                    setSelectedCustomerId('');
+                    setIsCustDropdownOpen(true);
+                  }}
+                  className="px-3 py-1.5 rounded-xl bg-white dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shadow-xs hover:bg-slate-50 transition-all"
                 >
-                  Change
+                  Change Customer
                 </button>
               </div>
             ) : (
-              <div className="space-y-2">
+              <div className="relative space-y-2">
                 <div className="relative">
-                  <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
+                  <Search className="w-4 h-4 absolute left-3.5 top-3 text-slate-400" />
                   <input
                     type="text"
-                    placeholder="Search customer by name or mobile number..."
+                    placeholder="Click to select or search customer by name / mobile..."
                     value={customerSearch}
-                    onChange={(e) => setCustomerSearch(e.target.value)}
-                    className="w-full pl-9 pr-4 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-brand-500"
+                    onFocus={() => setIsCustDropdownOpen(true)}
+                    onChange={(e) => {
+                      setCustomerSearch(e.target.value);
+                      setIsCustDropdownOpen(true);
+                    }}
+                    className="w-full pl-10 pr-4 py-2.5 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-brand-500 font-medium"
                   />
                 </div>
 
-                <div className="max-h-40 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-xl">
-                  {filteredCustomers.slice(0, 5).map((cust) => (
-                    <button
-                      key={cust._id}
-                      type="button"
-                      onClick={() => setSelectedCustomerId(cust._id)}
-                      className="w-full text-left p-2.5 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors flex justify-between items-center text-xs"
-                    >
-                      <div>
-                        <p className="font-bold text-slate-900 dark:text-white">{cust.name}</p>
-                        <p className="text-slate-500 text-[11px]">+91 {cust.mobile}</p>
+                {/* Dropdown list - ONLY SHOWN WHEN CLICKED/FOCUSED OR SEARCHING */}
+                {isCustDropdownOpen && (
+                  <div className="absolute z-20 left-0 right-0 top-full mt-1 max-h-52 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-2xl shadow-xl">
+                    {filteredCustomers.length === 0 ? (
+                      <div className="p-4 text-center text-xs text-slate-400">
+                        No matching customers found.{' '}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsCustDropdownOpen(false);
+                            setShowNewCustModal(true);
+                          }}
+                          className="text-brand-600 font-bold underline"
+                        >
+                          + Add New Customer
+                        </button>
                       </div>
-                      <span className="text-[10px] px-2.5 py-1 rounded-full bg-brand-50 text-brand-600 font-bold">
-                        Select
-                      </span>
-                    </button>
-                  ))}
-                </div>
+                    ) : (
+                      filteredCustomers.slice(0, 10).map((cust) => (
+                        <button
+                          key={cust._id}
+                          type="button"
+                          onClick={() => {
+                            setSelectedCustomerId(cust._id);
+                            setIsCustDropdownOpen(false);
+                            setCustomerSearch('');
+                          }}
+                          className="w-full text-left p-3 hover:bg-brand-50/60 dark:hover:bg-slate-800 transition-colors flex justify-between items-center text-xs group"
+                        >
+                          <div>
+                            <p className="font-extrabold text-slate-900 dark:text-white group-hover:text-brand-600">
+                              {cust.name}
+                            </p>
+                            <p className="text-slate-500 text-[11px] font-medium">+91 {cust.mobile}</p>
+                          </div>
+                          <span className="text-[10px] px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold group-hover:bg-brand-600 group-hover:text-white transition-all">
+                            Select
+                          </span>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </div>
