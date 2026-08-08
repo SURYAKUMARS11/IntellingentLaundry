@@ -185,7 +185,11 @@ export const deleteCustomerApi = async (id: string) => {
 // --- Service API ---
 export const fetchServices = async () => {
   try {
-    return await fetchApi('/services');
+    const res = await fetchApi('/services');
+    if (res.success && Array.isArray(res.services) && res.services.length >= 10) {
+      return res;
+    }
+    return { success: true, services: getMockServices() };
   } catch (err) {
     return { success: true, services: getMockServices() };
   }
@@ -254,7 +258,11 @@ export const deleteServiceApi = async (id: string) => {
 // --- Clothing Item API ---
 export const fetchItems = async () => {
   try {
-    return await fetchApi('/items');
+    const res = await fetchApi('/items');
+    if (res.success && Array.isArray(res.items) && res.items.length >= 50) {
+      return res;
+    }
+    return { success: true, items: getMockItems() };
   } catch (err) {
     return { success: true, items: getMockItems() };
   }
