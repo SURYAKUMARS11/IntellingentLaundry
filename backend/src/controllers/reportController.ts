@@ -3,6 +3,7 @@ import Order from '../models/Order';
 import Customer from '../models/Customer';
 import Service from '../models/Service';
 import Payment from '../models/Payment';
+import Expense from '../models/Expense';
 
 export const getDashboardStats = async (req: Request, res: Response) => {
   try {
@@ -272,11 +273,176 @@ export const getRevenueReport = async (req: Request, res: Response) => {
   }
 };
 
+export const getProfitAndLossReport = async (req: Request, res: Response) => {
+  try {
+    const { preset = 'current_month', dateFrom, dateTo } = req.query;
+
+    const now = new Date();
+    let startDate: Date = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+    let endDate: Date = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+
+    if (preset === 'last_month') {
+      startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1, 0, 0, 0, 0);
+      endDate = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
+    } else if (preset === 'last_3_months') {
+      startDate = new Date(now.getFullYear(), now.getMonth() - 2, 1, 0, 0, 0, 0);
+      endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+    } else if (preset === 'current_year') {
+      startDate = new Date(now.getFullYear(), 0, 1, 0, 0, 0, 0);
+      endDate = new Date(now.getFullYear(), 11, 31, 23, 59, 59, 999);
+    } else if (preset === 'all') {
+      startDate = new Date(2020, 0, 1);
+      endDate = new Date();
+    } else if (dateFrom || dateTo) {
+      if (dateFrom) {
+        startDate = new Date(dateFrom as string);
+        startDate.setHours(0, 0, 0, 0);
+      }
+      if (dateTo) {
+        endDate = new Date(dateTo as string);
+        endDate.setHours(23, 59, 59, 999);
+      }
+    }
+
+    // 1. Calculate Gross Payments Revenue within period
+    const payments = await Payment.find({
+      paidAt: { $gte: startDate, $lte: endDate },
+    });
+
+    let grossRevenue = 0;
+    let cashIncome = 0;
+    let upiIncome = 0;
+    let cardIncome = 0;
+
+    payments.forEach((p) => {
+      grossRevenue += p.amount || 0;
+      if (p.paymentMethod === 'Cash') cashIncome += p.amount || 0;
+      else if (p.paymentMethod === 'UPI') upiIncome += p.amount || 0;
+      else if (p.paymentMethod === 'Card') cardIncome += p.amount || 0;
+    });
+
+    // Fallback if no payment models, calculate from orders
+    if (grossRevenue === 0) {
+      const orders = await Order.find({
+        orderDate: { $gte: startDate, $lte: endDate },
+      });
+      orders.forEach((o) => {
+        grossRevenue += o.advancePaid || 0;
+        cashIncome += o.advancePaid || 0;
+      });
+    }
+
+    // 2. Calculate Operating Expenses within period
+    const expenses = await Expense.find({
+      expenseDate: { $gte: startDate, $lte: endDate },
+    });
+
+    let totalExpenses = 0;
+    let cashExpenses = 0;
+    let bankExpenses = 0;
+    const categoryTotals: { [key: string]: number } = {};
+
+    expenses.forEach((e) => {
+      totalExpenses += e.amount || 0;
+      if (e.paymentMethod === 'Cash') cashExpenses += e.amount || 0;
+      else bankExpenses += e.amount || 0;
+
+      const cat = e.category || 'Miscellaneous';
+      categoryTotals[cat] = (categoryTotals[cat] || 0) + (e.amount || 0);
+    });
+
+    // 3. Compute Net Profit & Margin
+    const netProfit = grossRevenue - totalExpenses;
+    const profitMargin = grossRevenue > 0 ? Number(((netProfit / grossRevenue) * 100).toFixed(1)) : 0;
+
+    // 4. Expense Breakdown List
+    const expenseBreakdown = Object.keys(categoryTotals).map((cat) => ({
+      category: cat,
+      amount: categoryTotals[cat],
+      percentage: totalExpenses > 0 ? Number(((categoryTotals[cat] / totalExpenses) * 100).toFixed(1)) : 0,
+    })).sort((a, b) => b.amount - a.amount);
+
+    // 5. Monthly Comparison (Last 6 Months)
+    const monthlyTrends = [];
+    for (let i = 5; i >= 0; i--) {
+      const mStart = new Date(now.getFullYear(), now.getMonth() - i, 1, 0, 0, 0, 0);
+      const mEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0, 23, 59, 59, 999);
+      const monthLabel = mStart.toLocaleString('default', { month: 'short', year: '2-digit' });
+
+      const mPayments = await Payment.find({ paidAt: { $gte: mStart, $lte: mEnd } });
+      const mRev = mPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
+
+      const mExpenses = await Expense.find({ expenseDate: { $gte: mStart, $lte: mEnd } });
+      const mExp = mExpenses.reduce((sum, e) => sum + (e.amount || 0), 0);
+
+      const mNet = mRev - mExp;
+      monthlyTrends.push({
+        month: monthLabel,
+        revenue: mRev,
+        expenses: mExp,
+        netProfit: mNet,
+      });
+    }
+
+    res.json({
+      success: true,
+      period: {
+        preset,
+        startDate: startDate.toISOString().slice(0, 10),
+        endDate: endDate.toISOString().slice(0, 10),
+      },
+      summary: {
+        grossRevenue,
+        cashIncome,
+        upiIncome,
+        cardIncome,
+        totalExpenses,
+        cashExpenses,
+        bankExpenses,
+        netProfit,
+        profitMargin,
+        isProfit: netProfit >= 0,
+      },
+      expenseBreakdown,
+      monthlyTrends,
+    });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 export const exportCSV = async (req: Request, res: Response) => {
   try {
     const { type = 'orders' } = req.query;
 
-    if (type === 'orders') {
+    if (type === 'pnl') {
+      const payments = await Payment.find();
+      const expenses = await Expense.find();
+
+      let grossRev = payments.reduce((sum, p) => sum + (p.amount || 0), 0);
+      let totalExp = expenses.reduce((sum, e) => sum + (e.amount || 0), 0);
+      let net = grossRev - totalExp;
+
+      let csv = 'PROFIT & LOSS FINANCIAL STATEMENT\n';
+      csv += `Generated Date,${new Date().toISOString().slice(0, 10)}\n\n`;
+      csv += 'FINANCIAL SUMMARY,AMOUNT (INR)\n';
+      csv += `Gross Income (Payments Collected),${grossRev}\n`;
+      csv += `Total Operating Expenses,${totalExp}\n`;
+      csv += `NET PROFIT / LOSS,${net}\n\n`;
+
+      csv += 'EXPENSE BREAKDOWN BY CATEGORY,AMOUNT (INR)\n';
+      const catTotals: { [k: string]: number } = {};
+      expenses.forEach((e) => {
+        catTotals[e.category || 'Miscellaneous'] = (catTotals[e.category || 'Miscellaneous'] || 0) + (e.amount || 0);
+      });
+      Object.keys(catTotals).forEach((cat) => {
+        csv += `"${cat}",${catTotals[cat]}\n`;
+      });
+
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', 'attachment; filename="laundry_profit_loss_statement.csv"');
+      return res.send(csv);
+    } else if (type === 'orders') {
       const orders = await Order.find().sort({ createdAt: -1 });
 
       let csv = 'Order Number,Customer Name,Customer Mobile,Order Date,Expected Delivery,Status,Payment Status,Total Amount,Advance Paid,Remaining Balance\n';
