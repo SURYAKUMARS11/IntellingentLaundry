@@ -52,10 +52,10 @@ export const loginApi = async (usernameOrCreds: any, passwordParam?: string) => 
       body: JSON.stringify({ username, password }),
     });
   } catch (err) {
-    if (username === 'admin' && password === 'admin123') {
+    if ((username === 'adminIL' && password === 'IL@112') || (username === 'admin' && password === 'admin123')) {
       const mockAdmin: Admin = {
         id: 'admin-1',
-        username: 'admin',
+        username: 'adminIL',
         name: 'Shop Owner',
         email: 'owner@intelligentlaundry.com',
       };
@@ -75,7 +75,7 @@ export const getMe = async () => {
       success: true,
       admin: {
         id: 'admin-1',
-        username: 'admin',
+        username: 'adminIL',
         name: 'Shop Owner',
         email: 'owner@intelligentlaundry.com',
       },

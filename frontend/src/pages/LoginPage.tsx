@@ -4,8 +4,8 @@ import { useAuth } from '../context/AuthContext';
 import { WashingMachine, Lock, User, Eye, EyeOff, Sparkles, CheckCircle2 } from 'lucide-react';
 
 export const LoginPage: React.FC = () => {
-  const [username, setUsername] = useState('admin');
-  const [password, setPassword] = useState('admin123');
+  const [username, setUsername] = useState('adminIL');
+  const [password, setPassword] = useState('IL@112');
   const [rememberMe, setRememberMe] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -71,7 +71,7 @@ export const LoginPage: React.FC = () => {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="Enter admin username"
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-700 bg-slate-800/80 text-white text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/40 transition-all"
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-700 bg-slate-800/80 text-white text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/40 transition-all font-bold"
               />
             </div>
           </div>
@@ -88,7 +88,7 @@ export const LoginPage: React.FC = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter password"
-                className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-slate-700 bg-slate-800/80 text-white text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/40 transition-all"
+                className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-slate-700 bg-slate-800/80 text-white text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/40 transition-all font-bold"
               />
               <button
                 type="button"
@@ -127,12 +127,6 @@ export const LoginPage: React.FC = () => {
             )}
           </button>
         </form>
-
-        {/* Demo Credentials Tip */}
-        <div className="mt-8 p-3 rounded-2xl bg-white/5 border border-white/10 text-center text-xs text-slate-400">
-          <p className="font-semibold text-brand-300">Default Demo Credentials</p>
-          <p className="mt-0.5">Username: <code className="text-white">admin</code> | Password: <code className="text-white">admin123</code></p>
-        </div>
       </div>
     </div>
   );

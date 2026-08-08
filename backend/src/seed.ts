@@ -20,16 +20,21 @@ export const seedDatabase = async () => {
     console.log('[SEED] Starting database seeding process...');
 
     // 1. Seed Admin
-    const adminCount = await Admin.countDocuments();
-    if (adminCount === 0) {
-      const hashedPassword = await bcrypt.hash('admin123', 10);
+    let admin = await Admin.findOne({ username: 'adminIL' });
+    if (!admin) {
+      await Admin.deleteMany({ username: 'admin' });
+      const hashedPassword = await bcrypt.hash('IL@112', 10);
       await Admin.create({
-        username: 'admin',
+        username: 'adminIL',
         password: hashedPassword,
         name: 'Shop Owner',
         email: 'owner@intelligentlaundry.com',
       });
-      console.log('[SEED] Default admin created (username: admin, password: admin123)');
+      console.log('[SEED] Default admin created (username: adminIL, password: IL@112)');
+    } else {
+      const hashedPassword = await bcrypt.hash('IL@112', 10);
+      admin.password = hashedPassword;
+      await admin.save();
     }
 
     // 2. Seed Settings
