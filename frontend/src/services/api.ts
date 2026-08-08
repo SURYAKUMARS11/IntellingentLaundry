@@ -10,6 +10,7 @@ import {
   AccountsSummary,
   AccountsTransaction,
 } from '../types';
+import { posGroupCatalog } from '../data/posCatalogData';
 
 const API_BASE = '/api';
 
@@ -808,10 +809,23 @@ const getMockServices = (): Service[] => {
   const stored = localStorage.getItem('mock_services');
   if (stored) return JSON.parse(stored);
   const initial: Service[] = [
-    { _id: 'serv-1', name: 'Wash & Fold', price: 40, unit: 'kg', estimatedHours: 24, description: 'Everyday machine wash', isActive: true },
-    { _id: 'serv-2', name: 'Wash & Iron', price: 60, unit: 'piece', estimatedHours: 24, description: 'Deep wash, fabric softener & steam press', isActive: true },
-    { _id: 'serv-3', name: 'Iron Only', price: 20, unit: 'piece', estimatedHours: 12, description: 'High-pressure steam ironing', isActive: true },
-    { _id: 'serv-4', name: 'Dry Cleaning', price: 180, unit: 'piece', estimatedHours: 48, description: 'Chemical solvent cleaning', isActive: true },
+    { _id: 'serv-1', name: 'Wash and Fold', price: 40, unit: 'kg', estimatedHours: 24, description: 'Everyday machine wash & neat folding', isActive: true },
+    { _id: 'serv-2', name: 'Ironing', price: 15, unit: 'piece', estimatedHours: 12, description: 'High-pressure steam press ironing', isActive: true },
+    { _id: 'serv-3', name: 'Laundry', price: 50, unit: 'piece', estimatedHours: 24, description: 'Deep wash, fabric softener & steam press', isActive: true },
+    { _id: 'serv-4', name: 'Premium Laundry', price: 80, unit: 'piece', estimatedHours: 24, description: 'Individual drum wash with luxury perfume finish', isActive: true },
+    { _id: 'serv-5', name: 'Dry Cleaning', price: 150, unit: 'piece', estimatedHours: 48, description: 'Specialized chemical solvent cleaning', isActive: true },
+    { _id: 'serv-6', name: 'Starch + Ironing', price: 30, unit: 'piece', estimatedHours: 12, description: 'Crisp starch treatment with steam press', isActive: true },
+    { _id: 'serv-7', name: 'Wash + Starch + Ironing', price: 70, unit: 'piece', estimatedHours: 24, description: 'Complete wash, starch & steam press', isActive: true },
+    { _id: 'serv-8', name: 'Saree Polishing', price: 100, unit: 'piece', estimatedHours: 36, description: 'Saree roll press & shine restoration', isActive: true },
+    { _id: 'serv-9', name: 'Saree Pre-pleating', price: 120, unit: 'piece', estimatedHours: 24, description: 'Ready-to-wear pleating & box folding', isActive: true },
+    { _id: 'serv-10', name: 'Shoes Cleaning', price: 200, unit: 'pair', estimatedHours: 48, description: 'Deep shoe scrubbing & whitening', isActive: true },
+    { _id: 'serv-11', name: 'Bag Cleaning', price: 250, unit: 'piece', estimatedHours: 48, description: 'Leather & fabric bag deep restoration', isActive: true },
+
+    // Highlight Kg Rate Services
+    { _id: 'serv-kg-1', name: 'Wash & Iron (Kg Rate)', price: 120, unit: 'kg', estimatedHours: 24, description: 'Wash & Iron Rate per Kg', isActive: true },
+    { _id: 'serv-kg-2', name: 'Express Laundry (Kg Rate)', price: 199, unit: 'kg', estimatedHours: 12, description: 'Express Laundry Rate per Kg', isActive: true },
+    { _id: 'serv-kg-3', name: 'Premium Laundry (Kg Rate)', price: 159, unit: 'kg', estimatedHours: 24, description: 'Premium Laundry Rate per Kg', isActive: true },
+    { _id: 'serv-kg-4', name: 'Premium Express Laundry (Kg Rate)', price: 299, unit: 'kg', estimatedHours: 12, description: 'Premium Express Laundry Rate per Kg', isActive: true },
   ];
   localStorage.setItem('mock_services', JSON.stringify(initial));
   return initial;
@@ -822,12 +836,20 @@ const saveMockServices = (s: Service[]) => localStorage.setItem('mock_services',
 const getMockItems = (): LaundryItem[] => {
   const stored = localStorage.getItem('mock_items');
   if (stored) return JSON.parse(stored);
-  const initial: LaundryItem[] = [
-    { _id: 'item-1', name: 'Shirt / T-Shirt', defaultPrice: 40, category: 'Clothes', isActive: true },
-    { _id: 'item-2', name: 'Pant / Jeans', defaultPrice: 50, category: 'Clothes', isActive: true },
-    { _id: 'item-3', name: 'Suit (2 Piece)', defaultPrice: 250, category: 'Dry Clean', isActive: true },
-    { _id: 'item-4', name: 'Saree (Silk)', defaultPrice: 200, category: 'Dry Clean', isActive: true },
-  ];
+  const initial: LaundryItem[] = [];
+  posGroupCatalog.forEach((group) => {
+    group.subCategories.forEach((sub) => {
+      sub.items.forEach((item) => {
+        initial.push({
+          _id: item.id,
+          name: item.name,
+          defaultPrice: item.price,
+          category: group.groupName,
+          isActive: true,
+        });
+      });
+    });
+  });
   localStorage.setItem('mock_items', JSON.stringify(initial));
   return initial;
 };

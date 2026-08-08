@@ -8,7 +8,7 @@ import {
 } from '../services/api';
 import { LaundryItem, Setting } from '../types';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
-import { Shirt, Plus, Edit, Trash2, X, Tag } from 'lucide-react';
+import { Shirt, Plus, Edit, Trash2, X, Tag, Search } from 'lucide-react';
 
 export const ItemsPage: React.FC = () => {
   const [items, setItems] = useState<LaundryItem[]>([]);
@@ -87,7 +87,16 @@ export const ItemsPage: React.FC = () => {
     }
   };
 
-  const categories = ['Clothes', 'Household', 'Dry Clean', 'Footwear', 'Others'];
+  const [search, setSearch] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('All');
+
+  const categories = ['All', 'Regular', 'Men', 'Women', 'Kids', 'Household', 'Others'];
+
+  const filteredItems = items.filter((item) => {
+    const matchesSearch = item.name.toLowerCase().includes(search.toLowerCase());
+    const matchesCat = selectedCategory === 'All' || item.category === selectedCategory;
+    return matchesSearch && matchesCat;
+  });
 
   return (
     <div className="space-y-6 pb-20">
@@ -95,10 +104,10 @@ export const ItemsPage: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
-            <Shirt className="w-6 h-6 text-brand-600" /> Clothing & Item Categories
+            <Shirt className="w-6 h-6 text-brand-600" /> Clothing & Item Price Catalog
           </h1>
           <p className="hidden sm:block text-xs text-slate-500">
-            Manage garment types, default price lists & category groupings
+            Manage garment items, categories ({items.length} items loaded), and customize default rates
           </p>
         </div>
 
@@ -111,9 +120,55 @@ export const ItemsPage: React.FC = () => {
         </button>
       </div>
 
+      {/* Search & Category Filter Bar */}
+      <div className="glass-card p-4 space-y-3">
+        <div className="flex flex-col sm:flex-row items-center gap-3">
+          <div className="relative flex-1 w-full">
+            <Search className="w-4 h-4 absolute left-3.5 top-3 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search garment item by name (e.g. Shirt, Blazer, Saree, Hoodie)..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-brand-500 font-medium"
+            />
+          </div>
+
+          <div className="text-xs font-bold text-slate-500 shrink-0">
+            Showing {filteredItems.length} of {items.length} items
+          </div>
+        </div>
+
+        {/* Category Pills */}
+        <div className="flex flex-wrap gap-1.5 pt-1">
+          {categories.map((cat) => {
+            const active = selectedCategory === cat;
+            return (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => setSelectedCategory(cat)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                  active
+                    ? 'bg-brand-600 text-white shadow-md shadow-brand-600/20'
+                    : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200'
+                }`}
+              >
+                {cat}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Items Table & Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {items.map((item) => (
+      {filteredItems.length === 0 ? (
+        <div className="glass-card p-8 text-center text-xs text-slate-500">
+          No garment items found matching your search or category filter.
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredItems.map((item) => (
           <div
             key={item._id}
             className="glass-card p-5 space-y-3 flex items-center justify-between hover:border-brand-500 transition-all"
@@ -147,6 +202,7 @@ export const ItemsPage: React.FC = () => {
           </div>
         ))}
       </div>
+    )}
 
       {/* Add / Edit Modal */}
       {showModal && (
