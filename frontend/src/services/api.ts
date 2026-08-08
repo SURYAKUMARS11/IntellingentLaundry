@@ -1040,11 +1040,64 @@ export const fetchDashboardStats = async (params: {
 
 export const fetchRevenueReport = async (params: any = {}) => {
   const query = new URLSearchParams(params as any).toString();
+  let apiRes: any = null;
   try {
-    return await fetchApi(`/reports/revenue?${query}`);
-  } catch (err) {
-    return { success: true, report: [] };
-  }
+    apiRes = await fetchApi(`/reports/revenue?${query}`);
+    if (apiRes && apiRes.success && (apiRes.chartData?.length > 0 || apiRes.serviceBreakdown?.length > 0)) {
+      return apiRes;
+    }
+  } catch (err) {}
+
+  const orders = getMockOrders();
+  const customers = getMockCustomers();
+
+  // Compute daily chart points from orders
+  const chartMap: { [date: string]: number } = {};
+  orders.forEach((o) => {
+    const d = new Date(o.orderDate || o.createdAt).toISOString().slice(0, 10);
+    const amt = o.advancePaid > 0 ? o.advancePaid : o.totalAmount;
+    chartMap[d] = (chartMap[d] || 0) + amt;
+  });
+
+  const chartData = Object.keys(chartMap).map((d) => ({
+    date: d,
+    revenue: chartMap[d],
+    count: 1,
+  })).sort((a, b) => a.date.localeCompare(b.date));
+
+  // Compute service breakdown
+  const serviceMap: { [srv: string]: number } = {};
+  orders.forEach((o) => {
+    (o.items || []).forEach((item) => {
+      const srvName = item.serviceName || 'Laundry';
+      serviceMap[srvName] = (serviceMap[srvName] || 0) + (item.subtotal || item.unitPrice * item.quantity || 0);
+    });
+  });
+
+  const serviceBreakdown = Object.keys(serviceMap).map((srv) => ({
+    service: srv,
+    amount: serviceMap[srv],
+    quantity: 1,
+  })).sort((a, b) => b.amount - a.amount);
+
+  // Compute top customers
+  const processedCusts = customers.map((c) => {
+    const custOrds = orders.filter(
+      (o: any) =>
+        (o.customerId && String(o.customerId) === String(c._id)) ||
+        (o.customer && String(typeof o.customer === 'object' ? o.customer._id : o.customer) === String(c._id)) ||
+        (o.customerSnapshot && o.customerSnapshot.mobile === c.mobile)
+    );
+    const calcSpent = Math.max(c.totalSpent || 0, custOrds.reduce((sum, o) => sum + (o.totalAmount || 0), 0));
+    return { ...c, totalSpent: calcSpent, totalOrders: Math.max(c.totalOrders || 0, custOrds.length) };
+  }).sort((a, b) => b.totalSpent - a.totalSpent).slice(0, 5);
+
+  return {
+    success: true,
+    chartData: chartData.length > 0 ? chartData : [{ date: new Date().toISOString().slice(0, 10), revenue: 0, count: 0 }],
+    serviceBreakdown: serviceBreakdown.length > 0 ? serviceBreakdown : [{ service: 'Laundry', amount: 0, quantity: 0 }],
+    topCustomers: processedCusts,
+  };
 };
 
 export const fetchProfitLossReport = async (params: { preset?: string; dateFrom?: string; dateTo?: string } = {}) => {

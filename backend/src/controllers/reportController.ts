@@ -231,7 +231,8 @@ export const getRevenueReport = async (req: Request, res: Response) => {
     }
     startDate.setHours(0, 0, 0, 0);
 
-    const chartData = await Payment.aggregate([
+    // 1. Daily Chart Data: Group payments or orders by date
+    let chartData = await Payment.aggregate([
       { $match: { paidAt: { $gte: startDate } } },
       {
         $group: {
@@ -243,7 +244,22 @@ export const getRevenueReport = async (req: Request, res: Response) => {
       { $sort: { _id: 1 } },
     ]);
 
-    const serviceBreakdown = await Order.aggregate([
+    if (chartData.length === 0) {
+      chartData = await Order.aggregate([
+        { $match: { orderDate: { $gte: startDate } } },
+        {
+          $group: {
+            _id: { $dateToString: { format: '%Y-%m-%d', date: '$orderDate' } },
+            revenue: { $sum: { $cond: [{ $gt: ['$advancePaid', 0] }, '$advancePaid', '$totalAmount'] } },
+            count: { $sum: 1 },
+          },
+        },
+        { $sort: { _id: 1 } },
+      ]);
+    }
+
+    // 2. Service Breakdown
+    let serviceBreakdown = await Order.aggregate([
       { $unwind: '$items' },
       {
         $group: {
@@ -255,6 +271,7 @@ export const getRevenueReport = async (req: Request, res: Response) => {
       { $sort: { totalAmount: -1 } },
     ]);
 
+    // 3. Top Customers
     const topCustomers = await Customer.find().sort({ totalSpent: -1 }).limit(5);
 
     res.json({
@@ -369,7 +386,11 @@ export const getProfitAndLossReport = async (req: Request, res: Response) => {
       const monthLabel = mStart.toLocaleString('default', { month: 'short', year: '2-digit' });
 
       const mPayments = await Payment.find({ paidAt: { $gte: mStart, $lte: mEnd } });
-      const mRev = mPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
+      let mRev = mPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
+      if (mRev === 0) {
+        const mOrders = await Order.find({ orderDate: { $gte: mStart, $lte: mEnd } });
+        mRev = mOrders.reduce((sum, o) => sum + (o.advancePaid || 0), 0);
+      }
 
       const mExpenses = await Expense.find({ expenseDate: { $gte: mStart, $lte: mEnd } });
       const mExp = mExpenses.reduce((sum, e) => sum + (e.amount || 0), 0);
