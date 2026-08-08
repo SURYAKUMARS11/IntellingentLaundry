@@ -807,7 +807,12 @@ const saveMockCustomers = (customers: Customer[]) => localStorage.setItem('mock_
 
 const getMockServices = (): Service[] => {
   const stored = localStorage.getItem('mock_services');
-  if (stored) return JSON.parse(stored);
+  if (stored) {
+    try {
+      const list = JSON.parse(stored);
+      if (Array.isArray(list) && list.length >= 15) return list;
+    } catch (e) {}
+  }
   const initial: Service[] = [
     { _id: 'serv-1', name: 'Wash and Fold', price: 40, unit: 'kg', estimatedHours: 24, description: 'Everyday machine wash & neat folding', isActive: true },
     { _id: 'serv-2', name: 'Ironing', price: 15, unit: 'piece', estimatedHours: 12, description: 'High-pressure steam press ironing', isActive: true },
@@ -835,7 +840,12 @@ const saveMockServices = (s: Service[]) => localStorage.setItem('mock_services',
 
 const getMockItems = (): LaundryItem[] => {
   const stored = localStorage.getItem('mock_items');
-  if (stored) return JSON.parse(stored);
+  if (stored) {
+    try {
+      const list = JSON.parse(stored);
+      if (Array.isArray(list) && list.length >= 50) return list;
+    } catch (e) {}
+  }
   const initial: LaundryItem[] = [];
   posGroupCatalog.forEach((group) => {
     group.subCategories.forEach((sub) => {
