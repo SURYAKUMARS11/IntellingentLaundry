@@ -130,68 +130,171 @@ export const ServicesPage: React.FC = () => {
         </button>
       </div>
 
-      {/* Services Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {services.map((serv) => (
-          <div
-            key={serv._id}
-            className={`glass-card p-5 space-y-4 flex flex-col justify-between transition-all ${
-              !serv.isActive ? 'opacity-60 bg-slate-100 dark:bg-slate-900' : ''
-            }`}
-          >
-            <div>
-              <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="font-extrabold text-base text-slate-900 dark:text-white">
-                    {serv.name}
-                  </h3>
-                  <p className="text-lg font-black text-brand-600 dark:text-brand-400 mt-1">
-                    {currencySymbol}{serv.price} <span className="text-xs font-normal text-slate-500">/ {serv.unit}</span>
-                  </p>
-                </div>
+      {/* Services Row-by-Row Table List View */}
+      <div className="glass-card overflow-hidden">
+        {services.length === 0 ? (
+          <div className="text-center py-12 text-slate-500 text-xs">
+            No laundry services configured. Click "New Service" to add one.
+          </div>
+        ) : (
+          <div>
+            {/* Desktop / Tablet Table View */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 dark:bg-slate-800/80 text-slate-500 font-semibold border-b border-slate-200 dark:border-slate-800">
+                  <tr>
+                    <th className="py-3.5 px-4 w-12">#</th>
+                    <th className="py-3.5 px-4">Service Name & Description</th>
+                    <th className="py-3.5 px-4">Rate & Unit</th>
+                    <th className="py-3.5 px-4">Turnaround Time</th>
+                    <th className="py-3.5 px-4 text-center">Status</th>
+                    <th className="py-3.5 px-4 text-center">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-slate-800 dark:text-slate-200">
+                  {services.map((serv, idx) => (
+                    <tr
+                      key={serv._id}
+                      className={`hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors ${
+                        !serv.isActive ? 'opacity-60 bg-slate-50/50 dark:bg-slate-900/50' : ''
+                      }`}
+                    >
+                      <td className="py-4 px-4 font-bold text-slate-400">
+                        {idx + 1}
+                      </td>
 
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={() => handleOpenEdit(serv)}
-                    className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500"
-                  >
-                    <Edit className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => setDeleteServId(serv._id)}
-                    className="p-1.5 rounded-lg hover:bg-rose-50 text-rose-500"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
+                      <td className="py-4 px-4">
+                        <h3 className="font-extrabold text-sm text-slate-900 dark:text-white">
+                          {serv.name}
+                        </h3>
+                        {serv.description && (
+                          <p className="text-xs text-slate-500 mt-0.5 max-w-md line-clamp-1">
+                            {serv.description}
+                          </p>
+                        )}
+                      </td>
 
-              {serv.description && (
-                <p className="text-xs text-slate-600 dark:text-slate-400 mt-2 leading-relaxed">
-                  {serv.description}
-                </p>
-              )}
+                      <td className="py-4 px-4 whitespace-nowrap">
+                        <span className="font-black text-sm text-brand-600 dark:text-brand-400">
+                          {currencySymbol}{serv.price}
+                        </span>
+                        <span className="text-xs font-semibold text-slate-400 ml-1">
+                          / {serv.unit}
+                        </span>
+                      </td>
+
+                      <td className="py-4 px-4 text-slate-600 dark:text-slate-300 font-medium whitespace-nowrap">
+                        <span className="flex items-center gap-1.5">
+                          <Clock className="w-3.5 h-3.5 text-slate-400" />
+                          ~{serv.estimatedHours} Hours
+                        </span>
+                      </td>
+
+                      <td className="py-4 px-4 text-center whitespace-nowrap">
+                        <button
+                          onClick={() => handleToggleStatus(serv._id)}
+                          className={`px-3 py-1 rounded-full text-[11px] font-extrabold inline-flex items-center gap-1.5 transition-all ${
+                            serv.isActive
+                              ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900'
+                              : 'bg-rose-50 text-rose-700 dark:bg-rose-950 dark:text-rose-300 border border-rose-200 dark:border-rose-900'
+                          }`}
+                        >
+                          {serv.isActive ? <CheckCircle2 className="w-3.5 h-3.5" /> : <XCircle className="w-3.5 h-3.5" />}
+                          <span>{serv.isActive ? 'Active' : 'Inactive'}</span>
+                        </button>
+                      </td>
+
+                      <td className="py-4 px-4 text-center whitespace-nowrap">
+                        <div className="flex items-center justify-center gap-1">
+                          <button
+                            onClick={() => handleOpenEdit(serv)}
+                            title="Edit Service"
+                            className="p-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-brand-600 hover:text-white transition-colors"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => setDeleteServId(serv._id)}
+                            title="Delete Service"
+                            className="p-1.5 rounded-xl bg-rose-50 text-rose-500 hover:bg-rose-600 hover:text-white transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
 
-            <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
-              <span className="flex items-center gap-1 text-slate-500">
-                <Clock className="w-3.5 h-3.5" /> ~{serv.estimatedHours} Hours
-              </span>
+            {/* Mobile Touch Row View */}
+            <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
+              {services.map((serv, idx) => (
+                <div
+                  key={serv._id}
+                  className={`p-4 space-y-2.5 ${!serv.isActive ? 'opacity-60 bg-slate-50/50 dark:bg-slate-900/50' : ''}`}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-xs text-slate-400">#{idx + 1}</span>
+                        <h3 className="font-extrabold text-sm text-slate-900 dark:text-white">
+                          {serv.name}
+                        </h3>
+                      </div>
+                      {serv.description && (
+                        <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
+                          {serv.description}
+                        </p>
+                      )}
+                    </div>
 
-              <button
-                onClick={() => handleToggleStatus(serv._id)}
-                className={`px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1 transition-colors ${
-                  serv.isActive
-                    ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
-                    : 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300'
-                }`}
-              >
-                {serv.isActive ? <CheckCircle2 className="w-3.5 h-3.5" /> : <XCircle className="w-3.5 h-3.5" />}
-                <span>{serv.isActive ? 'Active' : 'Inactive'}</span>
-              </button>
+                    <div className="text-right shrink-0">
+                      <p className="font-black text-sm text-brand-600 dark:text-brand-400">
+                        {currencySymbol}{serv.price}
+                        <span className="text-[10px] font-normal text-slate-400 ml-0.5">/{serv.unit}</span>
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800 text-xs">
+                    <span className="flex items-center gap-1 text-slate-500 font-medium">
+                      <Clock className="w-3.5 h-3.5" /> ~{serv.estimatedHours} Hours
+                    </span>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleToggleStatus(serv._id)}
+                        className={`px-2.5 py-1 rounded-full text-[10px] font-bold flex items-center gap-1 ${
+                          serv.isActive
+                            ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
+                            : 'bg-rose-50 text-rose-700 dark:bg-rose-950 dark:text-rose-300'
+                        }`}
+                      >
+                        {serv.isActive ? <CheckCircle2 className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
+                        <span>{serv.isActive ? 'Active' : 'Inactive'}</span>
+                      </button>
+
+                      <button
+                        onClick={() => handleOpenEdit(serv)}
+                        className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300"
+                      >
+                        <Edit className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={() => setDeleteServId(serv._id)}
+                        className="p-1.5 rounded-lg bg-rose-50 text-rose-500"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
-        ))}
+        )}
       </div>
 
       {/* Add/Edit Modal */}
