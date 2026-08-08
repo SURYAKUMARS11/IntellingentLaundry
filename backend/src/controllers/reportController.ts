@@ -145,7 +145,16 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       ]),
       Order.aggregate([
         { $match: { orderDate: { $gte: todayStart, $lte: todayEnd } } },
-        { $group: { _id: null, totalAdv: { $sum: '$advancePaid' } } },
+        {
+          $group: {
+            _id: null,
+            totalAdv: {
+              $sum: {
+                $cond: [{ $eq: ['$paymentStatus', 'Paid'] }, '$totalAmount', '$advancePaid']
+              }
+            }
+          }
+        },
       ]),
     ]);
     
@@ -161,7 +170,16 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       ]),
       Order.aggregate([
         { $match: { orderDate: { $gte: monthStart } } },
-        { $group: { _id: null, totalAdv: { $sum: '$advancePaid' } } },
+        {
+          $group: {
+            _id: null,
+            totalAdv: {
+              $sum: {
+                $cond: [{ $eq: ['$paymentStatus', 'Paid'] }, '$totalAmount', '$advancePaid']
+              }
+            }
+          }
+        },
       ]),
     ]);
     
@@ -171,17 +189,17 @@ export const getDashboardStats = async (req: Request, res: Response) => {
 
     const periodRev = periodRevenue > 0 ? periodRevenue : todayRevenue;
 
-    // If paymentsList is empty, derive payment records strictly from orders with advance paid > 0
+    // If paymentsList is empty, derive payment records strictly from orders with collected money > 0
     if (paymentsList.length === 0 && ordersList.length > 0) {
       paymentsList = ordersList
-        .filter((o) => o.advancePaid > 0)
+        .filter((o) => o.paymentStatus === 'Paid' || o.advancePaid > 0)
         .map((o) => ({
           _id: o._id,
           orderNumber: o.orderNumber,
           customerName: o.customerSnapshot?.name || 'Customer',
           paymentMethod: o.paymentMethod || 'Cash',
           paidAt: o.orderDate,
-          amount: o.advancePaid,
+          amount: o.paymentStatus === 'Paid' ? o.totalAmount : o.advancePaid,
         })) as any;
     }
 
@@ -343,8 +361,12 @@ export const getProfitAndLossReport = async (req: Request, res: Response) => {
         orderDate: { $gte: startDate, $lte: endDate },
       });
       orders.forEach((o) => {
-        grossRevenue += o.advancePaid || 0;
-        cashIncome += o.advancePaid || 0;
+        const amt = o.paymentStatus === 'Paid' ? (o.totalAmount || 0) : (o.advancePaid || 0);
+        grossRevenue += amt;
+        if (o.paymentMethod === 'Cash') cashIncome += amt;
+        else if (o.paymentMethod === 'UPI') upiIncome += amt;
+        else if (o.paymentMethod === 'Card') cardIncome += amt;
+        else cashIncome += amt;
       });
     }
 
@@ -389,7 +411,10 @@ export const getProfitAndLossReport = async (req: Request, res: Response) => {
       let mRev = mPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
       if (mRev === 0) {
         const mOrders = await Order.find({ orderDate: { $gte: mStart, $lte: mEnd } });
-        mRev = mOrders.reduce((sum, o) => sum + (o.advancePaid || 0), 0);
+        mRev = mOrders.reduce(
+          (sum, o) => sum + (o.paymentStatus === 'Paid' ? (o.totalAmount || 0) : (o.advancePaid || 0)),
+          0
+        );
       }
 
       const mExpenses = await Expense.find({ expenseDate: { $gte: mStart, $lte: mEnd } });

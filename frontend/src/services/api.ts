@@ -1051,11 +1051,13 @@ export const fetchRevenueReport = async (params: any = {}) => {
   const orders = getMockOrders();
   const customers = getMockCustomers();
 
+  const getOrderCollectedAmt = (o: Order) => (o.paymentStatus === 'Paid' ? (o.totalAmount || 0) : (o.advancePaid || 0));
+
   // Compute daily chart points from orders
   const chartMap: { [date: string]: number } = {};
   orders.forEach((o) => {
     const d = new Date(o.orderDate || o.createdAt).toISOString().slice(0, 10);
-    const amt = o.advancePaid > 0 ? o.advancePaid : o.totalAmount;
+    const amt = getOrderCollectedAmt(o);
     chartMap[d] = (chartMap[d] || 0) + amt;
   });
 
@@ -1114,10 +1116,12 @@ export const fetchProfitLossReport = async (params: { preset?: string; dateFrom?
   const orders = getMockOrders();
   const expenses = getMockExpenses();
 
-  let grossRevenue = orders.reduce((sum, o) => sum + (o.advancePaid > 0 ? o.advancePaid : o.totalAmount), 0);
-  let cashIncome = orders.filter((o) => o.paymentMethod === 'Cash').reduce((sum, o) => sum + (o.advancePaid > 0 ? o.advancePaid : o.totalAmount), 0);
-  let upiIncome = orders.filter((o) => o.paymentMethod === 'UPI').reduce((sum, o) => sum + (o.advancePaid > 0 ? o.advancePaid : o.totalAmount), 0);
-  let cardIncome = orders.filter((o) => o.paymentMethod === 'Card').reduce((sum, o) => sum + (o.advancePaid > 0 ? o.advancePaid : o.totalAmount), 0);
+  const getOrderCollectedAmt = (o: Order) => (o.paymentStatus === 'Paid' ? (o.totalAmount || 0) : (o.advancePaid || 0));
+
+  let grossRevenue = orders.reduce((sum, o) => sum + getOrderCollectedAmt(o), 0);
+  let cashIncome = orders.filter((o) => o.paymentMethod === 'Cash').reduce((sum, o) => sum + getOrderCollectedAmt(o), 0);
+  let upiIncome = orders.filter((o) => o.paymentMethod === 'UPI').reduce((sum, o) => sum + getOrderCollectedAmt(o), 0);
+  let cardIncome = orders.filter((o) => o.paymentMethod === 'Card').reduce((sum, o) => sum + getOrderCollectedAmt(o), 0);
 
   let totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
   let cashExpenses = expenses.filter((e) => e.paymentMethod === 'Cash').reduce((sum, e) => sum + e.amount, 0);
