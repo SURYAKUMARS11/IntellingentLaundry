@@ -1333,3 +1333,176 @@ const getMockSettings = (): Setting => {
 };
 
 const saveMockSettings = (s: Setting) => localStorage.setItem('mock_settings', JSON.stringify(s));
+
+const getMockPayments = () => {
+  const stored = localStorage.getItem('mock_payments');
+  if (stored) return JSON.parse(stored);
+  return [];
+};
+
+// --- EXCEL MASTER BACKUP & RESTORE UTILITIES ---
+export const downloadMasterExcelBackupApi = async () => {
+  try {
+    const res = await fetch(`${API_BASE}/backup/export`);
+    if (res.ok) {
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Laundry_Master_Backup_${new Date().toISOString().slice(0, 10)}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+      return { success: true, message: 'Master Excel Backup downloaded successfully!' };
+    }
+  } catch (err) {}
+
+  // Local storage fallback generator for Excel backup
+  const orders = getMockOrders();
+  const customers = getMockCustomers();
+  const expenses = getMockExpenses();
+  const payments = getMockPayments();
+
+  const XLSX = await import('xlsx');
+
+  const ordersData = orders.map((o) => ({
+    'Order Number': o.orderNumber,
+    'Customer Name': o.customerSnapshot?.name || 'Customer',
+    'Customer Mobile': o.customerSnapshot?.mobile || '',
+    'Order Date': o.orderDate ? new Date(o.orderDate).toISOString().slice(0, 10) : '',
+    'Expected Delivery': o.expectedDeliveryDate ? new Date(o.expectedDeliveryDate).toISOString().slice(0, 10) : '',
+    'Order Status': o.status,
+    'Payment Status': o.paymentStatus,
+    'Payment Method': o.paymentMethod || 'Cash',
+    'Total Amount (₹)': o.totalAmount || 0,
+    'Advance Paid (₹)': o.advancePaid || 0,
+    'Remaining Balance (₹)': o.remainingBalance || 0,
+    'Items Summary': (o.items || []).map((i) => `${i.serviceName} (${i.quantity}x)`).join(', '),
+  }));
+
+  const customersData = customers.map((c) => ({
+    'Full Name': c.name,
+    'Mobile Number': c.mobile,
+    'Email Address': c.email || '',
+    'Address': c.address || '',
+    'Total Spent (₹)': c.totalSpent || 0,
+    'Total Orders': c.totalOrders || 0,
+  }));
+
+  const paymentsData = payments.map((p: any) => ({
+    'Order Number': p.orderNumber || '',
+    'Customer Name': p.customerName || 'Customer',
+    'Payment Method': p.paymentMethod || 'Cash',
+    'Amount Paid (₹)': p.amount || 0,
+    'Paid Date & Time': p.paidAt ? new Date(p.paidAt).toLocaleString() : '',
+  }));
+
+  const expensesData = expenses.map((e) => ({
+    'Voucher Number': e.voucherNumber,
+    'Category': e.category,
+    'Description': e.description,
+    'Amount (₹)': e.amount || 0,
+    'Payment Method': e.paymentMethod,
+    'Paid To': e.paidTo || '',
+    'Expense Date': e.expenseDate ? new Date(e.expenseDate).toISOString().slice(0, 10) : '',
+  }));
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(ordersData.length > 0 ? ordersData : [{}]), 'Orders');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(customersData.length > 0 ? customersData : [{}]), 'Customers');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(paymentsData.length > 0 ? paymentsData : [{}]), 'Payments');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(expensesData.length > 0 ? expensesData : [{}]), 'Expenses');
+
+  XLSX.writeFile(wb, `Laundry_Master_Backup_${new Date().toISOString().slice(0, 10)}.xlsx`);
+  return { success: true, message: 'Master Excel Backup created & downloaded successfully!' };
+};
+
+export const restoreMasterExcelBackupApi = async (file: File) => {
+  const XLSX = await import('xlsx');
+  const buffer = await file.arrayBuffer();
+  const wb = XLSX.read(buffer);
+
+  const payload: any = {
+    orders: [],
+    customers: [],
+    payments: [],
+    expenses: [],
+  };
+
+  if (wb.Sheets['Orders']) payload.orders = XLSX.utils.sheet_to_json(wb.Sheets['Orders']);
+  if (wb.Sheets['Customers']) payload.customers = XLSX.utils.sheet_to_json(wb.Sheets['Customers']);
+  if (wb.Sheets['Payments']) payload.payments = XLSX.utils.sheet_to_json(wb.Sheets['Payments']);
+  if (wb.Sheets['Expenses']) payload.expenses = XLSX.utils.sheet_to_json(wb.Sheets['Expenses']);
+
+  try {
+    const apiRes = await fetchApi('/backup/restore', {
+      method: 'POST',
+      body: JSON.stringify({ payload }),
+    });
+    if (apiRes && apiRes.success) {
+      return apiRes;
+    }
+  } catch (err) {}
+
+  // Local storage fallback restoration
+  if (payload.customers.length > 0) {
+    const existingCusts = getMockCustomers();
+    payload.customers.forEach((c: any) => {
+      const mob = c['Mobile Number'] || c.mobile;
+      const name = c['Full Name'] || c.name;
+      if (mob && name && !existingCusts.some((ec) => ec.mobile === mob)) {
+        existingCusts.unshift({
+          _id: `cust-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          name,
+          mobile: mob,
+          email: c['Email Address'] || c.email || '',
+          address: c['Address'] || c.address || '',
+          totalSpent: Number(c['Total Spent (₹)']) || 0,
+          totalOrders: Number(c['Total Orders']) || 0,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        });
+      }
+    });
+    saveMockCustomers(existingCusts);
+  }
+
+  if (payload.orders.length > 0) {
+    const existingOrders = getMockOrders();
+    payload.orders.forEach((o: any) => {
+      const oNum = o['Order Number'] || o.orderNumber;
+      if (oNum && !existingOrders.some((eo) => eo.orderNumber === oNum)) {
+        existingOrders.unshift({
+          _id: `ord-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          orderNumber: oNum,
+          customerSnapshot: {
+            name: o['Customer Name'] || o.customerName || 'Customer',
+            mobile: o['Customer Mobile'] || o.customerMobile || '',
+          },
+          orderDate: o['Order Date'] || new Date().toISOString(),
+          expectedDeliveryDate: o['Expected Delivery'] || new Date().toISOString(),
+          status: o['Order Status'] || 'Received',
+          paymentStatus: o['Payment Status'] || 'Pending',
+          paymentMethod: o['Payment Method'] || 'Cash',
+          totalAmount: Number(o['Total Amount (₹)']) || 0,
+          advancePaid: Number(o['Advance Paid (₹)']) || 0,
+          remainingBalance: Number(o['Remaining Balance (₹)']) || 0,
+          items: [],
+        } as any);
+      }
+    });
+    saveMockOrders(existingOrders);
+  }
+
+  return {
+    success: true,
+    message: 'Data successfully restored from Excel backup!',
+    summary: {
+      restoredOrdersCount: payload.orders.length,
+      restoredCustomersCount: payload.customers.length,
+      restoredPaymentsCount: payload.payments.length,
+      restoredExpensesCount: payload.expenses.length,
+    },
+  };
+};

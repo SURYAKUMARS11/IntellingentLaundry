@@ -15,6 +15,7 @@ import reportRoutes from './routes/reportRoutes';
 import settingRoutes from './routes/settingRoutes';
 import expenseRoutes from './routes/expenseRoutes';
 import categoryRoutes from './routes/categoryRoutes';
+import backupRoutes from './routes/backupRoutes';
 
 dotenv.config();
 
@@ -46,6 +47,7 @@ app.use('/api/reports', reportRoutes);
 app.use('/api/settings', settingRoutes);
 app.use('/api/expenses', expenseRoutes);
 app.use('/api/garment-categories', categoryRoutes);
+app.use('/api/backup', backupRoutes);
 
 // Global Error Handler
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
