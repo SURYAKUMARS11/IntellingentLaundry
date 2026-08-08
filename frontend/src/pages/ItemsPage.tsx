@@ -234,11 +234,6 @@ export const ItemsPage: React.FC = () => {
                     <span className="text-base font-black text-emerald-600 dark:text-emerald-400">
                       {currencySymbol}{activeServicePrice}
                     </span>
-                    {selectedService !== 'Wash and Fold' && (
-                      <span className="text-[10px] text-slate-400 line-through">
-                        {currencySymbol}{item.defaultPrice}
-                      </span>
-                    )}
                   </div>
                 </div>
 
