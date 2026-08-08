@@ -5,6 +5,7 @@ import {
   createOrderApi,
   fetchSettings,
   createCustomerApi,
+  fetchItems,
 } from '../services/api';
 import { Customer, Order, Setting } from '../types';
 import { InvoiceView } from '../components/invoice/InvoiceView';
@@ -13,6 +14,7 @@ import {
   kgServicesList,
   posGroupCatalog,
   POSCatalogItem,
+  POSGroup,
   KgServiceRate,
   getItemPriceForService,
 } from '../data/posCatalogData';
@@ -101,18 +103,49 @@ export const CreateOrderPage: React.FC = () => {
   const [createdOrder, setCreatedOrder] = useState<Order | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Active POS Catalog State (Dynamic Sync with Items Manager)
+  const [activeCatalog, setActiveCatalog] = useState<POSGroup[]>(posGroupCatalog);
+
   useEffect(() => {
     const loadInitial = async () => {
       try {
-        const [custRes, setRes] = await Promise.all([
+        const [custRes, setRes, itemRes] = await Promise.all([
           fetchCustomers(),
           fetchSettings(),
+          fetchItems(),
         ]);
 
         if (custRes.success) setCustomers(custRes.customers);
         if (setRes.success) {
           setSetting(setRes.setting);
           setTaxPercent(0);
+        }
+
+        if (itemRes.success && Array.isArray(itemRes.items) && itemRes.items.length > 0) {
+          const priceMap = new Map<string, { price: number; name: string }>();
+          itemRes.items.forEach((i: any) => {
+            if (i._id) priceMap.set(i._id, { price: i.defaultPrice, name: i.name });
+            if (i.name) priceMap.set(i.name.toLowerCase(), { price: i.defaultPrice, name: i.name });
+          });
+
+          const synced = posGroupCatalog.map((grp) => ({
+            ...grp,
+            subCategories: grp.subCategories.map((sub) => ({
+              ...sub,
+              items: sub.items.map((item) => {
+                const match = priceMap.get(item.id) || priceMap.get(item.name.toLowerCase());
+                if (match) {
+                  return {
+                    ...item,
+                    name: match.name || item.name,
+                    price: match.price !== undefined ? match.price : item.price,
+                  };
+                }
+                return item;
+              }),
+            })),
+          }));
+          setActiveCatalog(synced);
         }
       } catch (err) {
         console.error('Failed to load POS reference data', err);
@@ -289,17 +322,17 @@ export const CreateOrderPage: React.FC = () => {
   };
 
   // Current Group Object
-  const currentGroupObj = posGroupCatalog.find((g) => g.groupName === activeGroup) || posGroupCatalog[0];
+  const currentGroupObj = activeCatalog.find((g) => g.groupName === activeGroup) || activeCatalog[0];
 
   // Available Sub-categories for active group
   const subCategoriesList = [
     'All',
-    ...currentGroupObj.subCategories.map((sc) => sc.name),
+    ...currentGroupObj.subCategories.map((sc: any) => sc.name),
   ];
 
   // Flattened items list for current active group & subcategory filter & search
   let displayItems: POSCatalogItem[] = [];
-  currentGroupObj.subCategories.forEach((sc) => {
+  currentGroupObj.subCategories.forEach((sc: any) => {
     if (activeSubCategory === 'All' || activeSubCategory === sc.name) {
       displayItems.push(...sc.items);
     }
@@ -672,7 +705,7 @@ export const CreateOrderPage: React.FC = () => {
                   Garment Category Groups
                 </span>
                 <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
-                  {posGroupCatalog.map((grp) => {
+                  {activeCatalog.map((grp) => {
                     const active = activeGroup === grp.groupName;
                     return (
                       <button
