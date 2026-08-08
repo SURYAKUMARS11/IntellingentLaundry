@@ -903,6 +903,23 @@ export const fetchDashboardStats = async (params: {
       }));
   }
 
+  const processedNewCustomers = (apiRes.newCustomersList || localCustomers).map((c: any) => {
+    const custOrders = mergedOrders.filter(
+      (o: any) =>
+        (o.customerId && String(o.customerId) === String(c._id)) ||
+        (o.customer && String(typeof o.customer === 'object' ? o.customer._id : o.customer) === String(c._id)) ||
+        (o.customerSnapshot && o.customerSnapshot.mobile === c.mobile)
+    );
+    return {
+      ...c,
+      totalOrders: Math.max(c.totalOrders || 0, custOrders.length),
+      totalSpent: Math.max(
+        c.totalSpent || 0,
+        custOrders.reduce((sum: number, o: any) => sum + (o.totalAmount || 0), 0)
+      ),
+    };
+  });
+
   apiRes.stats = {
     ...s,
     orders: mergedOrders.length,
@@ -910,7 +927,7 @@ export const fetchDashboardStats = async (params: {
     todayOrders: mergedOrders.length,
     activeOrders: activeOrds.length,
     overdueOrders: overdueOrds.length,
-    newCustomers: Math.max(s.newCustomers || 0, localCustomers.length, apiRes.newCustomersList?.length || 0),
+    newCustomers: Math.max(s.newCustomers || 0, localCustomers.length, processedNewCustomers.length),
     paymentsReceived: Math.max(s.paymentsReceived || 0, totalRev),
     todayRevenue: Math.max(s.todayRevenue || 0, totalRev),
     monthlyRevenue: Math.max(s.monthlyRevenue || 0, monthlyRev),
@@ -921,6 +938,7 @@ export const fetchDashboardStats = async (params: {
   apiRes.activeOrdersList = activeOrds;
   apiRes.overdueOrdersList = overdueOrds;
   apiRes.paymentsList = pList;
+  apiRes.newCustomersList = processedNewCustomers;
 
   return apiRes;
 };

@@ -183,10 +183,27 @@ export const DashboardPage: React.FC = () => {
   const activePresetLabel = presetOptions.find((p) => p.id === preset)?.label || 'All Time';
 
   // Active Category List & Pagination math
+  const processedCustomersList = newCustomersList.map((c) => {
+    const custOrders = ordersList.filter(
+      (o: any) =>
+        (o.customerId && String(o.customerId) === String(c._id)) ||
+        (o.customer && String(typeof o.customer === 'object' ? o.customer._id : o.customer) === String(c._id)) ||
+        (o.customerSnapshot && o.customerSnapshot.mobile === c.mobile)
+    );
+    return {
+      ...c,
+      totalOrders: Math.max(c.totalOrders || 0, custOrders.length),
+      totalSpent: Math.max(
+        c.totalSpent || 0,
+        custOrders.reduce((sum: number, o: any) => sum + (o.totalAmount || 0), 0)
+      ),
+    };
+  });
+
   const activeList: any[] = activeCard === 'orders' ? ordersList
     : activeCard === 'payments' ? paymentsList
     : activeCard === 'active' ? activeOrdersList
-    : activeCard === 'customers' ? newCustomersList
+    : activeCard === 'customers' ? processedCustomersList
     : overdueOrdersList;
 
   const totalDashRecords = activeList.length;
