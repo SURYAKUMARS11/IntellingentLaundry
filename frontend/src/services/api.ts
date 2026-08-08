@@ -739,9 +739,17 @@ export const fetchDashboardStats = async (params: {
   const localOrders = getMockOrders();
   const localCustomers = getMockCustomers();
 
+  const now = new Date();
+  const isOrderOverdue = (o: Order) => {
+    if (o.status === 'Delivered' || o.status === 'Cancelled') return false;
+    const isPastDeliveryDate = o.expectedDeliveryDate && new Date(o.expectedDeliveryDate) < now;
+    const hasUnpaidBalance = o.remainingBalance > 0 && o.paymentStatus !== 'Paid';
+    return isPastDeliveryDate || hasUnpaidBalance;
+  };
+
   if (!apiRes || !apiRes.success) {
     const activeOrds = localOrders.filter((o) => o.status !== 'Delivered' && o.status !== 'Cancelled');
-    const overdueOrds = localOrders.filter((o) => o.remainingBalance > 0 || (o.status !== 'Delivered' && o.status !== 'Cancelled'));
+    const overdueOrds = localOrders.filter(isOrderOverdue);
     const totalRev = localOrders.reduce((acc, o) => acc + (o.advancePaid || o.totalAmount), 0);
     const monthlyRev = localOrders.reduce((acc, o) => acc + o.totalAmount, 0);
 
@@ -789,7 +797,7 @@ export const fetchDashboardStats = async (params: {
   const mergedOrders = Array.from(map.values());
 
   const activeOrds = mergedOrders.filter((o) => o.status !== 'Delivered' && o.status !== 'Cancelled');
-  const overdueOrds = mergedOrders.filter((o) => o.remainingBalance > 0 || (o.status !== 'Delivered' && o.status !== 'Cancelled'));
+  const overdueOrds = mergedOrders.filter(isOrderOverdue);
 
   const totalRev = mergedOrders.reduce((acc, o) => acc + (o.advancePaid > 0 ? o.advancePaid : o.totalAmount), 0);
   const monthlyRev = mergedOrders.reduce((acc, o) => acc + o.totalAmount, 0);

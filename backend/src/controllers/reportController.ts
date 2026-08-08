@@ -127,7 +127,7 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       status: { $nin: ['Delivered', 'Cancelled'] },
       $or: [
         { expectedDeliveryDate: { $lt: now } },
-        { remainingBalance: { $gt: 0 } },
+        { remainingBalance: { $gt: 0 }, paymentStatus: { $ne: 'Paid' } },
       ],
     };
     const overdueOrdersCount = await Order.countDocuments(overdueQuery);
