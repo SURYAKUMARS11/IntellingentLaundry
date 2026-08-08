@@ -1,5 +1,5 @@
-import React from 'react';
-import { NavLink } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { NavLink, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
   ShoppingBag,
@@ -13,7 +13,9 @@ import {
   Sparkles,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Wallet,
+  PackageSearch,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -22,15 +24,33 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed = false, onToggleCollapse }) => {
-  const navItems = [
+  const location = useLocation();
+
+  // Check if current path belongs to Catalog & Services group
+  const isCatalogRoute = ['/services', '/items', '/categories'].includes(location.pathname);
+  const [isCatalogOpen, setIsCatalogOpen] = useState<boolean>(true);
+
+  useEffect(() => {
+    if (isCatalogRoute) {
+      setIsCatalogOpen(true);
+    }
+  }, [location.pathname]);
+
+  const mainNavItems = [
     { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
     { label: 'New Order', path: '/orders/new', icon: PlusCircle },
     { label: 'Orders', path: '/orders', icon: ShoppingBag, end: true },
     { label: 'Accounts & Expenses', path: '/accounts', icon: Wallet },
     { label: 'Customers', path: '/customers', icon: Users },
+  ];
+
+  const catalogNavItems = [
     { label: 'Services', path: '/services', icon: WashingMachine },
     { label: 'Clothing Items', path: '/items', icon: Shirt },
     { label: 'Garment Categories', path: '/categories', icon: Layers },
+  ];
+
+  const systemNavItems = [
     { label: 'Reports', path: '/reports', icon: BarChart3 },
     { label: 'Shop Settings', path: '/settings', icon: Settings },
   ];
@@ -69,36 +89,146 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed = false, onToggleC
         )}
       </div>
 
-      {/* Nav Menu */}
-      <div className="flex-1 px-3 py-6 space-y-1.5 overflow-y-auto">
-        {!isCollapsed && (
-          <div className="px-3 text-[11px] font-semibold tracking-wider text-slate-400 uppercase mb-2">
-            Management
-          </div>
-        )}
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          return (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              end={item.end}
-              title={isCollapsed ? item.label : undefined}
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-sm transition-all duration-150 ${
-                  isCollapsed ? 'justify-center' : ''
-                } ${
-                  isActive
-                    ? 'bg-brand-600 text-white shadow-md shadow-brand-600/30 font-bold'
-                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-slate-100'
-                }`
-              }
-            >
-              <Icon className="w-5 h-5 shrink-0" />
-              {!isCollapsed && <span>{item.label}</span>}
-            </NavLink>
-          );
-        })}
+      {/* Nav Menu Container */}
+      <div className="flex-1 px-3 py-4 space-y-4 overflow-y-auto">
+        {/* SECTION 1: CORE OPERATIONS */}
+        <div className="space-y-1">
+          {!isCollapsed && (
+            <div className="px-3 text-[10px] font-bold tracking-wider text-slate-400 uppercase mb-1.5">
+              Core Operations
+            </div>
+          )}
+          {mainNavItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <NavLink
+                key={item.path}
+                to={item.path}
+                end={item.end}
+                title={isCollapsed ? item.label : undefined}
+                className={({ isActive }) =>
+                  `flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-sm transition-all duration-150 ${
+                    isCollapsed ? 'justify-center' : ''
+                  } ${
+                    isActive
+                      ? 'bg-brand-600 text-white shadow-md shadow-brand-600/30 font-bold'
+                      : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-slate-100'
+                  }`
+                }
+              >
+                <Icon className="w-5 h-5 shrink-0" />
+                {!isCollapsed && <span>{item.label}</span>}
+              </NavLink>
+            );
+          })}
+        </div>
+
+        {/* SECTION 2: CATALOG & SERVICES (COLLAPSIBLE DROPDOWN GROUP) */}
+        <div className="space-y-1 pt-1 border-t border-slate-100 dark:border-slate-800/80">
+          {!isCollapsed ? (
+            <div>
+              {/* Dropdown Header Button */}
+              <button
+                type="button"
+                onClick={() => setIsCatalogOpen(!isCatalogOpen)}
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-extrabold transition-all ${
+                  isCatalogRoute
+                    ? 'text-brand-600 dark:text-brand-400 bg-brand-50/60 dark:bg-brand-950/40'
+                    : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/40'
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <PackageSearch className="w-4 h-4 text-brand-500" />
+                  <span className="uppercase tracking-wider">Catalog & Pricing</span>
+                </div>
+                <ChevronDown
+                  className={`w-4 h-4 transition-transform duration-200 ${
+                    isCatalogOpen ? 'rotate-180 text-brand-600 dark:text-brand-400' : 'text-slate-400'
+                  }`}
+                />
+              </button>
+
+              {/* Dropdown Sub-Items List */}
+              {isCatalogOpen && (
+                <div className="mt-1 pl-3 space-y-1 border-l-2 border-slate-200 dark:border-slate-800 ml-4">
+                  {catalogNavItems.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <NavLink
+                        key={item.path}
+                        to={item.path}
+                        className={({ isActive }) =>
+                          `flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-150 ${
+                            isActive
+                              ? 'bg-brand-600 text-white shadow-sm shadow-brand-600/20 font-bold'
+                              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-slate-100'
+                          }`
+                        }
+                      >
+                        <Icon className="w-4 h-4 shrink-0" />
+                        <span>{item.label}</span>
+                      </NavLink>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          ) : (
+            /* Collapsed view icons for catalog items */
+            <div className="space-y-1">
+              {catalogNavItems.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <NavLink
+                    key={item.path}
+                    to={item.path}
+                    title={item.label}
+                    className={({ isActive }) =>
+                      `flex items-center justify-center p-2.5 rounded-xl transition-all ${
+                        isActive
+                          ? 'bg-brand-600 text-white shadow-md'
+                          : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                      }`
+                    }
+                  >
+                    <Icon className="w-5 h-5 shrink-0" />
+                  </NavLink>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* SECTION 3: REPORTS & SYSTEM */}
+        <div className="space-y-1 pt-1 border-t border-slate-100 dark:border-slate-800/80">
+          {!isCollapsed && (
+            <div className="px-3 text-[10px] font-bold tracking-wider text-slate-400 uppercase mb-1.5">
+              Analytics & Config
+            </div>
+          )}
+          {systemNavItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <NavLink
+                key={item.path}
+                to={item.path}
+                title={isCollapsed ? item.label : undefined}
+                className={({ isActive }) =>
+                  `flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-sm transition-all duration-150 ${
+                    isCollapsed ? 'justify-center' : ''
+                  } ${
+                    isActive
+                      ? 'bg-brand-600 text-white shadow-md shadow-brand-600/30 font-bold'
+                      : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-slate-100'
+                  }`
+                }
+              >
+                <Icon className="w-5 h-5 shrink-0" />
+                {!isCollapsed && <span>{item.label}</span>}
+              </NavLink>
+            );
+          })}
+        </div>
       </div>
 
       {/* Footer Info */}
