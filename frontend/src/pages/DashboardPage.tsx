@@ -146,7 +146,7 @@ export const DashboardPage: React.FC = () => {
 
   const handleWhatsAppShare = (ord: Order) => {
     const mobile = ord.customerSnapshot.mobile.replace(/\D/g, '');
-    const receiptUrl = `${window.location.origin}/receipt/${ord.orderNumber}`;
+    const receiptUrl = `${window.location.origin}/receipt/${ord.orderNumber}?r=${ord.orderNumber}`;
     const text = `Hello *${ord.customerSnapshot.name}*,\n\nYour official laundry invoice & receipt for Order *#${ord.orderNumber}* from *${setting?.shopName || 'IntelligentLaundry'}* is ready!\n\n📋 *Invoice Summary*:\n• Status: ${ord.status}\n• Payment: ${ord.paymentStatus}\n• Total Amount: ${currencySymbol}${ord.totalAmount}\n• Advance Paid: ${currencySymbol}${ord.advancePaid}\n• Remaining Balance: ${currencySymbol}${ord.remainingBalance}\n\n🔗 *View / Print Invoice Directly*:\n${receiptUrl}\n\nThank you for choosing ${setting?.shopName || 'IntelligentLaundry'}!`;
     const url = `https://wa.me/${mobile.length === 10 ? '91' + mobile : mobile}?text=${encodeURIComponent(text)}`;
     window.open(url, '_blank');

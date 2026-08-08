@@ -75,6 +75,8 @@ export const AppContent: React.FC = () => {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/receipt/:orderNumber" element={<PublicReceiptPage />} />
+      <Route path="/receipt" element={<PublicReceiptPage />} />
+      <Route path="/index.html" element={<PublicReceiptPage />} />
 
       <Route
         path="/dashboard"

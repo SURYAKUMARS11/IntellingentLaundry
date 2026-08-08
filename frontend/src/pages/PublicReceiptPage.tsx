@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Navigate } from 'react-router-dom';
 import { fetchPublicOrderByNumber, fetchSettings } from '../services/api';
 import { Order, Setting } from '../types';
 import { InvoiceView } from '../components/invoice/InvoiceView';
 import { WashingMachine, AlertCircle, ArrowLeft } from 'lucide-react';
 
 export const PublicReceiptPage: React.FC = () => {
-  const { orderNumber } = useParams<{ orderNumber: string }>();
+  const { orderNumber: paramOrderNumber } = useParams<{ orderNumber: string }>();
+  const searchParams = new URLSearchParams(window.location.search);
+  const queryOrderNumber = searchParams.get('receipt') || searchParams.get('order') || searchParams.get('r');
+  const orderNumber = paramOrderNumber || queryOrderNumber;
+
   const [order, setOrder] = useState<Order | null>(null);
   const [setting, setSetting] = useState<Setting | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(true);
@@ -16,7 +20,10 @@ export const PublicReceiptPage: React.FC = () => {
 
   useEffect(() => {
     const loadReceipt = async () => {
-      if (!orderNumber) return;
+      if (!orderNumber) {
+        setIsLoading(false);
+        return;
+      }
       setIsLoading(true);
       try {
         const [ordRes, setRes] = await Promise.all([
@@ -41,6 +48,10 @@ export const PublicReceiptPage: React.FC = () => {
     };
     loadReceipt();
   }, [orderNumber]);
+
+  if (!orderNumber && !isLoading) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   if (isLoading) {
     return (
