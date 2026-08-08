@@ -22,10 +22,25 @@ export const getCustomers = async (req: Request, res: Response) => {
     }
 
     const total = await Customer.countDocuments(query);
-    const customers = await Customer.find(query)
+    const rawCustomers = await Customer.find(query)
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
+
+    const allOrders = await Order.find();
+
+    // Dynamically calculate totalOrders & totalSpent for every customer
+    const customers = rawCustomers.map((c) => {
+      const obj = c.toObject();
+      const custOrders = allOrders.filter(
+        (o) =>
+          (o.customer && String(o.customer) === String(c._id)) ||
+          (o.customerSnapshot && o.customerSnapshot.mobile === c.mobile)
+      );
+      obj.totalOrders = custOrders.length;
+      obj.totalSpent = custOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
+      return obj;
+    });
 
     res.json({
       success: true,
@@ -44,12 +59,18 @@ export const getCustomers = async (req: Request, res: Response) => {
 
 export const getCustomerById = async (req: Request, res: Response) => {
   try {
-    const customer = await Customer.findById(req.params.id);
-    if (!customer) {
+    const customerObj = await Customer.findById(req.params.id);
+    if (!customerObj) {
       return res.status(404).json({ success: false, message: 'Customer not found' });
     }
 
-    const orders = await Order.find({ customer: customer._id }).sort({ createdAt: -1 });
+    const orders = await Order.find({
+      $or: [{ customer: customerObj._id }, { 'customerSnapshot.mobile': customerObj.mobile }],
+    }).sort({ createdAt: -1 });
+
+    const customer = customerObj.toObject();
+    customer.totalOrders = orders.length;
+    customer.totalSpent = orders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
 
     res.json({
       success: true,
@@ -80,6 +101,8 @@ export const createCustomer = async (req: Request, res: Response) => {
       address,
       email: email || '',
       notes: notes || '',
+      totalOrders: 0,
+      totalSpent: 0,
     });
 
     await customer.save();
@@ -135,7 +158,9 @@ export const deleteCustomer = async (req: Request, res: Response) => {
       return res.status(404).json({ success: false, message: 'Customer not found' });
     }
 
-    const orderCount = await Order.countDocuments({ customer: customer._id });
+    const orderCount = await Order.countDocuments({
+      $or: [{ customer: customer._id }, { 'customerSnapshot.mobile': customer.mobile }],
+    });
     if (orderCount > 0) {
       return res.status(400).json({
         success: false,

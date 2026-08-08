@@ -101,36 +101,111 @@ export const fetchCustomers = async (params: { search?: string; page?: number; l
   const page = typeof params === 'object' ? params.page || 1 : 1;
   const limit = typeof params === 'object' ? params.limit || 10 : 10;
   const query = new URLSearchParams({ search, page: String(page), limit: String(limit) }).toString();
+
+  let customers: Customer[] = [];
+  let pagination: any = null;
+
   try {
-    return await fetchApi(`/customers?${query}`);
-  } catch (err) {
-    let customers = getMockCustomers();
-    if (search) {
-      const q = search.toLowerCase();
-      customers = customers.filter(
-        (c) =>
-          c.name.toLowerCase().includes(q) ||
-          c.mobile.includes(q) ||
-          c.address.toLowerCase().includes(q)
-      );
+    const res = await fetchApi(`/customers?${query}`);
+    if (res.success && Array.isArray(res.customers)) {
+      customers = res.customers;
+      pagination = res.pagination;
     }
+  } catch (err) {}
+
+  const localCustomers = getMockCustomers();
+  if (customers.length === 0) {
+    customers = localCustomers;
+  } else {
+    const map = new Map<string, Customer>();
+    customers.forEach((c) => map.set(c.mobile || c._id, c));
+    localCustomers.forEach((c) => {
+      if (!map.has(c.mobile || c._id)) map.set(c.mobile || c._id, c);
+    });
+    customers = Array.from(map.values());
+  }
+
+  const allOrders = getMockOrders();
+
+  // Dynamically calculate totalOrders & totalSpent for every customer
+  const processed = customers.map((c) => {
+    const custOrders = allOrders.filter(
+      (o: any) =>
+        (o.customerId && String(o.customerId) === String(c._id)) ||
+        (o.customer && String(typeof o.customer === 'object' ? o.customer._id : o.customer) === String(c._id)) ||
+        (o.customerSnapshot && o.customerSnapshot.mobile === c.mobile)
+    );
+    const calcOrdersCount = Math.max(c.totalOrders || 0, custOrders.length);
+    const calcSpent = Math.max(
+      c.totalSpent || 0,
+      custOrders.reduce((sum: number, o: any) => sum + (o.totalAmount || 0), 0)
+    );
+    return {
+      ...c,
+      totalOrders: calcOrdersCount,
+      totalSpent: calcSpent,
+    };
+  });
+
+  if (search) {
+    const q = search.toLowerCase();
+    const filtered = processed.filter(
+      (c) =>
+        c.name.toLowerCase().includes(q) ||
+        c.mobile.includes(q) ||
+        (c.address && c.address.toLowerCase().includes(q))
+    );
     const skip = (page - 1) * limit;
-    const paginated = customers.slice(skip, skip + limit);
     return {
       success: true,
-      customers: paginated,
-      pagination: { total: customers.length, page, limit, pages: Math.ceil(customers.length / limit) },
+      customers: filtered.slice(skip, skip + limit),
+      pagination: { total: filtered.length, page, limit, pages: Math.ceil(filtered.length / limit) },
     };
   }
+
+  const skip = (page - 1) * limit;
+  return {
+    success: true,
+    customers: processed.slice(skip, skip + limit),
+    pagination: pagination || { total: processed.length, page, limit, pages: Math.ceil(processed.length / limit) },
+  };
 };
 
 export const fetchCustomerById = async (id: string) => {
+  let customer: any = null;
+  let orders: Order[] = [];
   try {
-    return await fetchApi(`/customers/${id}`);
-  } catch (err) {
-    const customer = getMockCustomers().find((c) => c._id === id);
-    return { success: true, customer, orders: [] };
+    const res = await fetchApi(`/customers/${id}`);
+    if (res.success) {
+      customer = res.customer;
+      orders = res.orders || [];
+    }
+  } catch (err) {}
+
+  if (!customer) {
+    customer = getMockCustomers().find((c) => c._id === id);
   }
+
+  const allMockOrders = getMockOrders();
+  if (customer) {
+    const custOrders = allMockOrders.filter(
+      (o: any) =>
+        (o.customerId && String(o.customerId) === String(customer._id)) ||
+        (o.customer && String(typeof o.customer === 'object' ? o.customer._id : o.customer) === String(customer._id)) ||
+        (o.customerSnapshot && o.customerSnapshot.mobile === customer.mobile)
+    );
+    if (orders.length === 0) {
+      orders = custOrders;
+    }
+    customer.totalOrders = Math.max(customer.totalOrders || 0, custOrders.length, orders.length);
+    customer.totalSpent = Math.max(
+      customer.totalSpent || 0,
+      custOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0),
+      orders.reduce((sum, o) => sum + (o.totalAmount || 0), 0)
+    );
+  }
+
+  return { success: true, customer, orders };
 };
 
 export const createCustomerApi = async (customerData: any) => {
@@ -410,6 +485,16 @@ export const createOrderApi = async (orderData: any) => {
       const orders = getMockOrders();
       orders.unshift(res.order);
       saveMockOrders(orders);
+
+      const customers = getMockCustomers();
+      const mobile = res.order.customerSnapshot?.mobile;
+      const custId = res.order.customer || res.order.customerId;
+      const targetCust = customers.find((c) => (custId && c._id === custId) || (mobile && c.mobile === mobile));
+      if (targetCust) {
+        targetCust.totalOrders = (targetCust.totalOrders || 0) + 1;
+        targetCust.totalSpent = (targetCust.totalSpent || 0) + (res.order.totalAmount || 0);
+        saveMockCustomers(customers);
+      }
     }
     return res;
   } catch (err) {
@@ -502,13 +587,13 @@ export const createOrderApi = async (orderData: any) => {
     saveMockOrders(orders);
 
     // Also update customer stats in mock storage
-    if (orderData.customerId) {
-      const custIdx = customers.findIndex((c) => c._id === orderData.customerId);
-      if (custIdx !== -1) {
-        customers[custIdx].totalOrders = (customers[custIdx].totalOrders || 0) + 1;
-        customers[custIdx].totalSpent = (customers[custIdx].totalSpent || 0) + totalAmount;
-        saveMockCustomers(customers);
-      }
+    const targetCust = customers.find(
+      (c) => (orderData.customerId && c._id === orderData.customerId) || (customerMobile && c.mobile === customerMobile)
+    );
+    if (targetCust) {
+      targetCust.totalOrders = (targetCust.totalOrders || 0) + 1;
+      targetCust.totalSpent = (targetCust.totalSpent || 0) + totalAmount;
+      saveMockCustomers(customers);
     }
 
     return { success: true, order: newOrd };
