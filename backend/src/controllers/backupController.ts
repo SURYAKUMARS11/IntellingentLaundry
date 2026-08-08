@@ -49,7 +49,7 @@ export const exportMasterExcelBackup = async (req: Request, res: Response) => {
     }));
 
     // 4. Format Sheet 3: Payments
-    const paymentsData = payments.map((p) => ({
+    let paymentsData = payments.map((p) => ({
       'Payment ID': p._id.toString(),
       'Order Number': p.orderNumber || '',
       'Customer Name': p.customerName || 'Customer',
@@ -59,6 +59,21 @@ export const exportMasterExcelBackup = async (req: Request, res: Response) => {
       'Transaction Ref / ID': p.transactionId || '',
       'Payment Note': p.note || '',
     }));
+
+    if (paymentsData.length === 0 && orders.length > 0) {
+      paymentsData = orders
+        .filter((o) => o.paymentStatus === 'Paid' || o.advancePaid > 0)
+        .map((o) => ({
+          'Payment ID': o._id.toString(),
+          'Order Number': o.orderNumber,
+          'Customer Name': o.customerSnapshot?.name || 'Customer',
+          'Payment Method': (o.paymentMethod || 'Cash') as any,
+          'Amount Paid (₹)': o.paymentStatus === 'Paid' ? o.totalAmount : o.advancePaid,
+          'Paid Date & Time': o.orderDate ? new Date(o.orderDate).toLocaleString() : '',
+          'Transaction Ref / ID': 'SYSTEM-ORDER',
+          'Payment Note': o.paymentStatus === 'Paid' ? 'Full Payment' : 'Advance Payment',
+        })) as any;
+    }
 
     // 5. Format Sheet 4: Expenses
     const expensesData = expenses.map((e) => ({

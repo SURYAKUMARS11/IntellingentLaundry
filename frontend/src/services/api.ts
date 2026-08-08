@@ -1342,31 +1342,82 @@ const getMockPayments = () => {
 
 // --- EXCEL MASTER BACKUP & RESTORE UTILITIES ---
 export const downloadMasterExcelBackupApi = async () => {
+  const XLSX = await import('xlsx');
+
+  // Fetch live orders & customers & expenses via unified API helpers
+  let apiOrders: Order[] = [];
+  let apiCustomers: Customer[] = [];
+  let apiExpenses: Expense[] = [];
+
   try {
-    const res = await fetch(`${API_BASE}/backup/export`);
-    if (res.ok) {
-      const blob = await res.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `Laundry_Master_Backup_${new Date().toISOString().slice(0, 10)}.xlsx`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      window.URL.revokeObjectURL(url);
-      return { success: true, message: 'Master Excel Backup downloaded successfully!' };
+    const [ordRes, custRes, expRes] = await Promise.all([
+      fetchOrders({ limit: 1000 }),
+      fetchCustomers({ limit: 1000 }),
+      fetchExpenses({ limit: 1000 }),
+    ]);
+    if (ordRes && ordRes.success && Array.isArray(ordRes.orders)) {
+      apiOrders = ordRes.orders;
+    }
+    if (custRes && custRes.success && Array.isArray(custRes.customers)) {
+      apiCustomers = custRes.customers;
+    }
+    if (expRes && expRes.success && Array.isArray(expRes.expenses)) {
+      apiExpenses = expRes.expenses;
     }
   } catch (err) {}
 
-  // Local storage fallback generator for Excel backup
-  const orders = getMockOrders();
-  const customers = getMockCustomers();
-  const expenses = getMockExpenses();
-  const payments = getMockPayments();
+  // Fallback / merge with local storage mock items to ensure 0 records are lost
+  const localOrds = getMockOrders();
+  const localCusts = getMockCustomers();
+  const localExps = getMockExpenses();
 
-  const XLSX = await import('xlsx');
+  const orderMap = new Map<string, Order>();
+  apiOrders.forEach((o) => orderMap.set(o.orderNumber || o._id, o));
+  localOrds.forEach((o) => {
+    if (!orderMap.has(o.orderNumber || o._id)) orderMap.set(o.orderNumber || o._id, o);
+  });
+  const mergedOrders = Array.from(orderMap.values());
 
-  const ordersData = orders.map((o) => ({
+  const custMap = new Map<string, Customer>();
+  apiCustomers.forEach((c) => custMap.set(c.mobile || c._id, c));
+  localCusts.forEach((c) => {
+    if (!custMap.has(c.mobile || c._id)) custMap.set(c.mobile || c._id, c);
+  });
+  const mergedCustomers = Array.from(custMap.values());
+
+  const expMap = new Map<string, Expense>();
+  apiExpenses.forEach((e) => expMap.set(e.voucherNumber || e._id, e));
+  localExps.forEach((e) => {
+    if (!expMap.has(e.voucherNumber || e._id)) expMap.set(e.voucherNumber || e._id, e);
+  });
+  const mergedExpenses = Array.from(expMap.values());
+
+  // Derive payments list from orders + local payments
+  const localPayments = getMockPayments();
+  const paymentsMap = new Map<string, any>();
+
+  localPayments.forEach((p: any) => {
+    const key = p._id || p.orderNumber;
+    if (key) paymentsMap.set(key, p);
+  });
+
+  mergedOrders.forEach((o) => {
+    const amt = o.paymentStatus === 'Paid' ? (o.totalAmount || 0) : (o.advancePaid || 0);
+    if (amt > 0 && !paymentsMap.has(o.orderNumber)) {
+      paymentsMap.set(o.orderNumber, {
+        orderNumber: o.orderNumber,
+        customerName: o.customerSnapshot?.name || 'Customer',
+        paymentMethod: o.paymentMethod || 'Cash',
+        amount: amt,
+        paidAt: o.orderDate,
+      });
+    }
+  });
+
+  const mergedPayments = Array.from(paymentsMap.values());
+
+  // Format Excel sheets
+  const ordersData = mergedOrders.map((o) => ({
     'Order Number': o.orderNumber,
     'Customer Name': o.customerSnapshot?.name || 'Customer',
     'Customer Mobile': o.customerSnapshot?.mobile || '',
@@ -1381,7 +1432,7 @@ export const downloadMasterExcelBackupApi = async () => {
     'Items Summary': (o.items || []).map((i) => `${i.serviceName} (${i.quantity}x)`).join(', '),
   }));
 
-  const customersData = customers.map((c) => ({
+  const customersData = mergedCustomers.map((c) => ({
     'Full Name': c.name,
     'Mobile Number': c.mobile,
     'Email Address': c.email || '',
@@ -1390,7 +1441,7 @@ export const downloadMasterExcelBackupApi = async () => {
     'Total Orders': c.totalOrders || 0,
   }));
 
-  const paymentsData = payments.map((p: any) => ({
+  const paymentsData = mergedPayments.map((p: any) => ({
     'Order Number': p.orderNumber || '',
     'Customer Name': p.customerName || 'Customer',
     'Payment Method': p.paymentMethod || 'Cash',
@@ -1398,7 +1449,7 @@ export const downloadMasterExcelBackupApi = async () => {
     'Paid Date & Time': p.paidAt ? new Date(p.paidAt).toLocaleString() : '',
   }));
 
-  const expensesData = expenses.map((e) => ({
+  const expensesData = mergedExpenses.map((e) => ({
     'Voucher Number': e.voucherNumber,
     'Category': e.category,
     'Description': e.description,
@@ -1415,7 +1466,7 @@ export const downloadMasterExcelBackupApi = async () => {
   XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(expensesData.length > 0 ? expensesData : [{}]), 'Expenses');
 
   XLSX.writeFile(wb, `Laundry_Master_Backup_${new Date().toISOString().slice(0, 10)}.xlsx`);
-  return { success: true, message: 'Master Excel Backup created & downloaded successfully!' };
+  return { success: true, message: 'Master Excel Backup downloaded successfully!' };
 };
 
 export const restoreMasterExcelBackupApi = async (file: File) => {
