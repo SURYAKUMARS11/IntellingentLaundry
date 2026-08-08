@@ -928,8 +928,8 @@ export const fetchDashboardStats = async (params: {
   if (!apiRes || !apiRes.success) {
     const activeOrds = localOrders.filter((o) => o.status !== 'Delivered' && o.status !== 'Cancelled');
     const overdueOrds = localOrders.filter(isOrderOverdue);
-    const totalRev = localOrders.reduce((acc, o) => acc + (o.advancePaid || o.totalAmount), 0);
-    const monthlyRev = localOrders.reduce((acc, o) => acc + o.totalAmount, 0);
+    const totalRev = localOrders.reduce((acc, o) => acc + (o.advancePaid || 0), 0);
+    const monthlyRev = totalRev;
 
     const stats: DashboardStats = {
       orders: localOrders.length,
@@ -952,14 +952,16 @@ export const fetchDashboardStats = async (params: {
       success: true,
       stats,
       ordersList: localOrders,
-      paymentsList: localOrders.map((o) => ({
-        _id: o._id,
-        orderNumber: o.orderNumber,
-        customerName: o.customerSnapshot?.name || 'Customer',
-        paymentMethod: o.paymentMethod || 'Cash',
-        paidAt: o.orderDate,
-        amount: o.advancePaid || o.totalAmount,
-      })),
+      paymentsList: localOrders
+        .filter((o) => o.advancePaid > 0)
+        .map((o) => ({
+          _id: o._id,
+          orderNumber: o.orderNumber,
+          customerName: o.customerSnapshot?.name || 'Customer',
+          paymentMethod: o.paymentMethod || 'Cash',
+          paidAt: o.orderDate,
+          amount: o.advancePaid,
+        })),
       activeOrdersList: activeOrds,
       newCustomersList: localCustomers,
       overdueOrdersList: overdueOrds,
@@ -977,22 +979,22 @@ export const fetchDashboardStats = async (params: {
   const activeOrds = mergedOrders.filter((o) => o.status !== 'Delivered' && o.status !== 'Cancelled');
   const overdueOrds = mergedOrders.filter(isOrderOverdue);
 
-  const totalRev = mergedOrders.reduce((acc, o) => acc + (o.advancePaid > 0 ? o.advancePaid : o.totalAmount), 0);
-  const monthlyRev = mergedOrders.reduce((acc, o) => acc + o.totalAmount, 0);
+  const totalRev = mergedOrders.reduce((acc, o) => acc + (o.advancePaid || 0), 0);
+  const monthlyRev = totalRev;
 
   const s = apiRes.stats || {};
 
   let pList = Array.isArray(apiRes.paymentsList) ? apiRes.paymentsList : [];
   if (pList.length === 0 && mergedOrders.length > 0) {
     pList = mergedOrders
-      .filter((o) => (o.advancePaid > 0 || o.paymentStatus === 'Paid' || o.paymentStatus === 'Partially Paid'))
+      .filter((o) => o.advancePaid > 0)
       .map((o) => ({
         _id: o._id,
         orderNumber: o.orderNumber,
         customerName: o.customerSnapshot?.name || 'Customer',
         paymentMethod: o.paymentMethod || 'Cash',
         paidAt: o.orderDate,
-        amount: o.advancePaid > 0 ? o.advancePaid : o.totalAmount,
+        amount: o.advancePaid,
       }));
   }
 

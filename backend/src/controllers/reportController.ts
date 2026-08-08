@@ -145,14 +145,13 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       ]),
       Order.aggregate([
         { $match: { orderDate: { $gte: todayStart, $lte: todayEnd } } },
-        { $group: { _id: null, totalAdv: { $sum: '$advancePaid' }, totalVal: { $sum: '$totalAmount' } } },
+        { $group: { _id: null, totalAdv: { $sum: '$advancePaid' } } },
       ]),
     ]);
     
     const todayPayTotal = todayPayments[0]?.total || 0;
     const todayAdvTotal = todayOrdersSum[0]?.totalAdv || 0;
-    const todayValTotal = todayOrdersSum[0]?.totalVal || 0;
-    const todayRevenue = Math.max(todayPayTotal, todayAdvTotal, todayValTotal);
+    const todayRevenue = todayPayTotal > 0 ? todayPayTotal : todayAdvTotal;
 
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
     const [monthPayments, monthOrdersSum] = await Promise.all([
@@ -162,27 +161,27 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       ]),
       Order.aggregate([
         { $match: { orderDate: { $gte: monthStart } } },
-        { $group: { _id: null, totalAdv: { $sum: '$advancePaid' }, totalVal: { $sum: '$totalAmount' } } },
+        { $group: { _id: null, totalAdv: { $sum: '$advancePaid' } } },
       ]),
     ]);
     
     const monthPayTotal = monthPayments[0]?.total || 0;
-    const monthValTotal = monthOrdersSum[0]?.totalVal || 0;
-    const monthlyRevenue = Math.max(monthPayTotal, monthValTotal);
+    const monthAdvTotal = monthOrdersSum[0]?.totalAdv || 0;
+    const monthlyRevenue = monthPayTotal > 0 ? monthPayTotal : monthAdvTotal;
 
-    const periodRev = Math.max(periodRevenue, todayRevenue);
+    const periodRev = periodRevenue > 0 ? periodRevenue : todayRevenue;
 
-    // If paymentsList is empty, derive payment records from orders with advance/paid status
+    // If paymentsList is empty, derive payment records strictly from orders with advance paid > 0
     if (paymentsList.length === 0 && ordersList.length > 0) {
       paymentsList = ordersList
-        .filter((o) => (o.advancePaid > 0 || o.paymentStatus === 'Paid' || o.paymentStatus === 'Partially Paid'))
+        .filter((o) => o.advancePaid > 0)
         .map((o) => ({
           _id: o._id,
           orderNumber: o.orderNumber,
           customerName: o.customerSnapshot?.name || 'Customer',
           paymentMethod: o.paymentMethod || 'Cash',
-          paidAt: o.createdAt || o.orderDate,
-          amount: o.advancePaid > 0 ? o.advancePaid : o.totalAmount,
+          paidAt: o.orderDate,
+          amount: o.advancePaid,
         })) as any;
     }
 
