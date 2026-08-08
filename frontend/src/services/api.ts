@@ -749,61 +749,92 @@ export const deleteExpenseApi = async (id: string) => {
 
 export const fetchAccountsSummary = async (params: { dateFrom?: string; dateTo?: string; paymentMethod?: string } = {}) => {
   const query = new URLSearchParams(params as any).toString();
+  let apiRes: any = null;
   try {
-    return await fetchApi(`/expenses/summary?${query}`);
-  } catch (err) {
-    const orders = getMockOrders();
-    const expenses = getMockExpenses();
+    apiRes = await fetchApi(`/expenses/summary?${query}`);
+  } catch (err) {}
 
-    const totalIncome = orders.reduce((acc, o) => acc + o.advancePaid, 0);
-    const totalExpenses = expenses.reduce((acc, e) => acc + e.amount, 0);
+  const orders = getMockOrders();
+  const expenses = getMockExpenses();
 
-    const cashIncome = orders.filter((o) => o.paymentMethod === 'Cash').reduce((acc, o) => acc + o.advancePaid, 0);
-    const cashExpenses = expenses.filter((e) => e.paymentMethod === 'Cash').reduce((acc, e) => acc + e.amount, 0);
-    const cashBalance = cashIncome - cashExpenses;
+  const incomeMap = new Map<string, AccountsTransaction>();
 
-    const bankIncome = orders.filter((o) => o.paymentMethod !== 'Cash').reduce((acc, o) => acc + o.advancePaid, 0);
-    const bankExpenses = expenses.filter((e) => e.paymentMethod !== 'Cash').reduce((acc, e) => acc + e.amount, 0);
-    const bankBalance = bankIncome - bankExpenses;
+  if (apiRes && apiRes.success && Array.isArray(apiRes.transactions)) {
+    apiRes.transactions.forEach((t: AccountsTransaction) => incomeMap.set(t.id || t.refNumber, t));
+  }
 
-    const transactions: AccountsTransaction[] = [
-      ...orders.map((o) => ({
-        id: o._id,
-        refNumber: `#${o.orderNumber}`,
-        date: o.orderDate,
-        type: 'Income' as const,
-        category: 'Order Payment',
-        description: `Order #${o.orderNumber} payment from ${o.customerSnapshot.name}`,
-        paymentMethod: o.paymentMethod || 'Cash',
-        amount: o.advancePaid,
-      })),
-      ...expenses.map((e) => ({
+  orders.forEach((o) => {
+    const amt = o.advancePaid > 0 ? o.advancePaid : o.totalAmount;
+    if (amt > 0) {
+      const ref = `#${o.orderNumber}`;
+      if (!incomeMap.has(o._id) && !incomeMap.has(ref)) {
+        incomeMap.set(o._id, {
+          id: o._id,
+          refNumber: ref,
+          date: o.orderDate || o.createdAt,
+          type: 'Income',
+          category: 'Order Payment',
+          description: `Order #${o.orderNumber} payment from ${o.customerSnapshot?.name || 'Customer'}`,
+          paymentMethod: o.paymentMethod || 'Cash',
+          amount: amt,
+        });
+      }
+    }
+  });
+
+  expenses.forEach((e) => {
+    if (!incomeMap.has(e._id) && !incomeMap.has(e.voucherNumber)) {
+      incomeMap.set(e._id, {
         id: e._id,
         refNumber: e.voucherNumber,
         date: e.expenseDate,
-        type: 'Expense' as const,
+        type: 'Expense',
         category: e.category,
-        description: e.description,
+        description: e.description + (e.paidTo ? ` (Paid to: ${e.paidTo})` : ''),
         paymentMethod: e.paymentMethod,
         amount: e.amount,
-      })),
-    ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      });
+    }
+  });
 
-    return {
-      success: true,
-      summary: {
-        totalIncome,
-        totalExpenses,
-        cashBalance,
-        bankBalance,
-        cashIncome,
-        cashExpenses,
-        bankIncome,
-        bankExpenses,
-      },
-      transactions,
-    };
+  let transactions = Array.from(incomeMap.values()).sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+  );
+
+  if (params.paymentMethod) {
+    transactions = transactions.filter((t) =>
+      params.paymentMethod === 'Cash' ? t.paymentMethod === 'Cash' : t.paymentMethod !== 'Cash'
+    );
   }
+
+  const incomeList = transactions.filter((t) => t.type === 'Income');
+  const expenseList = transactions.filter((t) => t.type === 'Expense');
+
+  const totalIncome = incomeList.reduce((acc, t) => acc + t.amount, 0);
+  const totalExpenses = expenseList.reduce((acc, t) => acc + t.amount, 0);
+
+  const cashIncome = incomeList.filter((t) => t.paymentMethod === 'Cash').reduce((acc, t) => acc + t.amount, 0);
+  const cashExpenses = expenseList.filter((t) => t.paymentMethod === 'Cash').reduce((acc, t) => acc + t.amount, 0);
+  const cashBalance = cashIncome - cashExpenses;
+
+  const bankIncome = incomeList.filter((t) => t.paymentMethod !== 'Cash').reduce((acc, t) => acc + t.amount, 0);
+  const bankExpenses = expenseList.filter((t) => t.paymentMethod !== 'Cash').reduce((acc, t) => acc + t.amount, 0);
+  const bankBalance = bankIncome - bankExpenses;
+
+  return {
+    success: true,
+    summary: {
+      totalIncome,
+      totalExpenses,
+      cashBalance,
+      bankBalance,
+      cashIncome,
+      cashExpenses,
+      bankIncome,
+      bankExpenses,
+    },
+    transactions,
+  };
 };
 
 // --- Reports API ---
