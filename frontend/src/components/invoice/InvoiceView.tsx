@@ -210,11 +210,19 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ order, setting, onClos
             {/* UPI Payment Scan & Pay Box */}
             <div className="w-full sm:w-auto flex items-start gap-3 bg-slate-50 p-3.5 rounded-2xl border border-slate-200 shadow-xs">
               <div className="bg-white p-1.5 rounded-xl border border-slate-200 shadow-xs shrink-0">
-                <QRCodeSVG
-                  value={upiPaymentUrl}
-                  size={85}
-                  level="M"
-                />
+                {setting?.paymentQrUrl ? (
+                  <img
+                    src={setting.paymentQrUrl}
+                    alt="Shop Payment QR"
+                    className="w-[85px] h-[85px] object-contain rounded-lg"
+                  />
+                ) : (
+                  <QRCodeSVG
+                    value={upiPaymentUrl}
+                    size={85}
+                    level="M"
+                  />
+                )}
               </div>
 
               <div className="text-xs space-y-1">

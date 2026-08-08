@@ -139,6 +139,7 @@ export interface Setting {
   termsAndConditions?: string;
   upiId?: string;
   gpayNumber?: string;
+  paymentQrUrl?: string;
 }
 
 export interface DashboardStats {

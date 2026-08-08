@@ -15,6 +15,7 @@ export interface ISetting extends Document {
   termsAndConditions?: string;
   upiId?: string;
   gpayNumber?: string;
+  paymentQrUrl?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -35,6 +36,7 @@ const SettingSchema: Schema = new Schema(
     termsAndConditions: { type: String, default: 'Items not collected within 30 days are subject to storage charges. Please report any discrepancy within 24 hours of pickup.' },
     upiId: { type: String, default: '9876543210@paytm' },
     gpayNumber: { type: String, default: '9876543210' },
+    paymentQrUrl: { type: String, default: '' },
   },
   { timestamps: true }
 );

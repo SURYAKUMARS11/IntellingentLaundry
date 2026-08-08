@@ -3,7 +3,7 @@ import { fetchSettings, updateSettingsApi, updateProfile, clearAllDataApi } from
 import { useAuth } from '../context/AuthContext';
 import { Setting } from '../types';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
-import { Settings, Store, Receipt, Lock, CheckCircle, Save, Trash2 } from 'lucide-react';
+import { Settings, Store, Receipt, Lock, CheckCircle, Save, Trash2, Upload, X } from 'lucide-react';
 
 export const SettingsPage: React.FC = () => {
   const { admin, updateAdminState } = useAuth();
@@ -342,6 +342,74 @@ export const SettingsPage: React.FC = () => {
                 className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none font-bold text-brand-600"
               />
               <p className="text-[10px] text-slate-400 mt-1">Generates instant UPI scan & pay QR code on invoice receipts.</p>
+            </div>
+          </div>
+
+          {/* Custom Payment QR Image Upload Section */}
+          <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-3">
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+              Custom Payment QR Code Image (GPay / PhonePe Standee Image)
+            </label>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+              {setting.paymentQrUrl ? (
+                <div className="relative group shrink-0">
+                  <img
+                    src={setting.paymentQrUrl}
+                    alt="Custom Payment QR"
+                    className="w-24 h-24 object-contain rounded-xl border border-slate-300 bg-white p-1 shadow-xs"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setSetting({ ...setting, paymentQrUrl: '' })}
+                    className="absolute -top-2 -right-2 p-1 rounded-full bg-rose-600 text-white shadow-md hover:bg-rose-700 transition-all"
+                    title="Remove custom QR image"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ) : (
+                <div className="w-24 h-24 rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-700 flex flex-col items-center justify-center text-slate-400 text-center p-2 bg-white dark:bg-slate-800 shrink-0">
+                  <Upload className="w-6 h-6 mb-1 text-slate-400" />
+                  <span className="text-[10px] font-bold">No Custom QR</span>
+                </div>
+              )}
+
+              <div className="flex-1 space-y-2 w-full">
+                <p className="text-xs text-slate-600 dark:text-slate-400">
+                  Upload your shop's official GPay / PhonePe / Paytm standee QR image to show directly on customer invoices.
+                </p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <label className="px-3.5 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-extrabold cursor-pointer inline-flex items-center gap-1.5 shadow-xs transition-all active:scale-95">
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>Upload QR Image</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onloadend = () => {
+                            setSetting({ ...setting, paymentQrUrl: reader.result as string });
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                    />
+                  </label>
+
+                  <span className="text-xs text-slate-400 font-bold">OR</span>
+
+                  <input
+                    type="text"
+                    placeholder="Paste image URL directly..."
+                    value={setting.paymentQrUrl || ''}
+                    onChange={(e) => setSetting({ ...setting, paymentQrUrl: e.target.value })}
+                    className="flex-1 min-w-[200px] px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white outline-none font-mono"
+                  />
+                </div>
+              </div>
             </div>
           </div>
 
