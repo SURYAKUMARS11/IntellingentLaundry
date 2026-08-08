@@ -96,7 +96,7 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       if (startDate) paymentMatch.paidAt.$gte = startDate;
       if (endDate) paymentMatch.paidAt.$lte = endDate;
     }
-    const paymentsList = await Payment.find(paymentMatch).sort({ paidAt: -1 }).limit(20);
+    let paymentsList = await Payment.find(paymentMatch).sort({ paidAt: -1 }).limit(20);
     const periodPayments = await Payment.aggregate([
       { $match: paymentMatch },
       { $group: { _id: null, total: { $sum: '$amount' } } },
@@ -171,24 +171,38 @@ export const getDashboardStats = async (req: Request, res: Response) => {
 
     const periodRev = Math.max(periodRevenue, todayRevenue);
 
+    // If paymentsList is empty, derive payment records from orders with advance/paid status
+    if (paymentsList.length === 0 && ordersList.length > 0) {
+      paymentsList = ordersList
+        .filter((o) => (o.advancePaid > 0 || o.paymentStatus === 'Paid' || o.paymentStatus === 'Partially Paid'))
+        .map((o) => ({
+          _id: o._id,
+          orderNumber: o.orderNumber,
+          customerName: o.customerSnapshot?.name || 'Customer',
+          paymentMethod: o.paymentMethod || 'Cash',
+          paidAt: o.createdAt || o.orderDate,
+          amount: o.advancePaid > 0 ? o.advancePaid : o.totalAmount,
+        })) as any;
+    }
+
     res.json({
       success: true,
       stats: {
-        totalOrders: totalOrdersCount,
+        totalOrders: ordersList.length,
+        orders: ordersList.length,
         paymentsReceived: periodRev,
-        activeOrders: activeOrdersCount,
-        newCustomers: newCustomersCount,
-        overdueOrders: overdueOrdersCount,
-        // legacy
-        todayOrders: totalOrdersCount,
-        pendingOrders: overdueOrdersCount,
-        inProgress: activeOrdersCount,
-        readyForPickup: activeOrdersCount,
-        deliveredOrders: totalOrdersCount - activeOrdersCount,
+        activeOrders: activeOrdersList.length,
+        newCustomers: newCustomersList.length,
+        overdueOrders: overdueOrdersList.length,
+        todayOrders: ordersList.length,
+        pendingOrders: activeOrdersList.length,
+        inProgress: activeOrdersList.length,
+        readyForPickup: activeOrdersList.length,
+        deliveredOrders: ordersList.length - activeOrdersList.length,
         todayRevenue,
         monthlyRevenue,
         periodRevenue: periodRev,
-        totalCustomers: newCustomersCount,
+        totalCustomers: newCustomersList.length,
       },
       ordersList,
       paymentsList,

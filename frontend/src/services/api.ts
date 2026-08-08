@@ -780,39 +780,54 @@ export const fetchDashboardStats = async (params: {
     };
   }
 
-  // If API succeeded, merge any local orders into the dashboard response
-  if (localOrders.length > 0) {
-    const map = new Map<string, Order>();
-    if (Array.isArray(apiRes.ordersList)) {
-      apiRes.ordersList.forEach((o: Order) => map.set(o._id, o));
-    }
-    localOrders.forEach((o: Order) => map.set(o._id, o));
-    const mergedOrders = Array.from(map.values());
-
-    const activeOrds = mergedOrders.filter((o) => o.status !== 'Delivered' && o.status !== 'Cancelled');
-    const overdueOrds = mergedOrders.filter((o) => o.remainingBalance > 0 || (o.status !== 'Delivered' && o.status !== 'Cancelled'));
-
-    const totalRev = mergedOrders.reduce((acc, o) => acc + (o.advancePaid > 0 ? o.advancePaid : o.totalAmount), 0);
-    const monthlyRev = mergedOrders.reduce((acc, o) => acc + o.totalAmount, 0);
-
-    const s = apiRes.stats || {};
-
-    apiRes.stats = {
-      ...s,
-      orders: Math.max(s.orders || 0, mergedOrders.length, s.totalOrders || 0),
-      totalOrders: Math.max(s.totalOrders || 0, mergedOrders.length, s.orders || 0),
-      todayOrders: Math.max(s.todayOrders || 0, mergedOrders.length),
-      activeOrders: Math.max(s.activeOrders || 0, activeOrds.length),
-      paymentsReceived: Math.max(s.paymentsReceived || 0, totalRev),
-      todayRevenue: Math.max(s.todayRevenue || 0, totalRev),
-      monthlyRevenue: Math.max(s.monthlyRevenue || 0, monthlyRev),
-      periodRevenue: Math.max(s.periodRevenue || 0, totalRev),
-    };
-
-    apiRes.ordersList = mergedOrders;
-    apiRes.activeOrdersList = activeOrds;
-    apiRes.overdueOrdersList = overdueOrds;
+  // Merge local orders into dashboard response and synchronize counts
+  const map = new Map<string, Order>();
+  if (apiRes.success && Array.isArray(apiRes.ordersList)) {
+    apiRes.ordersList.forEach((o: Order) => map.set(o._id, o));
   }
+  localOrders.forEach((o: Order) => map.set(o._id, o));
+  const mergedOrders = Array.from(map.values());
+
+  const activeOrds = mergedOrders.filter((o) => o.status !== 'Delivered' && o.status !== 'Cancelled');
+  const overdueOrds = mergedOrders.filter((o) => o.remainingBalance > 0 || (o.status !== 'Delivered' && o.status !== 'Cancelled'));
+
+  const totalRev = mergedOrders.reduce((acc, o) => acc + (o.advancePaid > 0 ? o.advancePaid : o.totalAmount), 0);
+  const monthlyRev = mergedOrders.reduce((acc, o) => acc + o.totalAmount, 0);
+
+  const s = apiRes.stats || {};
+
+  let pList = Array.isArray(apiRes.paymentsList) ? apiRes.paymentsList : [];
+  if (pList.length === 0 && mergedOrders.length > 0) {
+    pList = mergedOrders
+      .filter((o) => (o.advancePaid > 0 || o.paymentStatus === 'Paid' || o.paymentStatus === 'Partially Paid'))
+      .map((o) => ({
+        _id: o._id,
+        orderNumber: o.orderNumber,
+        customerName: o.customerSnapshot?.name || 'Customer',
+        paymentMethod: o.paymentMethod || 'Cash',
+        paidAt: o.orderDate,
+        amount: o.advancePaid > 0 ? o.advancePaid : o.totalAmount,
+      }));
+  }
+
+  apiRes.stats = {
+    ...s,
+    orders: mergedOrders.length,
+    totalOrders: mergedOrders.length,
+    todayOrders: mergedOrders.length,
+    activeOrders: activeOrds.length,
+    overdueOrders: overdueOrds.length,
+    newCustomers: Math.max(s.newCustomers || 0, localCustomers.length, apiRes.newCustomersList?.length || 0),
+    paymentsReceived: Math.max(s.paymentsReceived || 0, totalRev),
+    todayRevenue: Math.max(s.todayRevenue || 0, totalRev),
+    monthlyRevenue: Math.max(s.monthlyRevenue || 0, monthlyRev),
+    periodRevenue: Math.max(s.periodRevenue || 0, totalRev),
+  };
+
+  apiRes.ordersList = mergedOrders;
+  apiRes.activeOrdersList = activeOrds;
+  apiRes.overdueOrdersList = overdueOrds;
+  apiRes.paymentsList = pList;
 
   return apiRes;
 };

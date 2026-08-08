@@ -375,7 +375,7 @@ export const DashboardPage: React.FC = () => {
           </div>
           <div className="mt-2 sm:mt-3">
             <p className="text-base sm:text-2xl font-black text-slate-900 dark:text-white truncate">
-              {stats?.orders ?? stats?.todayOrders ?? 0}
+              {ordersList.length}
             </p>
             <p className="hidden sm:block text-[11px] font-semibold text-blue-600 mt-0.5">Click to view orders</p>
           </div>
@@ -398,7 +398,7 @@ export const DashboardPage: React.FC = () => {
           </div>
           <div className="mt-2 sm:mt-3">
             <p className="text-base sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 truncate">
-              {currencySymbol}{stats?.paymentsReceived ?? stats?.periodRevenue ?? 0}
+              {currencySymbol}{stats?.paymentsReceived ?? (paymentsList.length > 0 ? paymentsList : ordersList).reduce((acc, o: any) => acc + (o.amount || o.advancePaid || o.totalAmount || 0), 0)}
             </p>
             <p className="hidden sm:block text-[11px] font-semibold text-emerald-600 mt-0.5">Click to view income</p>
           </div>
@@ -421,7 +421,7 @@ export const DashboardPage: React.FC = () => {
           </div>
           <div className="mt-2 sm:mt-3">
             <p className="text-base sm:text-2xl font-black text-cyan-600 dark:text-cyan-400 truncate">
-              {stats?.activeOrders ?? stats?.pendingOrders ?? 0}
+              {activeOrdersList.length}
             </p>
             <p className="hidden sm:block text-[11px] font-semibold text-cyan-600 mt-0.5">Click to view active</p>
           </div>
@@ -444,7 +444,7 @@ export const DashboardPage: React.FC = () => {
           </div>
           <div className="mt-2 sm:mt-3">
             <p className="text-base sm:text-2xl font-black text-slate-900 dark:text-white truncate">
-              {stats?.newCustomers ?? stats?.totalCustomers ?? 0}
+              {newCustomersList.length}
             </p>
             <p className="hidden sm:block text-[11px] font-semibold text-indigo-600 mt-0.5">Click to view customers</p>
           </div>
@@ -467,7 +467,7 @@ export const DashboardPage: React.FC = () => {
           </div>
           <div className="mt-2 sm:mt-3">
             <p className="text-base sm:text-2xl font-black text-rose-600 dark:text-rose-400 truncate">
-              {stats?.overdueOrders ?? stats?.pendingOrders ?? 0}
+              {overdueOrdersList.length}
             </p>
             <p className="hidden sm:block text-[11px] font-semibold text-rose-600 mt-0.5">Click to view overdue</p>
           </div>
