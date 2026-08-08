@@ -14,6 +14,7 @@ import { CreateOrderPage } from './pages/CreateOrderPage';
 import { CustomersPage } from './pages/CustomersPage';
 import { ServicesPage } from './pages/ServicesPage';
 import { ItemsPage } from './pages/ItemsPage';
+import { GarmentCategoriesPage } from './pages/GarmentCategoriesPage';
 import { ReportsPage } from './pages/ReportsPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { PublicReceiptPage } from './pages/PublicReceiptPage';
@@ -134,6 +135,15 @@ export const AppContent: React.FC = () => {
         element={
           <ProtectedLayout>
             <ItemsPage />
+          </ProtectedLayout>
+        }
+      />
+
+      <Route
+        path="/categories"
+        element={
+          <ProtectedLayout>
+            <GarmentCategoriesPage />
           </ProtectedLayout>
         }
       />

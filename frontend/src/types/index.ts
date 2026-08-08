@@ -52,6 +52,17 @@ export interface LaundryItem {
   createdAt?: string;
 }
 
+export interface GarmentCategory {
+  _id: string;
+  name: string;
+  description?: string;
+  icon?: string;
+  displayOrder?: number;
+  itemCount?: number;
+  isActive: boolean;
+  createdAt?: string;
+}
+
 export interface OrderItem {
   itemId?: string;
   itemName: string;

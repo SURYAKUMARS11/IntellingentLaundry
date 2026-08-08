@@ -72,6 +72,20 @@ export const BottomNav: React.FC = () => {
             </NavLink>
 
             <NavLink
+              to="/categories"
+              onClick={() => setShowMoreMenu(false)}
+              className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 font-medium text-slate-700 dark:text-slate-200"
+            >
+              <div className="p-2 rounded-lg bg-amber-100 text-amber-600 dark:bg-amber-950 dark:text-amber-400">
+                <ShoppingBag className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold">Garment Categories</p>
+                <p className="text-xs text-slate-500">Regular, Men, Women, Kids, Household</p>
+              </div>
+            </NavLink>
+
+            <NavLink
               to="/reports"
               onClick={() => setShowMoreMenu(false)}
               className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 font-medium text-slate-700 dark:text-slate-200"

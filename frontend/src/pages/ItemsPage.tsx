@@ -5,6 +5,7 @@ import {
   updateItemApi,
   deleteItemApi,
   fetchSettings,
+  fetchGarmentCategories,
 } from '../services/api';
 import { LaundryItem, Setting } from '../types';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
@@ -14,6 +15,14 @@ import { Shirt, Plus, Edit, Trash2, X, Tag, Search, Sparkles, Check } from 'luci
 export const ItemsPage: React.FC = () => {
   const [items, setItems] = useState<LaundryItem[]>([]);
   const [setting, setSetting] = useState<Setting | undefined>(undefined);
+  const [categoriesList, setCategoriesList] = useState<string[]>([
+    'Regular',
+    'Men',
+    'Women',
+    'Kids',
+    'Household',
+    'Others',
+  ]);
   const [showModal, setShowModal] = useState(false);
   const [editingItem, setEditingItem] = useState<LaundryItem | null>(null);
 
@@ -34,9 +43,16 @@ export const ItemsPage: React.FC = () => {
 
   const loadData = async () => {
     try {
-      const [itemRes, setRes] = await Promise.all([fetchItems(), fetchSettings()]);
+      const [itemRes, setRes, catRes] = await Promise.all([
+        fetchItems(),
+        fetchSettings(),
+        fetchGarmentCategories(),
+      ]);
       if (itemRes.success) setItems(itemRes.items);
       if (setRes.success) setSetting(setRes.setting);
+      if (catRes.success && Array.isArray(catRes.categories) && catRes.categories.length > 0) {
+        setCategoriesList(catRes.categories.map((c: any) => c.name));
+      }
     } catch (err) {
       console.error('Failed to load laundry items', err);
     }
@@ -200,7 +216,7 @@ export const ItemsPage: React.FC = () => {
             Garment Category Groups
           </span>
           <div className="flex flex-wrap gap-1.5">
-            {categories.map((cat) => {
+            {categoriesList.map((cat) => {
               const active = selectedCategory === cat;
               return (
                 <button
@@ -319,7 +335,7 @@ export const ItemsPage: React.FC = () => {
                   onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                   className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none font-bold"
                 >
-                  {categories.filter((c) => c !== 'All').map((cat) => (
+                  {categoriesList.map((cat) => (
                     <option key={cat} value={cat}>
                       {cat}
                     </option>

@@ -7,6 +7,7 @@ import {
   Users,
   WashingMachine,
   Shirt,
+  Layers,
   BarChart3,
   Settings,
   Sparkles,
@@ -29,6 +30,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed = false, onToggleC
     { label: 'Customers', path: '/customers', icon: Users },
     { label: 'Services', path: '/services', icon: WashingMachine },
     { label: 'Clothing Items', path: '/items', icon: Shirt },
+    { label: 'Garment Categories', path: '/categories', icon: Layers },
     { label: 'Reports', path: '/reports', icon: BarChart3 },
     { label: 'Shop Settings', path: '/settings', icon: Settings },
   ];

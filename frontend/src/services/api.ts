@@ -3,6 +3,7 @@ import {
   Customer,
   Service,
   LaundryItem,
+  GarmentCategory,
   Order,
   Setting,
   DashboardStats,
@@ -385,6 +386,67 @@ export const deleteItemApi = async (id: string) => {
   } catch (err) {
     const current = getMockItems().filter((i) => i._id !== id);
     saveMockItems(current);
+    return { success: true };
+  }
+};
+
+// --- Garment Category API ---
+export const fetchGarmentCategories = async () => {
+  try {
+    const res = await fetchApi('/garment-categories');
+    if (res.success && Array.isArray(res.categories) && res.categories.length > 0) {
+      return res;
+    }
+    return { success: true, categories: getMockCategories() };
+  } catch (err) {
+    return { success: true, categories: getMockCategories() };
+  }
+};
+
+export const createGarmentCategoryApi = async (categoryData: any) => {
+  try {
+    return await fetchApi('/garment-categories', {
+      method: 'POST',
+      body: JSON.stringify(categoryData),
+    });
+  } catch (err) {
+    const newCat: GarmentCategory = {
+      _id: 'cat-' + Date.now(),
+      name: categoryData.name,
+      description: categoryData.description || '',
+      displayOrder: categoryData.displayOrder || 99,
+      isActive: true,
+    };
+    const current = getMockCategories();
+    current.push(newCat);
+    saveMockCategories(current);
+    return { success: true, category: newCat };
+  }
+};
+
+export const updateGarmentCategoryApi = async (id: string, categoryData: any) => {
+  try {
+    return await fetchApi(`/garment-categories/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(categoryData),
+    });
+  } catch (err) {
+    const current = getMockCategories();
+    const idx = current.findIndex((c) => c._id === id);
+    if (idx !== -1) {
+      current[idx] = { ...current[idx], ...categoryData };
+      saveMockCategories(current);
+    }
+    return { success: true, category: current[idx] };
+  }
+};
+
+export const deleteGarmentCategoryApi = async (id: string) => {
+  try {
+    return await fetchApi(`/garment-categories/${id}`, { method: 'DELETE' });
+  } catch (err) {
+    const current = getMockCategories().filter((c) => c._id !== id);
+    saveMockCategories(current);
     return { success: true };
   }
 };
@@ -1011,6 +1073,29 @@ const getMockCustomers = (): Customer[] => {
 };
 
 const saveMockCustomers = (customers: Customer[]) => localStorage.setItem('mock_customers', JSON.stringify(customers));
+
+const defaultMockCategories: GarmentCategory[] = [
+  { _id: 'cat-1', name: 'Regular', description: 'Everyday common garments like shirts, pants, dhotis & sarees', displayOrder: 1, isActive: true },
+  { _id: 'cat-2', name: 'Men', description: 'Gents apparel including suits, blazers, formal shirts & denim', displayOrder: 2, isActive: true },
+  { _id: 'cat-3', name: 'Women', description: 'Ladies wear including silk sarees, lehengas, tops & dresses', displayOrder: 3, isActive: true },
+  { _id: 'cat-4', name: 'Kids', description: 'Children wear including frocks, onesies, shorts & baby wear', displayOrder: 4, isActive: true },
+  { _id: 'cat-5', name: 'Household', description: 'Home items including bedsheets, blankets, curtains & towels', displayOrder: 5, isActive: true },
+  { _id: 'cat-6', name: 'Others', description: 'Footwear, bags, caps, gloves & miscellaneous items', displayOrder: 6, isActive: true },
+];
+
+const getMockCategories = (): GarmentCategory[] => {
+  const stored = localStorage.getItem('mock_categories');
+  if (stored) {
+    try {
+      const list = JSON.parse(stored);
+      if (Array.isArray(list) && list.length >= 1) return list;
+    } catch (e) {}
+  }
+  localStorage.setItem('mock_categories', JSON.stringify(defaultMockCategories));
+  return defaultMockCategories;
+};
+
+const saveMockCategories = (cats: GarmentCategory[]) => localStorage.setItem('mock_categories', JSON.stringify(cats));
 
 const getMockServices = (): Service[] => {
   const stored = localStorage.getItem('mock_services');
