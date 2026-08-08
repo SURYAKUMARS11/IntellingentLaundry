@@ -731,48 +731,90 @@ export const fetchDashboardStats = async (params: {
   dateTo?: string;
 } = {}) => {
   const query = new URLSearchParams(params as any).toString();
+  let apiRes: any = null;
   try {
-    return await fetchApi(`/reports/dashboard?${query}`);
-  } catch (err) {
-    const orders = getMockOrders();
-    const customers = getMockCustomers();
-    const activeOrds = orders.filter((o) => o.status !== 'Delivered' && o.status !== 'Cancelled');
-    const overdueOrds = orders.filter((o) => o.remainingBalance > 0 || (o.status !== 'Delivered' && o.status !== 'Cancelled'));
+    apiRes = await fetchApi(`/reports/dashboard?${query}`);
+  } catch (err) {}
+
+  const localOrders = getMockOrders();
+  const localCustomers = getMockCustomers();
+
+  if (!apiRes || !apiRes.success) {
+    const activeOrds = localOrders.filter((o) => o.status !== 'Delivered' && o.status !== 'Cancelled');
+    const overdueOrds = localOrders.filter((o) => o.remainingBalance > 0 || (o.status !== 'Delivered' && o.status !== 'Cancelled'));
+    const totalRev = localOrders.reduce((acc, o) => acc + (o.advancePaid || o.totalAmount), 0);
+    const monthlyRev = localOrders.reduce((acc, o) => acc + o.totalAmount, 0);
 
     const stats: DashboardStats = {
-      orders: orders.length,
-      paymentsReceived: orders.reduce((acc, o) => acc + o.advancePaid, 0),
+      orders: localOrders.length,
+      paymentsReceived: totalRev,
       activeOrders: activeOrds.length,
-      newCustomers: customers.length,
+      newCustomers: localCustomers.length,
       overdueOrders: overdueOrds.length,
-      todayOrders: orders.length,
+      todayOrders: localOrders.length,
       pendingOrders: activeOrds.length,
       inProgress: activeOrds.length,
-      readyForPickup: orders.filter((o) => o.status === 'Ready for Pickup').length,
-      deliveredOrders: orders.filter((o) => o.status === 'Delivered').length,
-      todayRevenue: orders.reduce((acc, o) => acc + o.advancePaid, 0),
-      monthlyRevenue: orders.reduce((acc, o) => acc + o.totalAmount, 0),
-      periodRevenue: orders.reduce((acc, o) => acc + o.advancePaid, 0),
-      totalCustomers: customers.length,
+      readyForPickup: localOrders.filter((o) => o.status === 'Ready for Pickup').length,
+      deliveredOrders: localOrders.filter((o) => o.status === 'Delivered').length,
+      todayRevenue: totalRev,
+      monthlyRevenue: monthlyRev,
+      periodRevenue: totalRev,
+      totalCustomers: localCustomers.length,
     };
 
     return {
       success: true,
       stats,
-      ordersList: orders,
-      paymentsList: orders.map((o) => ({
+      ordersList: localOrders,
+      paymentsList: localOrders.map((o) => ({
         _id: o._id,
         orderNumber: o.orderNumber,
-        customerName: o.customerSnapshot.name,
+        customerName: o.customerSnapshot?.name || 'Customer',
         paymentMethod: o.paymentMethod || 'Cash',
         paidAt: o.orderDate,
-        amount: o.advancePaid,
+        amount: o.advancePaid || o.totalAmount,
       })),
       activeOrdersList: activeOrds,
-      newCustomersList: customers,
+      newCustomersList: localCustomers,
       overdueOrdersList: overdueOrds,
     };
   }
+
+  // If API succeeded, merge any local orders into the dashboard response
+  if (localOrders.length > 0) {
+    const map = new Map<string, Order>();
+    if (Array.isArray(apiRes.ordersList)) {
+      apiRes.ordersList.forEach((o: Order) => map.set(o._id, o));
+    }
+    localOrders.forEach((o: Order) => map.set(o._id, o));
+    const mergedOrders = Array.from(map.values());
+
+    const activeOrds = mergedOrders.filter((o) => o.status !== 'Delivered' && o.status !== 'Cancelled');
+    const overdueOrds = mergedOrders.filter((o) => o.remainingBalance > 0 || (o.status !== 'Delivered' && o.status !== 'Cancelled'));
+
+    const totalRev = mergedOrders.reduce((acc, o) => acc + (o.advancePaid > 0 ? o.advancePaid : o.totalAmount), 0);
+    const monthlyRev = mergedOrders.reduce((acc, o) => acc + o.totalAmount, 0);
+
+    const s = apiRes.stats || {};
+
+    apiRes.stats = {
+      ...s,
+      orders: Math.max(s.orders || 0, mergedOrders.length, s.totalOrders || 0),
+      totalOrders: Math.max(s.totalOrders || 0, mergedOrders.length, s.orders || 0),
+      todayOrders: Math.max(s.todayOrders || 0, mergedOrders.length),
+      activeOrders: Math.max(s.activeOrders || 0, activeOrds.length),
+      paymentsReceived: Math.max(s.paymentsReceived || 0, totalRev),
+      todayRevenue: Math.max(s.todayRevenue || 0, totalRev),
+      monthlyRevenue: Math.max(s.monthlyRevenue || 0, monthlyRev),
+      periodRevenue: Math.max(s.periodRevenue || 0, totalRev),
+    };
+
+    apiRes.ordersList = mergedOrders;
+    apiRes.activeOrdersList = activeOrds;
+    apiRes.overdueOrdersList = overdueOrds;
+  }
+
+  return apiRes;
 };
 
 export const fetchRevenueReport = async (params: any = {}) => {

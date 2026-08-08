@@ -133,27 +133,49 @@ export const getDashboardStats = async (req: Request, res: Response) => {
     const overdueOrdersCount = await Order.countDocuments(overdueQuery);
     const overdueOrdersList = await Order.find(overdueQuery).sort({ expectedDeliveryDate: 1 }).limit(20);
 
-    // Legacy values for fallback compatibility
+    // Calculate revenue from payments & order totals
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
     const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
-    const todayPayments = await Payment.aggregate([
-      { $match: { paidAt: { $gte: todayStart, $lte: todayEnd } } },
-      { $group: { _id: null, total: { $sum: '$amount' } } },
+    
+    const [todayPayments, todayOrdersSum] = await Promise.all([
+      Payment.aggregate([
+        { $match: { paidAt: { $gte: todayStart, $lte: todayEnd } } },
+        { $group: { _id: null, total: { $sum: '$amount' } } },
+      ]),
+      Order.aggregate([
+        { $match: { orderDate: { $gte: todayStart, $lte: todayEnd } } },
+        { $group: { _id: null, totalAdv: { $sum: '$advancePaid' }, totalVal: { $sum: '$totalAmount' } } },
+      ]),
     ]);
-    const todayRevenue = todayPayments[0]?.total || 0;
+    
+    const todayPayTotal = todayPayments[0]?.total || 0;
+    const todayAdvTotal = todayOrdersSum[0]?.totalAdv || 0;
+    const todayValTotal = todayOrdersSum[0]?.totalVal || 0;
+    const todayRevenue = Math.max(todayPayTotal, todayAdvTotal, todayValTotal);
 
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
-    const monthPayments = await Payment.aggregate([
-      { $match: { paidAt: { $gte: monthStart } } },
-      { $group: { _id: null, total: { $sum: '$amount' } } },
+    const [monthPayments, monthOrdersSum] = await Promise.all([
+      Payment.aggregate([
+        { $match: { paidAt: { $gte: monthStart } } },
+        { $group: { _id: null, total: { $sum: '$amount' } } },
+      ]),
+      Order.aggregate([
+        { $match: { orderDate: { $gte: monthStart } } },
+        { $group: { _id: null, totalAdv: { $sum: '$advancePaid' }, totalVal: { $sum: '$totalAmount' } } },
+      ]),
     ]);
-    const monthlyRevenue = monthPayments[0]?.total || 0;
+    
+    const monthPayTotal = monthPayments[0]?.total || 0;
+    const monthValTotal = monthOrdersSum[0]?.totalVal || 0;
+    const monthlyRevenue = Math.max(monthPayTotal, monthValTotal);
+
+    const periodRev = Math.max(periodRevenue, todayRevenue);
 
     res.json({
       success: true,
       stats: {
         totalOrders: totalOrdersCount,
-        paymentsReceived: periodRevenue,
+        paymentsReceived: periodRev,
         activeOrders: activeOrdersCount,
         newCustomers: newCustomersCount,
         overdueOrders: overdueOrdersCount,
@@ -165,7 +187,7 @@ export const getDashboardStats = async (req: Request, res: Response) => {
         deliveredOrders: totalOrdersCount - activeOrdersCount,
         todayRevenue,
         monthlyRevenue,
-        periodRevenue,
+        periodRevenue: periodRev,
         totalCustomers: newCustomersCount,
       },
       ordersList,
