@@ -151,10 +151,10 @@ export const createOrder = async (req: Request, res: Response) => {
       const qty = Number(item.quantity) || 1;
       const price = Number(item.unitPrice) || 0;
       return {
-        itemId: item.itemId,
-        itemName: item.itemName,
-        serviceId: item.serviceId,
-        serviceName: item.serviceName,
+        itemId: item.itemId ? String(item.itemId) : undefined,
+        itemName: item.itemName || 'Laundry Item',
+        serviceId: item.serviceId ? String(item.serviceId) : undefined,
+        serviceName: item.serviceName || 'Wash & Press',
         quantity: qty,
         unitPrice: price,
         subtotal: qty * price,

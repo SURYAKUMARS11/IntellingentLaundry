@@ -60,9 +60,9 @@ export interface IOrder extends Document {
 }
 
 const OrderItemSchema = new Schema({
-  itemId: { type: Schema.Types.ObjectId, ref: 'LaundryItem' },
+  itemId: { type: Schema.Types.Mixed },
   itemName: { type: String, required: true },
-  serviceId: { type: Schema.Types.ObjectId, ref: 'Service' },
+  serviceId: { type: Schema.Types.Mixed },
   serviceName: { type: String, required: true },
   quantity: { type: Number, required: true, min: 1 },
   unitPrice: { type: Number, required: true, min: 0 },
