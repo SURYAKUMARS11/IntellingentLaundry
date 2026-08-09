@@ -94,10 +94,8 @@ export const CreateOrderPage: React.FC = () => {
   const [discount, setDiscount] = useState<number>(0);
   const [taxPercent, setTaxPercent] = useState<number>(0);
   const [advancePaid, setAdvancePaid] = useState<number>(0);
-  const [paymentMethod, setPaymentMethod] = useState<'Cash' | 'UPI' | 'Card'>('Cash');
-  const [expectedDeliveryDate, setExpectedDeliveryDate] = useState<string>(
-    new Date(Date.now() + 86400000).toISOString().slice(0, 10)
-  );
+  const [paymentMethod, setPaymentMethod] = useState<'Cash' | 'UPI'>('Cash');
+  const [expectedDeliveryDate, setExpectedDeliveryDate] = useState<string>('');
   const [notes, setNotes] = useState<string>('');
 
   // Final Generated Order & Invoice Modal
@@ -308,7 +306,7 @@ export const CreateOrderPage: React.FC = () => {
         discount,
         taxPercent,
         advancePaid,
-        paymentMethod,
+        paymentMethod: advancePaid > 0 ? paymentMethod : 'Pending',
         notes,
       });
 
@@ -643,26 +641,28 @@ export const CreateOrderPage: React.FC = () => {
                 </span>
               </div>
 
-              {/* Payment Method */}
-              <div className="pt-2">
-                <label className="block text-[11px] font-bold text-slate-500 mb-1">Payment Method</label>
-                <div className="grid grid-cols-3 gap-2">
-                  {(['Cash', 'UPI', 'Card'] as const).map((m) => (
-                    <button
-                      key={m}
-                      type="button"
-                      onClick={() => setPaymentMethod(m)}
-                      className={`py-2 rounded-xl text-xs font-extrabold border transition-all ${
-                        paymentMethod === m
-                          ? 'bg-brand-600 text-white border-brand-600 shadow-sm'
-                          : 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700'
-                      }`}
-                    >
-                      {m}
-                    </button>
-                  ))}
+              {/* Payment Method (Only displayed if advancePaid > 0) */}
+              {advancePaid > 0 && (
+                <div className="pt-2">
+                  <label className="block text-[11px] font-bold text-slate-500 mb-1">Advance Payment Method</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {(['Cash', 'UPI'] as const).map((m) => (
+                      <button
+                        key={m}
+                        type="button"
+                        onClick={() => setPaymentMethod(m)}
+                        className={`py-2 rounded-xl text-xs font-extrabold border transition-all ${
+                          paymentMethod === m
+                            ? 'bg-brand-600 text-white border-brand-600 shadow-sm'
+                            : 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700'
+                        }`}
+                      >
+                        {m}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Expected Delivery Date */}
               <div className="pt-2">
