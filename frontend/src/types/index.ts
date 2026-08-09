@@ -4,6 +4,7 @@ export type OrderStatus =
   | 'Drying'
   | 'Ironing'
   | 'Packing'
+  | 'Ready for Delivery'
   | 'Ready for Pickup'
   | 'Delivered'
   | 'Cancelled';

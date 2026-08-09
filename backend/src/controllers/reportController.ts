@@ -107,7 +107,7 @@ export const getDashboardStats = async (req: Request, res: Response) => {
     // 3. Active Orders List & Count
     const activeQuery = {
       ...orderQuery,
-      status: { $in: ['Received', 'Washing', 'Drying', 'Ironing', 'Packing', 'Ready for Pickup'] },
+      status: { $in: ['Received', 'Washing', 'Drying', 'Ironing', 'Packing', 'Ready for Delivery', 'Ready for Pickup'] },
     };
     const activeOrdersCount = await Order.countDocuments(activeQuery);
     const activeOrdersList = await Order.find(activeQuery).sort({ orderDate: -1 }).limit(20);

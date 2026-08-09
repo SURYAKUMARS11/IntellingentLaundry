@@ -39,7 +39,7 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
     'Drying',
     'Ironing',
     'Packing',
-    'Ready for Pickup',
+    'Ready for Delivery',
     'Delivered',
     'Cancelled',
   ];

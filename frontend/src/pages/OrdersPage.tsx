@@ -119,7 +119,7 @@ export const OrdersPage: React.FC = () => {
     'Drying',
     'Ironing',
     'Packing',
-    'Ready for Pickup',
+    'Ready for Delivery',
     'Delivered',
     'Cancelled',
   ];

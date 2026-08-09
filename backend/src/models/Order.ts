@@ -6,6 +6,7 @@ export type OrderStatus =
   | 'Drying'
   | 'Ironing'
   | 'Packing'
+  | 'Ready for Delivery'
   | 'Ready for Pickup'
   | 'Delivered'
   | 'Cancelled';
@@ -94,6 +95,7 @@ const OrderSchema: Schema = new Schema(
         'Drying',
         'Ironing',
         'Packing',
+        'Ready for Delivery',
         'Ready for Pickup',
         'Delivered',
         'Cancelled',

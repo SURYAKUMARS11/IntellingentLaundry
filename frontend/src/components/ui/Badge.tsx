@@ -19,6 +19,7 @@ export const StatusBadge: React.FC<BadgeProps> = ({ status, size = 'md' }) => {
         return 'bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300 border-purple-200 dark:border-purple-800';
       case 'Packing':
         return 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800';
+      case 'Ready for Delivery':
       case 'Ready for Pickup':
         return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800 font-semibold';
       case 'Delivered':

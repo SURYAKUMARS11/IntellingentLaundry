@@ -274,6 +274,7 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
       'Drying',
       'Ironing',
       'Packing',
+      'Ready for Delivery',
       'Ready for Pickup',
       'Delivered',
       'Cancelled',

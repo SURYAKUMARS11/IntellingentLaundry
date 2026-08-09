@@ -170,7 +170,7 @@ export const DashboardPage: React.FC = () => {
     'Drying',
     'Ironing',
     'Packing',
-    'Ready for Pickup',
+    'Ready for Delivery',
     'Delivered',
     'Cancelled',
   ];
@@ -535,7 +535,7 @@ export const DashboardPage: React.FC = () => {
             <p className="hidden sm:block text-xs text-slate-500 mt-0.5">
               {activeCard === 'orders' && 'Showing all orders matching filter criteria.'}
               {activeCard === 'payments' && 'Showing payment collection receipts matching filter criteria.'}
-              {activeCard === 'active' && 'Active orders currently in washing, drying, ironing, packing, or ready for pickup.'}
+              {activeCard === 'active' && 'Active orders currently in washing, drying, ironing, packing, or ready for delivery.'}
               {activeCard === 'customers' && 'Showing new customer profiles registered during selected period.'}
               {activeCard === 'overdue' && 'Showing active orders with pending balance or past expected delivery.'}
             </p>
