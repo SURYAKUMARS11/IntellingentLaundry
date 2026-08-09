@@ -280,6 +280,10 @@ export const CreateOrderPage: React.FC = () => {
       setPosError('Please add at least one garment or service item to the order.');
       return;
     }
+    if (!expectedDeliveryDate) {
+      setPosError('Please select an Expected Delivery Date for the order.');
+      return;
+    }
 
     setIsSubmitting(true);
     try {
@@ -666,12 +670,17 @@ export const CreateOrderPage: React.FC = () => {
 
               {/* Expected Delivery Date */}
               <div className="pt-2">
-                <label className="block text-[11px] font-bold text-slate-500 mb-1">Expected Delivery Date</label>
+                <label className="block text-[11px] font-bold text-slate-500 mb-1">
+                  Expected Delivery Date <span className="text-rose-500 font-black">*</span>
+                </label>
                 <input
                   type="date"
+                  required
                   value={expectedDeliveryDate}
                   onChange={(e) => setExpectedDeliveryDate(e.target.value)}
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none"
+                  className={`w-full px-3 py-2 text-xs rounded-xl border ${
+                    !expectedDeliveryDate ? 'border-amber-400 bg-amber-50/30 dark:bg-amber-950/20' : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800'
+                  } text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-brand-500`}
                 />
               </div>
 
@@ -685,7 +694,7 @@ export const CreateOrderPage: React.FC = () => {
               {/* Submit Order Button */}
               <button
                 type="button"
-                disabled={isSubmitting || orderItems.length === 0 || !selectedCustomerId}
+                disabled={isSubmitting || orderItems.length === 0 || !selectedCustomerId || !expectedDeliveryDate}
                 onClick={handleSubmitOrder}
                 className="w-full mt-4 py-3.5 rounded-2xl bg-gradient-to-r from-brand-600 to-cyan-600 hover:from-brand-700 hover:to-cyan-700 text-white font-black text-sm shadow-lg shadow-brand-600/30 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 transition-all flex items-center justify-center gap-2"
               >
