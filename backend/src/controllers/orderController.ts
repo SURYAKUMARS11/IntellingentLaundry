@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import mongoose from 'mongoose';
 import Order, { OrderStatus, PaymentStatus } from '../models/Order';
 import Customer from '../models/Customer';
 import Payment from '../models/Payment';
@@ -111,18 +112,19 @@ export const createOrder = async (req: Request, res: Response) => {
 
     const custData = newCustomer || req.body.customerSnapshot;
 
-    if (customerId) {
+    if (customerId && mongoose.Types.ObjectId.isValid(customerId)) {
       customerObj = await Customer.findById(customerId);
     }
     
-    if (!customerObj && custData && custData.name && custData.mobile) {
-      let existing = await Customer.findOne({ mobile: custData.mobile });
+    if (!customerObj && custData && (custData.name || custData.mobile)) {
+      const mob = custData.mobile || '9876543210';
+      let existing = await Customer.findOne({ mobile: mob });
       if (existing) {
         customerObj = existing;
       } else {
         customerObj = new Customer({
-          name: custData.name,
-          mobile: custData.mobile,
+          name: custData.name || 'Walk-in Customer',
+          mobile: mob,
           address: custData.address || 'Local',
           email: custData.email || '',
         });
@@ -131,7 +133,17 @@ export const createOrder = async (req: Request, res: Response) => {
     }
 
     if (!customerObj) {
-      return res.status(400).json({ success: false, message: 'Please select a valid customer or provide customer details' });
+      let existing = await Customer.findOne({ mobile: '9876543210' });
+      if (existing) {
+        customerObj = existing;
+      } else {
+        customerObj = new Customer({
+          name: 'Walk-in Customer',
+          mobile: '9876543210',
+          address: 'Local Shop',
+        });
+        await customerObj.save();
+      }
     }
 
     // Process items & subtotal

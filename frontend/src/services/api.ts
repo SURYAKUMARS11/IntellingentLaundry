@@ -113,72 +113,30 @@ export const fetchCustomers = async (params: { search?: string; page?: number; l
   const limit = typeof params === 'object' ? params.limit || 10 : 10;
   const query = new URLSearchParams({ search, page: String(page), limit: String(limit) }).toString();
 
-  let customers: Customer[] = [];
-  let pagination: any = null;
-
   try {
     const res = await fetchApi(`/customers?${query}`);
-    if (res.success && Array.isArray(res.customers)) {
-      customers = res.customers;
-      pagination = res.pagination;
+    if (res && res.success && Array.isArray(res.customers)) {
+      return res;
     }
   } catch (err) {}
 
   const localCustomers = getMockCustomers();
-  if (customers.length === 0) {
-    customers = localCustomers;
-  } else {
-    const map = new Map<string, Customer>();
-    customers.forEach((c) => map.set(c.mobile || c._id, c));
-    localCustomers.forEach((c) => {
-      if (!map.has(c.mobile || c._id)) map.set(c.mobile || c._id, c);
-    });
-    customers = Array.from(map.values());
-  }
-
-  const allOrders = getMockOrders();
-
-  // Dynamically calculate totalOrders & totalSpent for every customer
-  const processed = customers.map((c) => {
-    const custOrders = allOrders.filter(
-      (o: any) =>
-        (o.customerId && String(o.customerId) === String(c._id)) ||
-        (o.customer && String(typeof o.customer === 'object' ? o.customer._id : o.customer) === String(c._id)) ||
-        (o.customerSnapshot && o.customerSnapshot.mobile === c.mobile)
-    );
-    const calcOrdersCount = Math.max(c.totalOrders || 0, custOrders.length);
-    const calcSpent = Math.max(
-      c.totalSpent || 0,
-      custOrders.reduce((sum: number, o: any) => sum + (o.totalAmount || 0), 0)
-    );
-    return {
-      ...c,
-      totalOrders: calcOrdersCount,
-      totalSpent: calcSpent,
-    };
-  });
-
+  let processed = [...localCustomers];
   if (search) {
     const q = search.toLowerCase();
-    const filtered = processed.filter(
+    processed = processed.filter(
       (c) =>
         c.name.toLowerCase().includes(q) ||
         c.mobile.includes(q) ||
         (c.address && c.address.toLowerCase().includes(q))
     );
-    const skip = (page - 1) * limit;
-    return {
-      success: true,
-      customers: filtered.slice(skip, skip + limit),
-      pagination: { total: filtered.length, page, limit, pages: Math.ceil(filtered.length / limit) },
-    };
   }
 
   const skip = (page - 1) * limit;
   return {
     success: true,
     customers: processed.slice(skip, skip + limit),
-    pagination: pagination || { total: processed.length, page, limit, pages: Math.ceil(processed.length / limit) },
+    pagination: { total: processed.length, page, limit, pages: Math.ceil(processed.length / limit) },
   };
 };
 
@@ -483,33 +441,17 @@ export const fetchOrders = async (
   const p = typeof params === 'string' ? { search: params } : params;
   const query = new URLSearchParams(p as any).toString();
 
-  let apiOrders: Order[] = [];
-  let apiSuccess = false;
-  let apiPagination: any = null;
-
   try {
     const res = await fetchApi(`/orders?${query}`);
-    if (res.success && Array.isArray(res.orders)) {
-      apiOrders = res.orders;
-      apiSuccess = true;
-      apiPagination = res.pagination;
+    if (res && res.success && Array.isArray(res.orders)) {
+      return res;
     }
   } catch (err) {
     // Backend fetch failed or offline mode
   }
 
   const mockOrders = getMockOrders();
-  const mergedMap = new Map<string, Order>();
-
-  apiOrders.forEach((o) => mergedMap.set(o._id || o.orderNumber, o));
-  mockOrders.forEach((o) => {
-    const key = o._id || o.orderNumber;
-    if (!mergedMap.has(key)) {
-      mergedMap.set(key, o);
-    }
-  });
-
-  let combined = Array.from(mergedMap.values());
+  let combined = [...mockOrders];
   combined.sort(
     (a, b) => new Date(b.createdAt || b.orderDate).getTime() - new Date(a.createdAt || a.orderDate).getTime()
   );
@@ -534,7 +476,7 @@ export const fetchOrders = async (
   return {
     success: true,
     orders: paginatedOrders,
-    pagination: apiPagination || {
+    pagination: {
       total: combined.length,
       page,
       limit,
@@ -924,9 +866,11 @@ export const fetchDashboardStats = async (params: {
   dateTo?: string;
 } = {}) => {
   const query = new URLSearchParams(params as any).toString();
-  let apiRes: any = null;
   try {
-    apiRes = await fetchApi(`/reports/dashboard?${query}`);
+    const apiRes = await fetchApi(`/reports/dashboard?${query}`);
+    if (apiRes && apiRes.success) {
+      return apiRes;
+    }
   } catch (err) {}
 
   const localOrders = getMockOrders();
@@ -940,68 +884,33 @@ export const fetchDashboardStats = async (params: {
     return isPastDeliveryDate || hasUnpaidBalance;
   };
 
-  if (!apiRes || !apiRes.success) {
-    const activeOrds = localOrders.filter((o) => o.status !== 'Delivered' && o.status !== 'Cancelled');
-    const overdueOrds = localOrders.filter(isOrderOverdue);
-    const totalRev = localOrders.reduce((acc, o) => acc + (o.advancePaid || 0), 0);
-    const monthlyRev = totalRev;
-
-    const stats: DashboardStats = {
-      orders: localOrders.length,
-      paymentsReceived: totalRev,
-      activeOrders: activeOrds.length,
-      newCustomers: localCustomers.length,
-      overdueOrders: overdueOrds.length,
-      todayOrders: localOrders.length,
-      pendingOrders: activeOrds.length,
-      inProgress: activeOrds.length,
-      readyForPickup: localOrders.filter((o) => o.status === 'Ready for Pickup').length,
-      deliveredOrders: localOrders.filter((o) => o.status === 'Delivered').length,
-      todayRevenue: totalRev,
-      monthlyRevenue: monthlyRev,
-      periodRevenue: totalRev,
-      totalCustomers: localCustomers.length,
-    };
-
-    return {
-      success: true,
-      stats,
-      ordersList: localOrders,
-      paymentsList: localOrders
-        .filter((o) => o.advancePaid > 0)
-        .map((o) => ({
-          _id: o._id,
-          orderNumber: o.orderNumber,
-          customerName: o.customerSnapshot?.name || 'Customer',
-          paymentMethod: o.paymentMethod || 'Cash',
-          paidAt: o.orderDate,
-          amount: o.advancePaid,
-        })),
-      activeOrdersList: activeOrds,
-      newCustomersList: localCustomers,
-      overdueOrdersList: overdueOrds,
-    };
-  }
-
-  // Merge local orders into dashboard response and synchronize counts
-  const map = new Map<string, Order>();
-  if (apiRes.success && Array.isArray(apiRes.ordersList)) {
-    apiRes.ordersList.forEach((o: Order) => map.set(o._id, o));
-  }
-  localOrders.forEach((o: Order) => map.set(o._id, o));
-  const mergedOrders = Array.from(map.values());
-
-  const activeOrds = mergedOrders.filter((o) => o.status !== 'Delivered' && o.status !== 'Cancelled');
-  const overdueOrds = mergedOrders.filter(isOrderOverdue);
-
-  const totalRev = mergedOrders.reduce((acc, o) => acc + (o.advancePaid || 0), 0);
+  const activeOrds = localOrders.filter((o) => o.status !== 'Delivered' && o.status !== 'Cancelled');
+  const overdueOrds = localOrders.filter(isOrderOverdue);
+  const totalRev = localOrders.reduce((acc, o) => acc + (o.advancePaid || 0), 0);
   const monthlyRev = totalRev;
 
-  const s = apiRes.stats || {};
+  const stats: DashboardStats = {
+    orders: localOrders.length,
+    paymentsReceived: totalRev,
+    activeOrders: activeOrds.length,
+    newCustomers: localCustomers.length,
+    overdueOrders: overdueOrds.length,
+    todayOrders: localOrders.length,
+    pendingOrders: activeOrds.length,
+    inProgress: activeOrds.length,
+    readyForPickup: localOrders.filter((o) => o.status === 'Ready for Pickup').length,
+    deliveredOrders: localOrders.filter((o) => o.status === 'Delivered').length,
+    todayRevenue: totalRev,
+    monthlyRevenue: monthlyRev,
+    periodRevenue: totalRev,
+    totalCustomers: localCustomers.length,
+  };
 
-  let pList = Array.isArray(apiRes.paymentsList) ? apiRes.paymentsList : [];
-  if (pList.length === 0 && mergedOrders.length > 0) {
-    pList = mergedOrders
+  return {
+    success: true,
+    stats,
+    ordersList: localOrders,
+    paymentsList: localOrders
       .filter((o) => o.advancePaid > 0)
       .map((o) => ({
         _id: o._id,
@@ -1010,47 +919,11 @@ export const fetchDashboardStats = async (params: {
         paymentMethod: o.paymentMethod || 'Cash',
         paidAt: o.orderDate,
         amount: o.advancePaid,
-      }));
-  }
-
-  const processedNewCustomers = (apiRes.newCustomersList || localCustomers).map((c: any) => {
-    const custOrders = mergedOrders.filter(
-      (o: any) =>
-        (o.customerId && String(o.customerId) === String(c._id)) ||
-        (o.customer && String(typeof o.customer === 'object' ? o.customer._id : o.customer) === String(c._id)) ||
-        (o.customerSnapshot && o.customerSnapshot.mobile === c.mobile)
-    );
-    return {
-      ...c,
-      totalOrders: Math.max(c.totalOrders || 0, custOrders.length),
-      totalSpent: Math.max(
-        c.totalSpent || 0,
-        custOrders.reduce((sum: number, o: any) => sum + (o.totalAmount || 0), 0)
-      ),
-    };
-  });
-
-  apiRes.stats = {
-    ...s,
-    orders: mergedOrders.length,
-    totalOrders: mergedOrders.length,
-    todayOrders: mergedOrders.length,
-    activeOrders: activeOrds.length,
-    overdueOrders: overdueOrds.length,
-    newCustomers: Math.max(s.newCustomers || 0, localCustomers.length, processedNewCustomers.length),
-    paymentsReceived: Math.max(s.paymentsReceived || 0, totalRev),
-    todayRevenue: Math.max(s.todayRevenue || 0, totalRev),
-    monthlyRevenue: Math.max(s.monthlyRevenue || 0, monthlyRev),
-    periodRevenue: Math.max(s.periodRevenue || 0, totalRev),
+      })),
+    activeOrdersList: activeOrds,
+    newCustomersList: localCustomers,
+    overdueOrdersList: overdueOrds,
   };
-
-  apiRes.ordersList = mergedOrders;
-  apiRes.activeOrdersList = activeOrds;
-  apiRes.overdueOrdersList = overdueOrds;
-  apiRes.paymentsList = pList;
-  apiRes.newCustomersList = processedNewCustomers;
-
-  return apiRes;
 };
 
 export const fetchRevenueReport = async (params: any = {}) => {
