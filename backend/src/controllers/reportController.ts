@@ -122,14 +122,11 @@ export const getDashboardStats = async (req: Request, res: Response) => {
     const newCustomersCount = await Customer.countDocuments(customerQuery);
     const newCustomersList = await Customer.find(customerQuery).sort({ createdAt: -1 }).limit(20);
 
-    // 5. Overdue / Pending Balance Orders List & Count
+    // 5. Overdue Orders List & Count (Only active orders that exceeded expectedDeliveryDate)
     const overdueQuery = {
       ...orderQuery,
       status: { $nin: ['Delivered', 'Cancelled'] },
-      $or: [
-        { expectedDeliveryDate: { $lt: now } },
-        { remainingBalance: { $gt: 0 }, paymentStatus: { $ne: 'Paid' } },
-      ],
+      expectedDeliveryDate: { $lt: now },
     };
     const overdueOrdersCount = await Order.countDocuments(overdueQuery);
     const overdueOrdersList = await Order.find(overdueQuery).sort({ expectedDeliveryDate: 1 }).limit(20);

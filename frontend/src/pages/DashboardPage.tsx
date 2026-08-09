@@ -537,7 +537,7 @@ export const DashboardPage: React.FC = () => {
               {activeCard === 'payments' && 'Showing payment collection receipts matching filter criteria.'}
               {activeCard === 'active' && 'Active orders currently in washing, drying, ironing, packing, or ready for delivery.'}
               {activeCard === 'customers' && 'Showing new customer profiles registered during selected period.'}
-              {activeCard === 'overdue' && 'Showing active orders with pending balance or past expected delivery.'}
+              {activeCard === 'overdue' && 'Showing active orders that have exceeded their expected delivery date.'}
             </p>
           </div>
 
@@ -930,7 +930,7 @@ export const DashboardPage: React.FC = () => {
         {activeCard === 'overdue' && (
           <div>
             {paginatedList.length === 0 ? (
-              <div className="text-center py-8 text-slate-500 text-xs">No overdue or pending balance orders. Excellent!</div>
+              <div className="text-center py-8 text-slate-500 text-xs font-semibold">No overdue orders found. All active orders are on schedule!</div>
             ) : (
               <div>
                 <div className="hidden md:block overflow-x-auto">

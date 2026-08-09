@@ -879,9 +879,7 @@ export const fetchDashboardStats = async (params: {
   const now = new Date();
   const isOrderOverdue = (o: Order) => {
     if (o.status === 'Delivered' || o.status === 'Cancelled') return false;
-    const isPastDeliveryDate = o.expectedDeliveryDate && new Date(o.expectedDeliveryDate) < now;
-    const hasUnpaidBalance = o.remainingBalance > 0 && o.paymentStatus !== 'Paid';
-    return isPastDeliveryDate || hasUnpaidBalance;
+    return Boolean(o.expectedDeliveryDate && new Date(o.expectedDeliveryDate) < now);
   };
 
   const activeOrds = localOrders.filter((o) => o.status !== 'Delivered' && o.status !== 'Cancelled');
