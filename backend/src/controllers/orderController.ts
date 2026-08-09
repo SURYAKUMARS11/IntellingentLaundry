@@ -5,6 +5,7 @@ import Customer from '../models/Customer';
 import Payment from '../models/Payment';
 import { generateOrderNumber } from '../utils/orderNumberGenerator';
 import { generateQRCodeDataUrl } from '../utils/qrGenerator';
+import { sendAutomatedWhatsAppMessage } from '../services/whatsappGateway';
 
 export const getPublicOrderByNumber = async (req: Request, res: Response) => {
   try {
@@ -249,6 +250,13 @@ export const createOrder = async (req: Request, res: Response) => {
       await payment.save();
     }
 
+    // Automated Background WhatsApp Notification on Order Creation
+    if (customerObj && customerObj.mobile) {
+      const receiptUrl = `https://intellingentlaundry-1.onrender.com/receipt/${order.orderNumber}?r=${order.orderNumber}`;
+      const msg = `Hello *${customerObj.name}*,\n\nYour official laundry invoice & receipt for Order *#${order.orderNumber}* is ready!\n\n📋 *Invoice Summary*:\n• Order Date: ${new Date(order.orderDate).toLocaleDateString('en-GB')}\n• Status: ${order.status}\n• Total Amount: ₹${order.totalAmount}\n• Advance Paid: ₹${order.advancePaid}\n• Remaining Balance: ₹${order.remainingBalance}\n\n🔗 *View & Print Invoice Directly*:\n${receiptUrl}\n\nThank you for choosing Intelligent Laundry!`;
+      sendAutomatedWhatsAppMessage(customerObj.mobile, msg);
+    }
+
     res.status(201).json({
       success: true,
       message: 'Order created successfully',
@@ -296,6 +304,13 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
     });
 
     await order.save();
+
+    // Automated Background WhatsApp Notification on Order Delivery
+    if (status === 'Delivered' && order.customerSnapshot && order.customerSnapshot.mobile) {
+      const receiptUrl = `https://intellingentlaundry-1.onrender.com/receipt/${order.orderNumber}?r=${order.orderNumber}`;
+      const msg = `Hello *${order.customerSnapshot.name}*,\n\nYour laundry Order *#${order.orderNumber}* has been successfully delivered! 🎉\n\n📄 *View & Download Tax Invoice PDF*:\n${receiptUrl}\n\nThank you for choosing Intelligent Laundry!`;
+      sendAutomatedWhatsAppMessage(order.customerSnapshot.mobile, msg);
+    }
 
     res.json({
       success: true,

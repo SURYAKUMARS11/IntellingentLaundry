@@ -1443,3 +1443,19 @@ export const restoreMasterExcelBackupApi = async (file: File) => {
     },
   };
 };
+
+export const fetchWhatsAppStatus = async () => {
+  try {
+    return await fetchApi('/whatsapp/status');
+  } catch (err) {
+    return { success: false, connected: false };
+  }
+};
+
+export const disconnectWhatsAppApi = async () => {
+  try {
+    return await fetchApi('/whatsapp/disconnect', { method: 'POST' });
+  } catch (err) {
+    return { success: false };
+  }
+};

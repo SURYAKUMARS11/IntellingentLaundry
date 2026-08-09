@@ -6,11 +6,13 @@ import {
   clearAllDataApi,
   downloadMasterExcelBackupApi,
   restoreMasterExcelBackupApi,
+  fetchWhatsAppStatus,
+  disconnectWhatsAppApi,
 } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { Setting } from '../types';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
-import { Settings, Store, Receipt, Lock, CheckCircle, Save, Trash2, Upload, X, FileSpreadsheet, Download, UploadCloud, CheckCircle2 } from 'lucide-react';
+import { Settings, Store, Receipt, Lock, CheckCircle, Save, Trash2, Upload, X, FileSpreadsheet, Download, UploadCloud, CheckCircle2, Smartphone, RefreshCw, QrCode } from 'lucide-react';
 
 export const SettingsPage: React.FC = () => {
   const { admin, updateAdminState } = useAuth();
@@ -29,8 +31,16 @@ export const SettingsPage: React.FC = () => {
     termsAndConditions: 'Items not collected within 30 days are subject to storage charges.',
   });
 
-  const [activeTab, setActiveTab] = useState<'shop' | 'invoice' | 'account' | 'backup'>('shop');
+  const [activeTab, setActiveTab] = useState<'shop' | 'invoice' | 'whatsapp' | 'account' | 'backup'>('shop');
   const [isSaved, setIsSaved] = useState(false);
+
+  // WhatsApp Automation Gateway State
+  const [waStatus, setWaStatus] = useState<{ connected: boolean; qrCode: string | null; phone: string | null }>({
+    connected: false,
+    qrCode: null,
+    phone: null,
+  });
+  const [waLoading, setWaLoading] = useState(false);
 
   // Admin account state
   const [adminName, setAdminName] = useState(admin?.name || '');
@@ -58,6 +68,48 @@ export const SettingsPage: React.FC = () => {
     };
     load();
   }, []);
+
+  useEffect(() => {
+    let interval: any;
+    const checkWa = async () => {
+      const res = await fetchWhatsAppStatus();
+      if (res && res.success) {
+        setWaStatus({
+          connected: res.connected,
+          qrCode: res.qrCode,
+          phone: res.phone,
+        });
+      }
+    };
+
+    checkWa();
+    if (activeTab === 'whatsapp') {
+      interval = setInterval(checkWa, 3000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [activeTab]);
+
+  const handleDisconnectWhatsApp = async () => {
+    if (!confirm('Are you sure you want to disconnect WhatsApp Gateway?')) return;
+    setWaLoading(true);
+    try {
+      await disconnectWhatsAppApi();
+      const res = await fetchWhatsAppStatus();
+      if (res && res.success) {
+        setWaStatus({
+          connected: res.connected,
+          qrCode: res.qrCode,
+          phone: res.phone,
+        });
+      }
+    } catch (err: any) {
+      alert('Failed to disconnect WhatsApp');
+    } finally {
+      setWaLoading(false);
+    }
+  };
 
   const handleSaveShopSettings = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -173,6 +225,20 @@ export const SettingsPage: React.FC = () => {
           }`}
         >
           <Receipt className="w-4 h-4" /> Invoice & Taxes
+        </button>
+
+        <button
+          onClick={() => setActiveTab('whatsapp')}
+          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+            activeTab === 'whatsapp'
+              ? 'bg-emerald-600 text-white shadow-md'
+              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+          }`}
+        >
+          <Smartphone className="w-4 h-4 text-emerald-500" /> WhatsApp Auto
+          {waStatus.connected && (
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse ml-0.5" />
+          )}
         </button>
 
         <button
@@ -492,6 +558,103 @@ export const SettingsPage: React.FC = () => {
             </button>
           </div>
         </form>
+      )}
+
+      {/* TAB 3: WHATSAPP AUTOMATION GATEWAY */}
+      {activeTab === 'whatsapp' && (
+        <div className="glass-card p-5 sm:p-8 space-y-6">
+          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+            <div>
+              <h3 className="font-extrabold text-base text-slate-900 dark:text-white flex items-center gap-2">
+                <Smartphone className="w-5 h-5 text-emerald-500" /> WhatsApp Automation Gateway
+              </h3>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Automatically send WhatsApp receipts on order creation & delivery in the background (100% Free)
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <span
+                className={`px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 ${
+                  waStatus.connected
+                    ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
+                    : 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300'
+                }`}
+              >
+                <span
+                  className={`w-2.5 h-2.5 rounded-full ${
+                    waStatus.connected ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'
+                  }`}
+                />
+                {waStatus.connected ? 'Connected' : 'QR Scan Required'}
+              </span>
+            </div>
+          </div>
+
+          {waStatus.connected ? (
+            <div className="bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/50 rounded-2xl p-6 space-y-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="space-y-1">
+                  <span className="text-xs font-extrabold text-emerald-800 dark:text-emerald-300 uppercase tracking-wider block">
+                    Linked Shop Phone Number
+                  </span>
+                  <p className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+                    📱 +{waStatus.phone}
+                  </p>
+                </div>
+                <button
+                  onClick={handleDisconnectWhatsApp}
+                  disabled={waLoading}
+                  className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-xs active:scale-95 transition-all"
+                >
+                  {waLoading ? 'Disconnecting...' : 'Disconnect / Relink Phone'}
+                </button>
+              </div>
+
+              <div className="p-4 bg-white dark:bg-slate-900 rounded-xl border border-emerald-100 dark:border-emerald-900 text-xs text-slate-600 dark:text-slate-300 space-y-2">
+                <p className="font-bold text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4" /> 100% Background Automation Enabled!
+                </p>
+                <ul className="list-disc pl-5 space-y-1 text-slate-500 dark:text-slate-400">
+                  <li>When you create a new order → customer receives WhatsApp receipt link automatically in background!</li>
+                  <li>When order status is set to Delivered → customer receives delivery confirmation & tax invoice link automatically in background!</li>
+                  <li>Zero manual WhatsApp opening or clicking required.</li>
+                </ul>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col md:flex-row items-center gap-8 bg-slate-50 dark:bg-slate-800/40 p-6 rounded-2xl border border-slate-200 dark:border-slate-800">
+              <div className="shrink-0 flex flex-col items-center space-y-3">
+                {waStatus.qrCode ? (
+                  <div className="bg-white p-4 rounded-2xl shadow-lg border border-slate-200">
+                    <img src={waStatus.qrCode} alt="WhatsApp QR Code" className="w-56 h-56 object-contain" />
+                  </div>
+                ) : (
+                  <div className="w-56 h-56 bg-slate-200 dark:bg-slate-700 animate-pulse rounded-2xl flex items-center justify-center text-slate-400 font-bold text-xs">
+                    Generating QR Code...
+                  </div>
+                )}
+                <span className="text-[11px] font-bold text-slate-500 flex items-center gap-1">
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin text-brand-600" /> Auto-refreshing QR code
+                </span>
+              </div>
+
+              <div className="space-y-4 flex-1">
+                <h4 className="font-extrabold text-sm text-slate-900 dark:text-white flex items-center gap-2">
+                  <QrCode className="w-4 h-4 text-emerald-600" /> Link your Shop WhatsApp (30 Seconds Setup)
+                </h4>
+                <ol className="list-decimal pl-5 space-y-2 text-xs font-medium text-slate-600 dark:text-slate-300">
+                  <li>Open <strong>WhatsApp</strong> on your shop's mobile phone.</li>
+                  <li>Tap <strong>Menu (⋮)</strong> on Android or <strong>Settings (⚙️)</strong> on iPhone.</li>
+                  <li>Select <strong>Linked Devices</strong> → tap <strong>Link a Device</strong>.</li>
+                  <li>Point your phone camera at the QR code on the left to scan!</li>
+                </ol>
+                <div className="p-3 bg-amber-50 dark:bg-amber-950/40 rounded-xl border border-amber-200 dark:border-amber-900 text-xs text-amber-800 dark:text-amber-300">
+                  💡 Once scanned, your phone will stay permanently linked for automated zero-click background customer messaging.
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       )}
 
       {/* Admin Account Settings */}

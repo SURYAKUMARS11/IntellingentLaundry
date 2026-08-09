@@ -16,6 +16,8 @@ import settingRoutes from './routes/settingRoutes';
 import expenseRoutes from './routes/expenseRoutes';
 import categoryRoutes from './routes/categoryRoutes';
 import backupRoutes from './routes/backupRoutes';
+import whatsappRoutes from './routes/whatsappRoutes';
+import { initWhatsAppGateway } from './services/whatsappGateway';
 
 dotenv.config();
 
@@ -52,6 +54,7 @@ app.use('/api/settings', settingRoutes);
 app.use('/api/expenses', expenseRoutes);
 app.use('/api/garment-categories', categoryRoutes);
 app.use('/api/backup', backupRoutes);
+app.use('/api/whatsapp', whatsappRoutes);
 
 // Global Error Handler
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
@@ -77,6 +80,7 @@ const startServer = async () => {
     if (isDBConnected) {
       await seedDatabase();
     }
+    initWhatsAppGateway();
     app.listen(PORT, () => {
       console.log(`====================================================`);
       console.log(` 🧺 INTELLIGENTLAUNDRY SHOP BACKEND IS RUNNING!`);
