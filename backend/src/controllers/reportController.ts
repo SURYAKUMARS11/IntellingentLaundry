@@ -33,7 +33,7 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       const diff = now.getDate() - day + (day === 0 ? -6 : 1);
       startDate = new Date(now.getFullYear(), now.getMonth(), diff, 0, 0, 0, 0);
       endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
-    } else if (preset === 'current_month') {
+    } else if (preset === 'current_month' || preset === 'this_month') {
       startDate = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
       endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
     } else if (preset === 'current_year') {

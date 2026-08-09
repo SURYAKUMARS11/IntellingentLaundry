@@ -66,7 +66,7 @@ export const DashboardPage: React.FC = () => {
   const [isFilterExpanded, setIsFilterExpanded] = useState<boolean>(false);
 
   // Filter States
-  const [preset, setPreset] = useState<string>('');
+  const [preset, setPreset] = useState<string>('current_month');
   const [paymentStatus, setPaymentStatus] = useState<string>('');
   const [orderStatus, setOrderStatus] = useState<string>('');
   const [dateType, setDateType] = useState<string>('orderDate');
@@ -136,7 +136,7 @@ export const DashboardPage: React.FC = () => {
   };
 
   const handleClearFilters = () => {
-    setPreset('');
+    setPreset('current_month');
     setPaymentStatus('');
     setOrderStatus('');
     setDateType('orderDate');
