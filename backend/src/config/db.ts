@@ -2,12 +2,12 @@ import mongoose from 'mongoose';
 
 export const connectDB = async () => {
   try {
-    const connStr = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/laundry_db';
-    console.log(`[DB] Attempting to connect to MongoDB at: ${connStr}`);
+    const connStr = process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/intelligentlaundry';
+    console.log(`[DB] Attempting to connect to MongoDB at: ${connStr.replace(/\/\/([^:]+):([^@]+)@/, '//***:***@')}`);
     
-    // Set low selection timeout so it fails fast if local MongoDB isn't running and can log helpful message
+    // Set serverSelectionTimeoutMS
     const conn = await mongoose.connect(connStr, {
-      serverSelectionTimeoutMS: 5000,
+      serverSelectionTimeoutMS: 10000,
     });
     
     console.log(`[DB] MongoDB Connected: ${conn.connection.host}`);
