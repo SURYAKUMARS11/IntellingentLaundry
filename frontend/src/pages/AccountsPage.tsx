@@ -70,11 +70,9 @@ export const AccountsPage: React.FC = () => {
   // Expense Modal State
   const [showExpModal, setShowExpModal] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
-  const [isCustomCategory, setIsCustomCategory] = useState<boolean>(false);
-  const [customCategoryInput, setCustomCategoryInput] = useState<string>('');
 
   const [expFormData, setExpFormData] = useState({
-    category: 'Electricity Bill',
+    category: '',
     description: '',
     amount: '',
     paymentMethod: 'Cash' as 'Cash' | 'Bank / UPI' | 'Card',
@@ -82,22 +80,6 @@ export const AccountsPage: React.FC = () => {
     expenseDate: new Date().toISOString().slice(0, 10),
     notes: '',
   });
-
-  const defaultCategories = [
-    'Electricity Bill',
-    'Labour & Salaries',
-    'Detergents & Solvents',
-    'Machinery & Maintenance',
-    'Shop Rent',
-    'Transport & Fuel',
-    'Tea & Refreshments',
-    'Miscellaneous',
-  ];
-
-  // Dynamic Categories (Presets + Any Custom Categories in DB)
-  const allCategories = Array.from(
-    new Set([...defaultCategories, ...expenses.map((e) => e.category).filter(Boolean)])
-  );
 
   const loadData = async () => {
     setIsLoading(true);
@@ -148,10 +130,8 @@ export const AccountsPage: React.FC = () => {
 
   const handleOpenAddExpense = () => {
     setEditingExpense(null);
-    setIsCustomCategory(false);
-    setCustomCategoryInput('');
     setExpFormData({
-      category: 'Electricity Bill',
+      category: '',
       description: '',
       amount: '',
       paymentMethod: 'Cash',
@@ -164,12 +144,9 @@ export const AccountsPage: React.FC = () => {
 
   const handleOpenEditExpense = (exp: Expense) => {
     setEditingExpense(exp);
-    const isCustom = !defaultCategories.includes(exp.category);
-    setIsCustomCategory(isCustom);
-    setCustomCategoryInput(isCustom ? exp.category : '');
     setExpFormData({
-      category: isCustom ? 'CUSTOM' : exp.category,
-      description: exp.description,
+      category: exp.category || '',
+      description: exp.description || exp.category || '',
       amount: String(exp.amount),
       paymentMethod: exp.paymentMethod,
       paidTo: exp.paidTo || '',
@@ -182,23 +159,22 @@ export const AccountsPage: React.FC = () => {
   const handleSaveExpense = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const finalCategory = isCustomCategory
-      ? customCategoryInput.trim()
-      : expFormData.category;
+    const categoryName = expFormData.category.trim();
 
-    if (!finalCategory) {
-      alert('Please select or specify a category');
+    if (!categoryName) {
+      alert('Please enter an expense category');
       return;
     }
 
-    if (!expFormData.description || !expFormData.amount) {
-      alert('Please fill description and valid amount');
+    if (!expFormData.amount || Number(expFormData.amount) <= 0) {
+      alert('Please enter a valid expense amount');
       return;
     }
 
     const payload = {
       ...expFormData,
-      category: finalCategory,
+      category: categoryName,
+      description: categoryName,
     };
 
     try {
@@ -565,21 +541,26 @@ export const AccountsPage: React.FC = () => {
               </div>
 
               <div>
-                <select
-                  value={expCategoryFilter}
-                  onChange={(e) => {
-                    setExpCategoryFilter(e.target.value);
-                    setExpPage(1);
-                  }}
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none"
-                >
-                  <option value="">All Expense Categories</option>
-                  {allCategories.map((cat) => (
-                    <option key={cat} value={cat}>
-                      {cat}
-                    </option>
-                  ))}
-                </select>
+                {(() => {
+                  const allCategories = Array.from(new Set(expenses.map((e) => e.category).filter(Boolean)));
+                  return (
+                    <select
+                      value={expCategoryFilter}
+                      onChange={(e) => {
+                        setExpCategoryFilter(e.target.value);
+                        setExpPage(1);
+                      }}
+                      className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none"
+                    >
+                      <option value="">All Expense Categories</option>
+                      {allCategories.map((cat) => (
+                        <option key={cat} value={cat}>
+                          {cat}
+                        </option>
+                      ))}
+                    </select>
+                  );
+                })()}
               </div>
 
               <div>
@@ -614,7 +595,7 @@ export const AccountsPage: React.FC = () => {
                       <tr>
                         <th className="py-3 px-4">Voucher & Date</th>
                         <th className="py-3 px-4">Category</th>
-                        <th className="py-3 px-4">Description / Paid To</th>
+                        <th className="py-3 px-4">Paid To / Vendor</th>
                         <th className="py-3 px-4">Payment Method</th>
                         <th className="py-3 px-4 text-right">Amount</th>
                         <th className="py-3 px-4 text-center">Actions</th>
@@ -638,9 +619,10 @@ export const AccountsPage: React.FC = () => {
                           </td>
 
                           <td className="py-3.5 px-4">
-                            <p className="font-bold text-slate-900 dark:text-white">{exp.description}</p>
-                            {exp.paidTo && (
-                              <p className="text-[11px] text-slate-500">Paid to: {exp.paidTo}</p>
+                            {exp.paidTo ? (
+                              <p className="font-bold text-slate-900 dark:text-white">Paid to: {exp.paidTo}</p>
+                            ) : (
+                              <p className="text-slate-400 text-[11px]">-</p>
                             )}
                           </td>
 
@@ -742,56 +724,13 @@ export const AccountsPage: React.FC = () => {
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                   Expense Category *
                 </label>
-                <select
-                  value={isCustomCategory ? 'CUSTOM' : expFormData.category}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (val === 'CUSTOM') {
-                      setIsCustomCategory(true);
-                    } else {
-                      setIsCustomCategory(false);
-                      setExpFormData({ ...expFormData, category: val });
-                    }
-                  }}
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none"
-                >
-                  {defaultCategories.map((cat) => (
-                    <option key={cat} value={cat}>
-                      {cat}
-                    </option>
-                  ))}
-                  <option value="CUSTOM">+ Add Custom Category...</option>
-                </select>
-              </div>
-
-              {/* Custom Category Input Field (Shows when user selects + Add Custom Category) */}
-              {isCustomCategory && (
-                <div className="animate-in fade-in zoom-in-95 duration-150">
-                  <label className="block text-xs font-semibold text-brand-600 dark:text-brand-400 mb-1 flex items-center gap-1">
-                    <Tag className="w-3.5 h-3.5" /> Enter Custom Category Name *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={customCategoryInput}
-                    onChange={(e) => setCustomCategoryInput(e.target.value)}
-                    placeholder="e.g. Water Bill, Packaging Covers, Internet"
-                    className="w-full px-3 py-2 text-xs rounded-xl border-2 border-brand-500 bg-brand-50/30 dark:bg-brand-950/30 text-slate-900 dark:text-white outline-none font-bold"
-                  />
-                </div>
-              )}
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  Expense Description *
-                </label>
                 <input
                   type="text"
                   required
-                  value={expFormData.description}
-                  onChange={(e) => setExpFormData({ ...expFormData, description: e.target.value })}
-                  placeholder="e.g. Electricity Bill July / Labour Wages / Liquid Detergent 20L"
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none"
+                  value={expFormData.category}
+                  onChange={(e) => setExpFormData({ ...expFormData, category: e.target.value })}
+                  placeholder="Enter expense category (e.g. Rent, Tea, Detergent, EB Bill)"
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-brand-500 font-bold"
                 />
               </div>
 
