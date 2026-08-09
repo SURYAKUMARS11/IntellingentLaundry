@@ -37,6 +37,7 @@ export const ItemsPage: React.FC = () => {
     name: '',
     defaultPrice: 15,
     category: 'Regular',
+    serviceName: 'Wash and Fold',
     icon: 'Shirt',
     isActive: true,
   });
@@ -66,7 +67,14 @@ export const ItemsPage: React.FC = () => {
 
   const handleOpenAdd = () => {
     setEditingItem(null);
-    setFormData({ name: '', defaultPrice: 15, category: 'Regular', icon: 'Shirt', isActive: true });
+    setFormData({
+      name: '',
+      defaultPrice: 15,
+      category: selectedCategory || 'Regular',
+      serviceName: selectedService || 'Wash and Fold',
+      icon: 'Shirt',
+      isActive: true,
+    });
     setShowModal(true);
   };
 
@@ -76,6 +84,7 @@ export const ItemsPage: React.FC = () => {
       name: item.name,
       defaultPrice: item.defaultPrice,
       category: item.category || 'Regular',
+      serviceName: selectedService || 'Wash and Fold',
       icon: item.icon || 'Shirt',
       isActive: item.isActive,
     });
@@ -326,26 +335,45 @@ export const ItemsPage: React.FC = () => {
                 />
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  Garment Category Group *
-                </label>
-                <select
-                  value={formData.category}
-                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none font-bold"
-                >
-                  {categoriesList.map((cat) => (
-                    <option key={cat} value={cat}>
-                      {cat}
-                    </option>
-                  ))}
-                </select>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Garment Group *
+                  </label>
+                  <select
+                    value={formData.category}
+                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                    className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none font-bold"
+                  >
+                    {categoriesList.map((cat) => (
+                      <option key={cat} value={cat}>
+                        {cat}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Applicable Service *
+                  </label>
+                  <select
+                    value={formData.serviceName}
+                    onChange={(e) => setFormData({ ...formData, serviceName: e.target.value })}
+                    className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none font-bold text-brand-600"
+                  >
+                    {mainServicesList.map((srv) => (
+                      <option key={srv} value={srv}>
+                        {srv}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  Base Wash & Fold Price ({currencySymbol}) *
+                  Item Rate for {formData.serviceName} ({currencySymbol}) *
                 </label>
                 <input
                   type="number"
@@ -355,9 +383,6 @@ export const ItemsPage: React.FC = () => {
                   onChange={(e) => setFormData({ ...formData, defaultPrice: Number(e.target.value) })}
                   className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none font-bold text-emerald-600"
                 />
-                <p className="text-[10px] text-slate-400 mt-1">
-                  Updating base price scales all 11 service prices (Ironing, Dry Cleaning, Laundry, etc.) proportionally.
-                </p>
               </div>
 
               <div className="pt-2 flex gap-3">

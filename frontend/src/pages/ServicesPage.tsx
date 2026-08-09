@@ -145,7 +145,6 @@ export const ServicesPage: React.FC = () => {
                   <tr>
                     <th className="py-3.5 px-4 w-12">#</th>
                     <th className="py-3.5 px-4">Service Name & Description</th>
-                    <th className="py-3.5 px-4">Rate & Unit</th>
                     <th className="py-3.5 px-4">Turnaround Time</th>
                     <th className="py-3.5 px-4 text-center">Status</th>
                     <th className="py-3.5 px-4 text-center">Actions</th>
@@ -172,15 +171,6 @@ export const ServicesPage: React.FC = () => {
                             {serv.description}
                           </p>
                         )}
-                      </td>
-
-                      <td className="py-4 px-4 whitespace-nowrap">
-                        <span className="font-black text-sm text-brand-600 dark:text-brand-400">
-                          {currencySymbol}{serv.price}
-                        </span>
-                        <span className="text-xs font-semibold text-slate-400 ml-1">
-                          / {serv.unit}
-                        </span>
                       </td>
 
                       <td className="py-4 px-4 text-slate-600 dark:text-slate-300 font-medium whitespace-nowrap">
