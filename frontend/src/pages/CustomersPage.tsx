@@ -198,7 +198,14 @@ export const CustomersPage: React.FC = () => {
 
       {/* LINE-BY-LINE (ROW-BY-ROW) CUSTOMER LIST & CARDS */}
       <div className="glass-card overflow-hidden">
-        {customers.length === 0 ? (
+        {isLoading ? (
+          <div className="p-10 text-center space-y-3">
+            <div className="w-8 h-8 border-3 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto" />
+            <p className="text-xs font-bold text-slate-500 dark:text-slate-400 animate-pulse">
+              Loading customer directory from database...
+            </p>
+          </div>
+        ) : customers.length === 0 ? (
           <div className="text-center py-12 text-slate-500 text-xs">
             No customers found matching search criteria.
           </div>
