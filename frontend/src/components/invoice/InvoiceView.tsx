@@ -28,42 +28,69 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ order, setting, onClos
     window.print();
   };
 
-  // Handle PDF Invoice Download
-  const handleDownloadPDF = async (): Promise<boolean> => {
-    if (!receiptRef.current) return false;
+  // Generate A4 PDF File Blob cleanly from off-screen desktop clone
+  const generatePDFBlob = async (): Promise<{ pdf: jsPDF; file: File } | null> => {
+    if (!receiptRef.current) return null;
+    const element = receiptRef.current;
+
+    // Create temporary off-screen clone with fixed 794px desktop A4 width
+    const clone = element.cloneNode(true) as HTMLElement;
+    clone.style.width = '794px';
+    clone.style.maxWidth = 'none';
+    clone.style.position = 'absolute';
+    clone.style.left = '-9999px';
+    clone.style.top = '0';
+    clone.style.background = '#ffffff';
+    document.body.appendChild(clone);
+
     try {
-      const canvas = await html2canvas(receiptRef.current, {
+      const canvas = await html2canvas(clone, {
         scale: 2,
         useCORS: true,
         logging: false,
+        width: 794,
+        windowWidth: 794,
       });
+
+      if (document.body.contains(clone)) {
+        document.body.removeChild(clone);
+      }
+
       const imgData = canvas.toDataURL('image/jpeg', 0.98);
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
         format: 'a4',
       });
-      const imgWidth = 210;
-      const pageHeight = 297;
+
+      const imgWidth = 210; // A4 width mm
+      const pageHeight = 297; // A4 height mm
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      let heightLeft = imgHeight;
-      let position = 0;
 
-      pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
+      pdf.addImage(imgData, 'JPEG', 0, 0, imgWidth, Math.min(imgHeight, pageHeight));
 
-      while (heightLeft >= 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
-      }
+      const pdfBlob = pdf.output('blob');
+      const pdfFile = new File([pdfBlob], `Invoice_${order.orderNumber}.pdf`, {
+        type: 'application/pdf',
+      });
 
-      pdf.save(`Invoice_${order.orderNumber}.pdf`);
-      return true;
+      return { pdf, file: pdfFile };
     } catch (err) {
-      console.error('PDF Generation Error:', err);
-      return false;
+      if (document.body.contains(clone)) {
+        document.body.removeChild(clone);
+      }
+      console.error('PDF generation error:', err);
+      return null;
+    }
+  };
+
+  // Handle PDF Invoice Download
+  const handleDownloadPDF = async () => {
+    const res = await generatePDFBlob();
+    if (res) {
+      res.pdf.save(`Invoice_${order.orderNumber}.pdf`);
+    } else {
+      window.print();
     }
   };
 
@@ -73,13 +100,27 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ order, setting, onClos
     const isDelivered = order.status === 'Delivered';
 
     if (isDelivered) {
-      // For Delivered orders: Download PDF & open WhatsApp with delivery note
-      await handleDownloadPDF();
-      const text = `Hello *${order.customerSnapshot.name}*,\n\nYour laundry Order *#${order.orderNumber}* has been successfully delivered! 🎉\n\n📄 *Attached is your final Tax Invoice PDF*.\n\nThank you for choosing *${setting?.shopName || 'IntelligentLaundry'}*!`;
-      const url = `https://wa.me/${mobile.length === 10 ? '91' + mobile : mobile}?text=${encodeURIComponent(text)}`;
+      // Delivered Order: Generate PDF & use Native Share API if supported
+      const res = await generatePDFBlob();
+      
+      if (res && navigator.canShare && navigator.canShare({ files: [res.file] })) {
+        try {
+          await navigator.share({
+            files: [res.file],
+            title: `Invoice_${order.orderNumber}.pdf`,
+          });
+          return;
+        } catch (err) {
+          // User cancelled native share or fallback
+        }
+      }
+
+      // Desktop / Web Fallback: Download PDF & open WhatsApp
+      if (res) res.pdf.save(`Invoice_${order.orderNumber}.pdf`);
+      const url = `https://wa.me/${mobile.length === 10 ? '91' + mobile : mobile}`;
       window.open(url, '_blank');
     } else {
-      // For Received / Active orders: Send summary text + digital receipt link
+      // Active / Received order: Send summary details + digital receipt link
       const receiptUrl = `${window.location.origin}/receipt/${order.orderNumber}?r=${order.orderNumber}`;
       const text = `Hello *${order.customerSnapshot.name}*,\n\nYour official laundry invoice & receipt for Order *#${order.orderNumber}* from *${setting?.shopName || 'IntelligentLaundry'}* is ready!\n\n📋 *Invoice Summary*:\n• Order Date: ${new Date(order.orderDate).toLocaleDateString('en-GB')}\n• Status: ${order.status}\n• Payment: ${order.paymentStatus}\n• Total Amount: ${currencySymbol}${order.totalAmount}\n• Advance Paid: ${currencySymbol}${order.advancePaid}\n• Remaining Balance: ${currencySymbol}${order.remainingBalance}\n\n🔗 *View & Print Invoice Directly*:\n${receiptUrl}\n\nThank you for choosing ${setting?.shopName || 'IntelligentLaundry'}!`;
       const url = `https://wa.me/${mobile.length === 10 ? '91' + mobile : mobile}?text=${encodeURIComponent(text)}`;
@@ -91,19 +132,29 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ order, setting, onClos
     <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden my-auto max-h-[96vh] flex flex-col">
         {/* Action Header Bar (Hidden during window.print()) */}
-        <div className="no-print p-3 sm:p-4 bg-slate-100 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between shrink-0 gap-2">
-          <div className="flex items-center gap-1.5 sm:gap-2">
-            <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-500 shrink-0" />
-            <h2 className="font-extrabold text-xs sm:text-sm text-slate-900 dark:text-white truncate">
-              Tax Invoice & Receipt
-            </h2>
+        <div className="no-print p-3 sm:p-4 bg-slate-100 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between shrink-0 gap-2.5">
+          <div className="flex items-center justify-between w-full sm:w-auto">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-500 shrink-0" />
+              <h2 className="font-extrabold text-xs sm:text-sm text-slate-900 dark:text-white truncate">
+                Tax Invoice & Receipt
+              </h2>
+            </div>
+            {onClose && (
+              <button
+                onClick={onClose}
+                className="sm:hidden p-1.5 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            )}
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 w-full sm:w-auto">
             <button
               onClick={handleWhatsAppShare}
               title="Share via WhatsApp"
-              className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm active:scale-95 transition-all"
+              className="flex-1 sm:flex-initial px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-xs active:scale-95 transition-all"
             >
               <Smartphone className="w-4 h-4" />
               <span>WhatsApp</span>
@@ -112,7 +163,7 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ order, setting, onClos
             <button
               onClick={handleDownloadPDF}
               title="Download PDF Invoice"
-              className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm active:scale-95 transition-all"
+              className="flex-1 sm:flex-initial px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-xs active:scale-95 transition-all"
             >
               <FileText className="w-4 h-4" />
               <span>PDF</span>
@@ -121,7 +172,7 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ order, setting, onClos
             <button
               onClick={handlePrint}
               title="Print Receipt"
-              className="px-3 py-1.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm active:scale-95 transition-all"
+              className="flex-1 sm:flex-initial px-3 py-1.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-xs active:scale-95 transition-all"
             >
               <Printer className="w-4 h-4" />
               <span>Print</span>
@@ -130,7 +181,7 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ order, setting, onClos
             {onClose && (
               <button
                 onClick={onClose}
-                className="p-1.5 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 transition-colors ml-0.5"
+                className="hidden sm:block p-1.5 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 transition-colors ml-0.5"
               >
                 <X className="w-5 h-5" />
               </button>
