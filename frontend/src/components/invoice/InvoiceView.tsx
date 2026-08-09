@@ -1,8 +1,10 @@
 import React, { useRef } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 import { Order, Setting } from '../../types';
 import { StatusBadge } from '../ui/Badge';
-import { Printer, Smartphone, X, CheckCircle, Sparkles, Phone, Mail, MapPin } from 'lucide-react';
+import { Printer, Smartphone, X, CheckCircle, Sparkles, Phone, Mail, MapPin, FileText } from 'lucide-react';
 
 interface InvoiceViewProps {
   order: Order;
@@ -26,13 +28,63 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ order, setting, onClos
     window.print();
   };
 
-  // Handle WhatsApp Receipt Link Share
-  const handleWhatsAppShare = () => {
+  // Handle PDF Invoice Download
+  const handleDownloadPDF = async (): Promise<boolean> => {
+    if (!receiptRef.current) return false;
+    try {
+      const canvas = await html2canvas(receiptRef.current, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+      });
+      const imgData = canvas.toDataURL('image/jpeg', 0.98);
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+      });
+      const imgWidth = 210;
+      const pageHeight = 297;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      pdf.save(`Invoice_${order.orderNumber}.pdf`);
+      return true;
+    } catch (err) {
+      console.error('PDF Generation Error:', err);
+      return false;
+    }
+  };
+
+  // Handle Smart WhatsApp Share based on Order Status
+  const handleWhatsAppShare = async () => {
     const mobile = order.customerSnapshot.mobile.replace(/\D/g, '');
-    const receiptUrl = `${window.location.origin}/receipt/${order.orderNumber}?r=${order.orderNumber}`;
-    const text = `Hello *${order.customerSnapshot.name}*,\n\nYour official laundry invoice & receipt for Order *#${order.orderNumber}* from *${setting?.shopName || 'IntelligentLaundry'}* is ready!\n\n📋 *Invoice Summary*:\n• Order Date: ${new Date(order.orderDate).toLocaleDateString('en-GB')}\n• Status: ${order.status}\n• Payment: ${order.paymentStatus}\n• Total Amount: ${currencySymbol}${order.totalAmount}\n• Advance Paid: ${currencySymbol}${order.advancePaid}\n• Remaining Balance: ${currencySymbol}${order.remainingBalance}\n\n🔗 *View & Print Invoice Directly*:\n${receiptUrl}\n\nThank you for choosing ${setting?.shopName || 'IntelligentLaundry'}!`;
-    const url = `https://wa.me/${mobile.length === 10 ? '91' + mobile : mobile}?text=${encodeURIComponent(text)}`;
-    window.open(url, '_blank');
+    const isDelivered = order.status === 'Delivered';
+
+    if (isDelivered) {
+      // For Delivered orders: Download PDF & open WhatsApp with delivery note
+      await handleDownloadPDF();
+      const text = `Hello *${order.customerSnapshot.name}*,\n\nYour laundry Order *#${order.orderNumber}* has been successfully delivered! 🎉\n\n📄 *Attached is your final Tax Invoice PDF*.\n\nThank you for choosing *${setting?.shopName || 'IntelligentLaundry'}*!`;
+      const url = `https://wa.me/${mobile.length === 10 ? '91' + mobile : mobile}?text=${encodeURIComponent(text)}`;
+      window.open(url, '_blank');
+    } else {
+      // For Received / Active orders: Send summary text + digital receipt link
+      const receiptUrl = `${window.location.origin}/receipt/${order.orderNumber}?r=${order.orderNumber}`;
+      const text = `Hello *${order.customerSnapshot.name}*,\n\nYour official laundry invoice & receipt for Order *#${order.orderNumber}* from *${setting?.shopName || 'IntelligentLaundry'}* is ready!\n\n📋 *Invoice Summary*:\n• Order Date: ${new Date(order.orderDate).toLocaleDateString('en-GB')}\n• Status: ${order.status}\n• Payment: ${order.paymentStatus}\n• Total Amount: ${currencySymbol}${order.totalAmount}\n• Advance Paid: ${currencySymbol}${order.advancePaid}\n• Remaining Balance: ${currencySymbol}${order.remainingBalance}\n\n🔗 *View & Print Invoice Directly*:\n${receiptUrl}\n\nThank you for choosing ${setting?.shopName || 'IntelligentLaundry'}!`;
+      const url = `https://wa.me/${mobile.length === 10 ? '91' + mobile : mobile}?text=${encodeURIComponent(text)}`;
+      window.open(url, '_blank');
+    }
   };
 
   return (
@@ -55,6 +107,15 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ order, setting, onClos
             >
               <Smartphone className="w-4 h-4" />
               <span>WhatsApp</span>
+            </button>
+
+            <button
+              onClick={handleDownloadPDF}
+              title="Download PDF Invoice"
+              className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm active:scale-95 transition-all"
+            >
+              <FileText className="w-4 h-4" />
+              <span>PDF</span>
             </button>
 
             <button
