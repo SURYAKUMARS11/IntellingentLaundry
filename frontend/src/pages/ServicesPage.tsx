@@ -23,6 +23,7 @@ import {
 export const ServicesPage: React.FC = () => {
   const [services, setServices] = useState<Service[]>([]);
   const [setting, setSetting] = useState<Setting | undefined>(undefined);
+  const [isLoading, setIsLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingService, setEditingService] = useState<Service | null>(null);
 
@@ -36,12 +37,15 @@ export const ServicesPage: React.FC = () => {
   });
 
   const loadData = async () => {
+    setIsLoading(true);
     try {
       const [servRes, setRes] = await Promise.all([fetchServices(), fetchSettings()]);
       if (servRes.success) setServices(servRes.services);
       if (setRes.success) setSetting(setRes.setting);
     } catch (err) {
       console.error('Failed to load services', err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -132,7 +136,14 @@ export const ServicesPage: React.FC = () => {
 
       {/* Services Row-by-Row Table List View */}
       <div className="glass-card overflow-hidden">
-        {services.length === 0 ? (
+        {isLoading ? (
+          <div className="p-10 text-center space-y-3">
+            <div className="w-8 h-8 border-3 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto" />
+            <p className="text-xs font-bold text-slate-500 dark:text-slate-400 animate-pulse">
+              Loading laundry services from database...
+            </p>
+          </div>
+        ) : services.length === 0 ? (
           <div className="text-center py-12 text-slate-500 text-xs">
             No laundry services configured. Click "New Service" to add one.
           </div>

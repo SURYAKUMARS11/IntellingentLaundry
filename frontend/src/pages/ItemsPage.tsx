@@ -15,6 +15,7 @@ import { Shirt, Plus, Edit, Trash2, X, Tag, Search, Sparkles, Check } from 'luci
 export const ItemsPage: React.FC = () => {
   const [items, setItems] = useState<LaundryItem[]>([]);
   const [setting, setSetting] = useState<Setting | undefined>(undefined);
+  const [isLoading, setIsLoading] = useState(true);
   const [categoriesList, setCategoriesList] = useState<string[]>([
     'Regular',
     'Men',
@@ -43,6 +44,7 @@ export const ItemsPage: React.FC = () => {
   });
 
   const loadData = async () => {
+    setIsLoading(true);
     try {
       const [itemRes, setRes, catRes] = await Promise.all([
         fetchItems(),
@@ -56,6 +58,8 @@ export const ItemsPage: React.FC = () => {
       }
     } catch (err) {
       console.error('Failed to load laundry items', err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -247,7 +251,14 @@ export const ItemsPage: React.FC = () => {
       </div>
 
       {/* Items Grid */}
-      {filteredItems.length === 0 ? (
+      {isLoading ? (
+        <div className="glass-card p-10 text-center space-y-3">
+          <div className="w-8 h-8 border-3 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto" />
+          <p className="text-xs font-bold text-slate-500 dark:text-slate-400 animate-pulse">
+            Loading laundry items catalog from database...
+          </p>
+        </div>
+      ) : filteredItems.length === 0 ? (
         <div className="glass-card p-8 text-center text-xs text-slate-500">
           No garment items found matching your search or category filter.
         </div>

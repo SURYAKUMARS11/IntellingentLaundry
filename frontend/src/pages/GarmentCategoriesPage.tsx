@@ -11,6 +11,7 @@ import { Layers, Plus, Edit, Trash2, X, Tag, Shirt, CheckCircle2 } from 'lucide-
 
 export const GarmentCategoriesPage: React.FC = () => {
   const [categories, setCategories] = useState<GarmentCategory[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingCategory, setEditingCategory] = useState<GarmentCategory | null>(null);
 
@@ -22,6 +23,7 @@ export const GarmentCategoriesPage: React.FC = () => {
   });
 
   const loadData = async () => {
+    setIsLoading(true);
     try {
       const res = await fetchGarmentCategories();
       if (res.success && Array.isArray(res.categories)) {
@@ -29,6 +31,8 @@ export const GarmentCategoriesPage: React.FC = () => {
       }
     } catch (err) {
       console.error('Failed to load garment categories', err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -110,8 +114,20 @@ export const GarmentCategoriesPage: React.FC = () => {
       </div>
 
       {/* Garment Categories Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {categories.map((cat) => (
+      {isLoading ? (
+        <div className="glass-card p-10 text-center space-y-3">
+          <div className="w-8 h-8 border-3 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto" />
+          <p className="text-xs font-bold text-slate-500 dark:text-slate-400 animate-pulse">
+            Loading garment categories from database...
+          </p>
+        </div>
+      ) : categories.length === 0 ? (
+        <div className="glass-card p-8 text-center text-xs text-slate-500">
+          No garment categories configured. Click "Add Garment Category" to create one.
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {categories.map((cat) => (
           <div
             key={cat._id}
             className="glass-card p-5 space-y-4 flex flex-col justify-between hover:border-brand-500 transition-all group"
@@ -172,6 +188,7 @@ export const GarmentCategoriesPage: React.FC = () => {
           </div>
         ))}
       </div>
+      )}
 
       {/* Add / Edit Category Modal */}
       {showModal && (
