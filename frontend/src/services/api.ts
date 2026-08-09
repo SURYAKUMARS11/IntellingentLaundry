@@ -21,19 +21,18 @@ export const getAuthToken = () => localStorage.getItem('auth_token');
 export const setAuthToken = (token: string) => localStorage.setItem('auth_token', token);
 export const removeAuthToken = () => localStorage.removeItem('auth_token');
 
-// Utility API fetch wrapper with auto-retry for cold starts & no-cache headers
+// Utility API fetch wrapper with auto-retry for cold starts
 const fetchApi = async (endpoint: string, options: RequestInit = {}, retries = 2): Promise<any> => {
   const token = getAuthToken();
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
-    'Cache-Control': 'no-cache, no-store, must-revalidate',
-    'Pragma': 'no-cache',
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...(options.headers || {}),
   };
 
   try {
     const response = await fetch(`${API_BASE}${endpoint}`, {
+      cache: 'no-store',
       ...options,
       headers,
     });
