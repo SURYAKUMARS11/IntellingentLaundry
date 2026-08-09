@@ -10,9 +10,10 @@ interface InvoiceViewProps {
   order: Order;
   setting?: Setting;
   onClose?: () => void;
+  isPublicView?: boolean;
 }
 
-export const InvoiceView: React.FC<InvoiceViewProps> = ({ order, setting, onClose }) => {
+export const InvoiceView: React.FC<InvoiceViewProps> = ({ order, setting, onClose, isPublicView = false }) => {
   const receiptRef = useRef<HTMLDivElement>(null);
   const currencySymbol = setting?.currencySymbol || '₹';
 
@@ -118,29 +119,29 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ order, setting, onClos
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden my-auto max-h-[96vh] flex flex-col">
-        {/* Action Header Bar (Hidden during window.print()) */}
-        <div className="no-print p-3 sm:p-4 bg-slate-100 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between shrink-0 gap-2.5">
-          <div className="flex items-center justify-between w-full sm:w-auto">
-            <div className="flex items-center gap-1.5 sm:gap-2">
-              <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-500 shrink-0" />
-              <h2 className="font-extrabold text-xs sm:text-sm text-slate-900 dark:text-white truncate">
-                Tax Invoice & Receipt
-              </h2>
-            </div>
-            {onClose && (
-              <button
-                onClick={onClose}
-                className="sm:hidden p-1.5 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            )}
+  const cardContent = (
+    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden my-auto max-h-[96vh] flex flex-col">
+      {/* Action Header Bar (Hidden during window.print()) */}
+      <div className="no-print p-3 sm:p-4 bg-slate-100 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between shrink-0 gap-2.5">
+        <div className="flex items-center justify-between w-full sm:w-auto">
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-500 shrink-0" />
+            <h2 className="font-extrabold text-xs sm:text-sm text-slate-900 dark:text-white truncate">
+              Tax Invoice & Receipt
+            </h2>
           </div>
+          {onClose && !isPublicView && (
+            <button
+              onClick={onClose}
+              className="sm:hidden p-1.5 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          )}
+        </div>
 
-          <div className="flex items-center gap-1.5 sm:gap-2 w-full sm:w-auto">
+        <div className="flex items-center gap-1.5 sm:gap-2 w-full sm:w-auto">
+          {!isPublicView && (
             <button
               onClick={handleWhatsAppShare}
               title="Share via WhatsApp"
@@ -149,35 +150,36 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ order, setting, onClos
               <Smartphone className="w-4 h-4" />
               <span>WhatsApp</span>
             </button>
+          )}
 
+          <button
+            onClick={handleDownloadPDF}
+            title="Download PDF Invoice"
+            className="flex-1 sm:flex-initial px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold flex items-center justify-center gap-1.5 shadow-md active:scale-95 transition-all"
+          >
+            <FileText className="w-4 h-4" />
+            <span>Download PDF</span>
+          </button>
+
+          <button
+            onClick={handlePrint}
+            title="Print Receipt"
+            className="flex-1 sm:flex-initial px-3 py-1.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-xs active:scale-95 transition-all"
+          >
+            <Printer className="w-4 h-4" />
+            <span>Print</span>
+          </button>
+
+          {onClose && !isPublicView && (
             <button
-              onClick={handleDownloadPDF}
-              title="Download PDF Invoice"
-              className="flex-1 sm:flex-initial px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-xs active:scale-95 transition-all"
+              onClick={onClose}
+              className="hidden sm:block p-1.5 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 transition-colors ml-0.5"
             >
-              <FileText className="w-4 h-4" />
-              <span>PDF</span>
+              <X className="w-5 h-5" />
             </button>
-
-            <button
-              onClick={handlePrint}
-              title="Print Receipt"
-              className="flex-1 sm:flex-initial px-3 py-1.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-xs active:scale-95 transition-all"
-            >
-              <Printer className="w-4 h-4" />
-              <span>Print</span>
-            </button>
-
-            {onClose && (
-              <button
-                onClick={onClose}
-                className="hidden sm:block p-1.5 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 transition-colors ml-0.5"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            )}
-          </div>
+          )}
         </div>
+      </div>
 
         {/* Printable Mobile-First Professional Invoice Area */}
         <div
@@ -409,6 +411,15 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ order, setting, onClos
           </div>
         </div>
       </div>
-    </div>
-  );
-};
+    );
+
+    if (isPublicView) {
+      return cardContent;
+    }
+
+    return (
+      <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+        {cardContent}
+      </div>
+    );
+  };

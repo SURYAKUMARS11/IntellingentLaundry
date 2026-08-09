@@ -84,7 +84,7 @@ export const PublicReceiptPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-900 flex items-center justify-center p-2 sm:p-6">
-      <InvoiceView order={order} setting={setting} />
+      <InvoiceView order={order} setting={setting} isPublicView={true} />
     </div>
   );
 };
