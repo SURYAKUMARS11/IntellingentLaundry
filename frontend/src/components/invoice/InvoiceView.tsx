@@ -94,36 +94,26 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ order, setting, onClos
     }
   };
 
-  // Handle Smart WhatsApp Share based on Order Status
+  // Handle Smart WhatsApp Share targeted directly to customer phone number
   const handleWhatsAppShare = async () => {
     const mobile = order.customerSnapshot.mobile.replace(/\D/g, '');
+    const phoneWithCountry = mobile.length === 10 ? '91' + mobile : mobile;
+    const receiptUrl = `${window.location.origin}/receipt/${order.orderNumber}?r=${order.orderNumber}`;
     const isDelivered = order.status === 'Delivered';
 
     if (isDelivered) {
-      // Delivered Order: Generate PDF & use Native Share API if supported
-      const res = await generatePDFBlob();
-      
-      if (res && navigator.canShare && navigator.canShare({ files: [res.file] })) {
-        try {
-          await navigator.share({
-            files: [res.file],
-            title: `Invoice_${order.orderNumber}.pdf`,
-          });
-          return;
-        } catch (err) {
-          // User cancelled native share or fallback
-        }
-      }
+      // Delivered Order: Trigger local PDF download for records & open targeted customer WhatsApp chat!
+      generatePDFBlob().then((res) => {
+        if (res) res.pdf.save(`Invoice_${order.orderNumber}.pdf`);
+      });
 
-      // Desktop / Web Fallback: Download PDF & open WhatsApp
-      if (res) res.pdf.save(`Invoice_${order.orderNumber}.pdf`);
-      const url = `https://wa.me/${mobile.length === 10 ? '91' + mobile : mobile}`;
+      const text = `Hello *${order.customerSnapshot.name}*,\n\nYour laundry Order *#${order.orderNumber}* has been successfully delivered! 🎉\n\n📄 *View & Download Tax Invoice PDF*:\n${receiptUrl}\n\nThank you for choosing *${setting?.shopName || 'IntelligentLaundry'}*!`;
+      const url = `https://wa.me/${phoneWithCountry}?text=${encodeURIComponent(text)}`;
       window.open(url, '_blank');
     } else {
-      // Active / Received order: Send summary details + digital receipt link
-      const receiptUrl = `${window.location.origin}/receipt/${order.orderNumber}?r=${order.orderNumber}`;
+      // Active / Received Order: Open targeted customer WhatsApp chat with summary details & invoice link!
       const text = `Hello *${order.customerSnapshot.name}*,\n\nYour official laundry invoice & receipt for Order *#${order.orderNumber}* from *${setting?.shopName || 'IntelligentLaundry'}* is ready!\n\n📋 *Invoice Summary*:\n• Order Date: ${new Date(order.orderDate).toLocaleDateString('en-GB')}\n• Status: ${order.status}\n• Payment: ${order.paymentStatus}\n• Total Amount: ${currencySymbol}${order.totalAmount}\n• Advance Paid: ${currencySymbol}${order.advancePaid}\n• Remaining Balance: ${currencySymbol}${order.remainingBalance}\n\n🔗 *View & Print Invoice Directly*:\n${receiptUrl}\n\nThank you for choosing ${setting?.shopName || 'IntelligentLaundry'}!`;
-      const url = `https://wa.me/${mobile.length === 10 ? '91' + mobile : mobile}?text=${encodeURIComponent(text)}`;
+      const url = `https://wa.me/${phoneWithCountry}?text=${encodeURIComponent(text)}`;
       window.open(url, '_blank');
     }
   };
