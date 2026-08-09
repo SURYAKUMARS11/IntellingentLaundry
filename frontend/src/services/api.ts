@@ -21,26 +21,36 @@ export const getAuthToken = () => localStorage.getItem('auth_token');
 export const setAuthToken = (token: string) => localStorage.setItem('auth_token', token);
 export const removeAuthToken = () => localStorage.removeItem('auth_token');
 
-// Utility API fetch wrapper
-const fetchApi = async (endpoint: string, options: RequestInit = {}) => {
+// Utility API fetch wrapper with auto-retry for cold starts & no-cache headers
+const fetchApi = async (endpoint: string, options: RequestInit = {}, retries = 2): Promise<any> => {
   const token = getAuthToken();
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    'Pragma': 'no-cache',
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...(options.headers || {}),
   };
 
-  const response = await fetch(`${API_BASE}${endpoint}`, {
-    ...options,
-    headers,
-  });
+  try {
+    const response = await fetch(`${API_BASE}${endpoint}`, {
+      ...options,
+      headers,
+    });
 
-  const data = await response.json();
-  if (!response.ok) {
-    throw new Error(data.message || 'API request failed');
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.message || 'API request failed');
+    }
+
+    return data;
+  } catch (err: any) {
+    if (retries > 0) {
+      await new Promise((res) => setTimeout(res, 2500));
+      return fetchApi(endpoint, options, retries - 1);
+    }
+    throw err;
   }
-
-  return data;
 };
 
 // --- Auth API ---
