@@ -13,7 +13,8 @@ import {
 } from '../types';
 import { posGroupCatalog } from '../data/posCatalogData';
 
-const API_BASE = '/api';
+const API_BASE =
+  (import.meta as any).env?.VITE_API_URL || 'https://intellingentlaundry.onrender.com/api';
 
 // Helper to retrieve auth token
 export const getAuthToken = () => localStorage.getItem('auth_token');
