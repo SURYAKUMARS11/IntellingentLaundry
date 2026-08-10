@@ -145,6 +145,7 @@ export interface Setting {
 
 export interface DashboardStats {
   orders: number;
+  totalOrders?: number;
   paymentsReceived: number;
   activeOrders: number;
   newCustomers: number;

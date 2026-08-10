@@ -396,7 +396,7 @@ export const DashboardPage: React.FC = () => {
               <div className="h-6 sm:h-7 w-16 bg-slate-200 dark:bg-slate-700 animate-pulse rounded-lg mt-1" />
             ) : (
               <p className="text-base sm:text-2xl font-black text-slate-900 dark:text-white truncate">
-                {ordersList.length}
+                {stats?.totalOrders ?? ordersList.length}
               </p>
             )}
             <p className="hidden sm:block text-[11px] font-semibold text-blue-600 mt-0.5">Click to view orders</p>
@@ -450,7 +450,7 @@ export const DashboardPage: React.FC = () => {
               <div className="h-6 sm:h-7 w-16 bg-slate-200 dark:bg-slate-700 animate-pulse rounded-lg mt-1" />
             ) : (
               <p className="text-base sm:text-2xl font-black text-cyan-600 dark:text-cyan-400 truncate">
-                {activeOrdersList.length}
+                {stats?.activeOrders ?? activeOrdersList.length}
               </p>
             )}
             <p className="hidden sm:block text-[11px] font-semibold text-cyan-600 mt-0.5">Click to view active</p>
@@ -477,7 +477,7 @@ export const DashboardPage: React.FC = () => {
               <div className="h-6 sm:h-7 w-16 bg-slate-200 dark:bg-slate-700 animate-pulse rounded-lg mt-1" />
             ) : (
               <p className="text-base sm:text-2xl font-black text-slate-900 dark:text-white truncate">
-                {newCustomersList.length}
+                {stats?.totalCustomers ?? newCustomersList.length}
               </p>
             )}
             <p className="hidden sm:block text-[11px] font-semibold text-indigo-600 mt-0.5">Click to view customers</p>
@@ -504,7 +504,7 @@ export const DashboardPage: React.FC = () => {
               <div className="h-6 sm:h-7 w-16 bg-slate-200 dark:bg-slate-700 animate-pulse rounded-lg mt-1" />
             ) : (
               <p className="text-base sm:text-2xl font-black text-rose-600 dark:text-rose-400 truncate">
-                {overdueOrdersList.length}
+                {stats?.overdueOrders ?? overdueOrdersList.length}
               </p>
             )}
             <p className="hidden sm:block text-[11px] font-semibold text-rose-600 mt-0.5">Click to view overdue</p>
