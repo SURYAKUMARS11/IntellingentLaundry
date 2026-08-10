@@ -88,7 +88,7 @@ export const getDashboardStats = async (req: Request, res: Response) => {
 
     // 1. Total Orders List & Count
     const totalOrdersCount = await Order.countDocuments(orderQuery);
-    const ordersList = await Order.find(orderQuery).sort({ createdAt: -1 }).limit(20);
+    const ordersList = await Order.find(orderQuery).sort({ orderDate: -1, createdAt: -1 }).limit(20);
 
     // 2. Payments Received List & Total
     let paymentMatch: any = {};
@@ -110,7 +110,7 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       status: { $in: ['Received', 'Washing', 'Drying', 'Ironing', 'Packing', 'Ready for Delivery', 'Ready for Pickup'] },
     };
     const activeOrdersCount = await Order.countDocuments(activeQuery);
-    const activeOrdersList = await Order.find(activeQuery).sort({ orderDate: -1 }).limit(20);
+    const activeOrdersList = await Order.find(activeQuery).sort({ orderDate: -1, createdAt: -1 }).limit(20);
 
     // 4. New Customers List & Count
     let customerQuery: any = {};
@@ -120,7 +120,7 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       if (endDate) customerQuery.createdAt.$lte = endDate;
     }
     const newCustomersCount = await Customer.countDocuments(customerQuery);
-    const newCustomersList = await Customer.find(customerQuery).sort({ createdAt: -1 }).limit(20);
+    const newCustomersList = await Customer.find(customerQuery).sort({ createdAt: -1, _id: -1 }).limit(20);
 
     // 5. Overdue Orders List & Count (Only active orders that exceeded expectedDeliveryDate)
     const overdueQuery = {
@@ -203,21 +203,21 @@ export const getDashboardStats = async (req: Request, res: Response) => {
     res.json({
       success: true,
       stats: {
-        totalOrders: ordersList.length,
-        orders: ordersList.length,
+        totalOrders: totalOrdersCount,
+        orders: totalOrdersCount,
         paymentsReceived: periodRev,
-        activeOrders: activeOrdersList.length,
-        newCustomers: newCustomersList.length,
-        overdueOrders: overdueOrdersList.length,
-        todayOrders: ordersList.length,
-        pendingOrders: activeOrdersList.length,
-        inProgress: activeOrdersList.length,
-        readyForPickup: activeOrdersList.length,
-        deliveredOrders: ordersList.length - activeOrdersList.length,
+        activeOrders: activeOrdersCount,
+        newCustomers: newCustomersCount,
+        overdueOrders: overdueOrdersCount,
+        todayOrders: totalOrdersCount,
+        pendingOrders: activeOrdersCount,
+        inProgress: activeOrdersCount,
+        readyForPickup: activeOrdersCount,
+        deliveredOrders: Math.max(0, totalOrdersCount - activeOrdersCount),
         todayRevenue,
         monthlyRevenue,
         periodRevenue: periodRev,
-        totalCustomers: newCustomersList.length,
+        totalCustomers: newCustomersCount,
       },
       ordersList,
       paymentsList,

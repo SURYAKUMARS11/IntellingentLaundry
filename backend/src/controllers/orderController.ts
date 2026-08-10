@@ -57,7 +57,7 @@ export const getOrders = async (req: Request, res: Response) => {
     const total = await Order.countDocuments(query);
     const orders = await Order.find(query)
       .populate('customer', 'name mobile address email')
-      .sort({ createdAt: -1 })
+      .sort({ orderDate: -1, createdAt: -1 })
       .skip(skip)
       .limit(limitNum);
 

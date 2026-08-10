@@ -23,7 +23,7 @@ export const getCustomers = async (req: Request, res: Response) => {
 
     const total = await Customer.countDocuments(query);
     const rawCustomers = await Customer.find(query)
-      .sort({ createdAt: -1 })
+      .sort({ createdAt: -1, _id: -1 })
       .skip(skip)
       .limit(limit);
 
