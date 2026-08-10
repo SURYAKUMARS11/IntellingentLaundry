@@ -332,6 +332,7 @@ export const importOldAppOrdersJson = async (req: Request, res: Response) => {
               serviceName: 'Laundry Service',
               quantity: 1,
               unitPrice: totalPrice,
+              subtotal: totalPrice,
               totalPrice: totalPrice,
             },
           ],
