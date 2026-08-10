@@ -12,9 +12,23 @@ export const generateOrderNumber = async (): Promise<string> => {
     // fallback
   }
 
-  const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-  const count = await Order.countDocuments();
-  const sequence = String(count + 1).padStart(4, '0');
+  // Find max numerical order number in database (e.g. from ORD-411/26 or ORD-411)
+  const orders = await Order.find({}, { orderNumber: 1 });
+  let maxNum = 0;
+  orders.forEach((o) => {
+    if (o.orderNumber) {
+      const match = o.orderNumber.match(/ORD-(\d+)/i) || o.orderNumber.match(/(\d+)/);
+      if (match) {
+        const num = parseInt(match[1]);
+        if (!isNaN(num) && num > maxNum) {
+          maxNum = num;
+        }
+      }
+    }
+  });
 
-  return `${prefix}${dateStr}-${sequence}`;
+  const nextNum = maxNum > 0 ? maxNum + 1 : 412;
+  const currentYearSuffix = new Date().getFullYear().toString().slice(-2); // e.g. 26 for 2026
+
+  return `${prefix}${nextNum}/${currentYearSuffix}`;
 };
