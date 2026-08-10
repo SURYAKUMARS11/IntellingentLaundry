@@ -8,11 +8,12 @@ import {
   restoreMasterExcelBackupApi,
   fetchWhatsAppStatus,
   disconnectWhatsAppApi,
+  importOldAppOrdersJsonApi,
 } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { Setting } from '../types';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
-import { Settings, Store, Receipt, Lock, CheckCircle, Save, Trash2, Upload, X, FileSpreadsheet, Download, UploadCloud, CheckCircle2, Smartphone, RefreshCw, QrCode } from 'lucide-react';
+import { Settings, Store, Receipt, Lock, CheckCircle, Save, Trash2, Upload, X, FileSpreadsheet, Download, UploadCloud, CheckCircle2, Smartphone, RefreshCw, QrCode, FileJson } from 'lucide-react';
 
 export const SettingsPage: React.FC = () => {
   const { admin, updateAdminState } = useAuth();
@@ -54,6 +55,32 @@ export const SettingsPage: React.FC = () => {
   const [isRestoring, setIsRestoring] = useState(false);
   const [backupMsg, setBackupMsg] = useState('');
   const [restoreSummary, setRestoreSummary] = useState<any>(null);
+
+  // Old Software JSON Importer state
+  const [jsonPasteText, setJsonPasteText] = useState('');
+  const [isImportingJson, setIsImportingJson] = useState(false);
+
+  const handleImportOldJson = async () => {
+    if (!jsonPasteText.trim()) return;
+    setIsImportingJson(true);
+    setBackupMsg('');
+    setRestoreSummary(null);
+    try {
+      let parsed = JSON.parse(jsonPasteText.trim());
+      const res = await importOldAppOrdersJsonApi(parsed);
+      if (res.success) {
+        setRestoreSummary(res.summary);
+        setBackupMsg(res.message || 'Successfully imported all past orders and customers!');
+        setJsonPasteText('');
+      } else {
+        alert(res.message || 'Failed to import JSON data');
+      }
+    } catch (err: any) {
+      alert('Invalid JSON format: ' + err.message);
+    } finally {
+      setIsImportingJson(false);
+    }
+  };
 
   useEffect(() => {
     const load = async () => {
@@ -828,6 +855,43 @@ export const SettingsPage: React.FC = () => {
                   className="hidden"
                 />
               </label>
+            </div>
+          </div>
+
+          {/* CARD 2.5: IMPORT OLD SOFTWARE JSON */}
+          <div className="glass-card p-6 space-y-4 border-l-4 border-l-indigo-500">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h3 className="font-black text-base text-slate-900 dark:text-white flex items-center gap-2">
+                  <FileJson className="w-5 h-5 text-indigo-600" />
+                  <span>Import Old Software JSON Payload (410+ Past Orders & Customers)</span>
+                </h3>
+                <p className="text-xs text-slate-500 mt-1">
+                  Paste the JSON object copied from your old app's DevTools Network tab (containing all 410+ past orders and customer details) to automatically migrate them into MongoDB!
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <textarea
+                rows={6}
+                value={jsonPasteText}
+                onChange={(e) => setJsonPasteText(e.target.value)}
+                placeholder='Paste raw JSON here e.g. {"status":"success", "orders": [...]} or [{"id":"411", "customer_name":"Surya Kumar", ...}]'
+                className="w-full p-3 text-xs font-mono rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white outline-none leading-relaxed"
+              />
+
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  disabled={isImportingJson || !jsonPasteText.trim()}
+                  onClick={handleImportOldJson}
+                  className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-black shadow-md flex items-center gap-2 active:scale-95 transition-all"
+                >
+                  <UploadCloud className={`w-4 h-4 ${isImportingJson ? 'animate-spin' : ''}`} />
+                  <span>{isImportingJson ? 'Importing Past Orders & Customers...' : 'Start Automatic JSON Import'}</span>
+                </button>
+              </div>
             </div>
           </div>
 

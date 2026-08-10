@@ -1459,3 +1459,10 @@ export const disconnectWhatsAppApi = async () => {
     return { success: false };
   }
 };
+
+export const importOldAppOrdersJsonApi = async (jsonPayload: any) => {
+  return await fetchApi('/backup/import-json', {
+    method: 'POST',
+    body: JSON.stringify(jsonPayload),
+  });
+};
