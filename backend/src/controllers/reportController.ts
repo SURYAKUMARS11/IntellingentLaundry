@@ -104,11 +104,11 @@ export const getDashboardStats = async (req: Request, res: Response) => {
     ]);
     const periodRevenue = periodPayments[0]?.total || 0;
 
-    // 3. Active Orders List & Count
+    // 3. Active Orders List & Count (Respects active date filter if selected)
     const activeQuery: any = {
+      ...orderQuery,
       status: { $in: ['Received', 'Washing', 'Drying', 'Ironing', 'Packing', 'Ready for Delivery', 'Ready for Pickup'] },
     };
-    if (paymentStatus) activeQuery.paymentStatus = paymentStatus;
 
     const activeOrdersCount = await Order.countDocuments(activeQuery);
     const activeOrdersList = await Order.find(activeQuery).sort({ orderDate: -1, createdAt: -1 });
@@ -123,11 +123,11 @@ export const getDashboardStats = async (req: Request, res: Response) => {
     const newCustomersCount = await Customer.countDocuments(customerQuery);
     const newCustomersList = await Customer.find(customerQuery).sort({ createdAt: -1, _id: -1 });
 
-    // 5. Overdue Orders List & Count (Only active orders that exceeded expectedDeliveryDate)
+    // 5. Overdue Orders List & Count (Respects active date filter if selected)
     const overdueQuery: any = {
+      ...orderQuery,
       status: { $nin: ['Delivered', 'Cancelled'] },
     };
-    if (paymentStatus) overdueQuery.paymentStatus = paymentStatus;
 
     const overdueOrdersCount = await Order.countDocuments(overdueQuery);
     const overdueOrdersList = await Order.find(overdueQuery).sort({ expectedDeliveryDate: 1 });
