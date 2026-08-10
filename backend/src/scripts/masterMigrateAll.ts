@@ -147,22 +147,40 @@ const run = async () => {
     const delivDate = oldOrd.delivery_date ? new Date(oldOrd.delivery_date) : new Date(orderDate.getTime() + 48 * 3600 * 1000);
 
     const totalPrice = Number(oldOrd.total_price || oldOrd.total_amount || 0);
-    const paidAmount = Number(oldOrd.paid_amount || oldOrd.advance_paid || 0);
-    const remBal = Math.max(0, totalPrice - paidAmount);
-
-    // Status mapping
-    let orderStatus: any = 'Received';
-    const rawStatus = (oldOrd.status || oldOrd.ord_status || '').toLowerCase();
-    if (rawStatus === 'delivered') orderStatus = 'Delivered';
-    else if (rawStatus === 'washing' || rawStatus === 'in_progress') orderStatus = 'Washing';
-    else if (rawStatus === 'ironing') orderStatus = 'Ironing';
-    else if (rawStatus === 'ready' || rawStatus === 'ready_for_delivery') orderStatus = 'Ready for Delivery';
 
     // Payment status mapping
     let payStatus: any = 'Pending';
     const rawPayStatus = (oldOrd.payment_status || '').toLowerCase();
-    if (rawPayStatus === 'paid' || (remBal === 0 && totalPrice > 0)) payStatus = 'Paid';
-    else if (paidAmount > 0) payStatus = 'Partially Paid';
+    let paidAmount = 0;
+
+    if (rawPayStatus === 'paid') {
+      payStatus = 'Paid';
+      paidAmount = totalPrice;
+    } else {
+      paidAmount = Number(oldOrd.paid_amount || 0);
+      if (paidAmount >= totalPrice && totalPrice > 0) {
+        payStatus = 'Paid';
+      } else if (paidAmount > 0) {
+        payStatus = 'Partially Paid';
+      } else {
+        payStatus = 'Pending';
+      }
+    }
+
+    const remBal = Math.max(0, totalPrice - paidAmount);
+
+    // Status mapping matching old app status values
+    let orderStatus: any = 'Received';
+    const rawStatus = (oldOrd.status || '').toLowerCase();
+    if (rawStatus === 'delivered') {
+      orderStatus = 'Delivered';
+    } else if (rawStatus === 'ready_to_delivery' || rawStatus === 'ready') {
+      orderStatus = 'Ready for Delivery';
+    } else if (rawStatus === 'cancelled') {
+      orderStatus = 'Cancelled';
+    } else {
+      orderStatus = 'Received'; // Pending order in process
+    }
 
     // Find linked Customer
     let customerDoc = oldCustomerIdMap[oldCustId];

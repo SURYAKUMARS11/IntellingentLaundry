@@ -192,7 +192,8 @@ export const getAccountsSummary = async (req: Request, res: Response) => {
 
     payments.forEach((p) => {
       const ref = p.orderNumber ? `#${p.orderNumber}` : `PAY-${p._id.toString().slice(-6)}`;
-      incomeMap.set(p._id.toString(), {
+      const key = p.orderId ? p.orderId.toString() : (p.orderNumber || p._id.toString());
+      incomeMap.set(key, {
         id: p._id.toString(),
         refNumber: ref,
         date: p.paidAt,
@@ -202,14 +203,19 @@ export const getAccountsSummary = async (req: Request, res: Response) => {
         paymentMethod: p.paymentMethod || 'Cash',
         amount: p.amount,
       });
+      if (p.orderNumber) {
+        incomeMap.set(p.orderNumber, incomeMap.get(key));
+      }
     });
 
     orders.forEach((o: any) => {
-      const amt = o.advancePaid > 0 ? o.advancePaid : 0;
+      const amt = o.paymentStatus === 'Paid' ? o.totalAmount : (o.advancePaid > 0 ? o.advancePaid : 0);
       const ref = `#${o.orderNumber}`;
-      if (amt > 0 && !incomeMap.has(o._id.toString())) {
-        incomeMap.set(o._id.toString(), {
-          id: o._id.toString(),
+      const oId = o._id.toString();
+      const oNum = o.orderNumber;
+      if (amt > 0 && !incomeMap.has(oId) && !incomeMap.has(oNum)) {
+        incomeMap.set(oId, {
+          id: oId,
           refNumber: ref,
           date: o.orderDate || o.createdAt,
           type: 'Income' as const,
