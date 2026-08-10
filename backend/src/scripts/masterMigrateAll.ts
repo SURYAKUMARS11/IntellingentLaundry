@@ -38,7 +38,28 @@ const run = async () => {
   await Payment.deleteMany({});
   console.log('Database cleared!');
 
-  // STEP 1: IMPORT ALL 303 CUSTOMERS FROM CSV
+  // STEP 0: LOAD EXACT OVERDUE ORDERS SET FROM overdue.txt
+  const overdueTxtPath = path.join(__dirname, '../../overdue.txt');
+  const overdueSet = new Set<string>();
+
+  if (fs.existsSync(overdueTxtPath)) {
+    try {
+      const overdueRaw = fs.readFileSync(overdueTxtPath, 'utf8');
+      const parsed = JSON.parse(overdueRaw);
+      const overdueList = parsed.overdue_orders || [];
+      overdueList.forEach((o: any) => {
+        if (o.id) overdueSet.add(String(o.id));
+        if (o.order_no) overdueSet.add(String(o.order_no));
+        if (o.order_no_display) overdueSet.add(String(o.order_no_display));
+        if (o.print_order_no) overdueSet.add(String(o.print_order_no));
+      });
+      console.log(`📌 Loaded ${overdueList.length} exact overdue orders from overdue.txt!`);
+    } catch (err: any) {
+      console.error('Error parsing overdue.txt:', err.message);
+    }
+  }
+
+  // STEP 1: IMPORT ALL CUSTOMERS FROM CSV
   const csvPath = path.join(__dirname, '../../customers_export (1).csv');
   if (!fs.existsSync(csvPath)) {
     console.error('CSV file not found at:', csvPath);
@@ -61,7 +82,6 @@ const run = async () => {
   const csvLines = sanitizedCsv.split('\n').filter((l) => l.trim().length > 0);
   console.log(`\n👥 Processing ${csvLines.length - 1} customer rows from CSV...`);
 
-  // Map old CSV customer ID (1..303) -> MongoDB Customer Document
   const oldCustomerIdMap: { [key: string]: any } = {};
   const phoneCustomerMap: { [key: string]: any } = {};
   const nameCustomerMap: { [key: string]: any } = {};
@@ -91,7 +111,6 @@ const run = async () => {
     }
 
     if (custDoc) {
-      // Update details if missing
       if (address && (!custDoc.address || custDoc.address === 'Coimbatore')) {
         custDoc.address = address;
       }
@@ -136,6 +155,7 @@ const run = async () => {
 
   let importedOrdersCount = 0;
   let importedPaymentsCount = 0;
+  let markedOverdueCount = 0;
 
   for (const oldOrd of rawOrders) {
     const oNum = oldOrd.print_order_no || oldOrd.order_no_display || `ORD-${oldOrd.order_no || oldOrd.id}/26`;
@@ -147,6 +167,14 @@ const run = async () => {
     const delivDate = oldOrd.delivery_date ? new Date(oldOrd.delivery_date) : new Date(orderDate.getTime() + 48 * 3600 * 1000);
 
     const totalPrice = Number(oldOrd.total_price || oldOrd.total_amount || 0);
+
+    // Exact Overdue match check against overdue.txt
+    const isOverdue =
+      overdueSet.has(String(oldOrd.id)) ||
+      overdueSet.has(String(oldOrd.order_no)) ||
+      overdueSet.has(String(oldOrd.order_no_display)) ||
+      overdueSet.has(String(oldOrd.print_order_no)) ||
+      overdueSet.has(oNum);
 
     // Payment status mapping
     let payStatus: any = 'Pending';
@@ -169,17 +197,15 @@ const run = async () => {
 
     const remBal = Math.max(0, totalPrice - paidAmount);
 
-    // Status mapping matching old app status values
-    let orderStatus: any = 'Received';
-    const rawStatus = (oldOrd.status || '').toLowerCase();
-    if (rawStatus === 'delivered') {
-      orderStatus = 'Delivered';
-    } else if (rawStatus === 'ready_to_delivery' || rawStatus === 'ready') {
-      orderStatus = 'Ready for Delivery';
-    } else if (rawStatus === 'cancelled') {
+    // Order status mapping: strictly match 77 overdue orders
+    let orderStatus: any = 'Delivered';
+    if (isOverdue) {
+      orderStatus = 'Received'; // Active processing order
+      markedOverdueCount++;
+    } else if ((oldOrd.status || '').toLowerCase() === 'cancelled') {
       orderStatus = 'Cancelled';
     } else {
-      orderStatus = 'Received'; // Pending order in process
+      orderStatus = 'Delivered';
     }
 
     // Find linked Customer
@@ -192,7 +218,6 @@ const run = async () => {
     }
 
     if (!customerDoc) {
-      // Create fallback customer profile
       customerDoc = new Customer({
         name: custName,
         mobile: custPhone.length >= 10 ? custPhone.slice(-10) : `9${Math.floor(100000000 + Math.random() * 900000000)}`,
@@ -241,7 +266,6 @@ const run = async () => {
     await newOrd.save();
     importedOrdersCount++;
 
-    // Update customer lifetime metrics
     customerDoc.totalOrders = (customerDoc.totalOrders || 0) + 1;
     customerDoc.totalSpent = (customerDoc.totalSpent || 0) + totalPrice;
     await customerDoc.save();
@@ -266,12 +290,16 @@ const run = async () => {
   const finalOrdersCount = await Order.countDocuments();
   const finalCustomersCount = await Customer.countDocuments();
   const finalPaymentsCount = await Payment.countDocuments();
+  const finalOverdueCount = await Order.countDocuments({
+    status: { $nin: ['Delivered', 'Cancelled'] },
+  });
 
   console.log(`\n=================================================`);
   console.log(`🎉 MASTER MIGRATION FINISHED SUCCESSFULLY!`);
   console.log(`=================================================`);
   console.log(`📦 Total Orders Migrated:    ${finalOrdersCount} (Target: 410)`);
-  console.log(`👥 Total Customers Migrated: ${finalCustomersCount} (Target: 303)`);
+  console.log(`⏳ Overdue Orders Marked:   ${finalOverdueCount} (Target: 77)`);
+  console.log(`👥 Total Customers Migrated: ${finalCustomersCount} (Target: 231)`);
   console.log(`💳 Total Payments Recorded:  ${finalPaymentsCount}`);
   console.log(`=================================================\n`);
 
