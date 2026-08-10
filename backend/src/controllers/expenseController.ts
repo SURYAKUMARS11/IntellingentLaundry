@@ -192,29 +192,28 @@ export const getAccountsSummary = async (req: Request, res: Response) => {
 
     payments.forEach((p) => {
       const ref = p.orderNumber ? `#${p.orderNumber}` : `PAY-${p._id.toString().slice(-6)}`;
-      const key = p.orderId ? p.orderId.toString() : (p.orderNumber || p._id.toString());
-      incomeMap.set(key, {
-        id: p._id.toString(),
-        refNumber: ref,
-        date: p.paidAt,
-        type: 'Income' as const,
-        category: 'Order Payment',
-        description: `Order #${p.orderNumber || ''} payment from ${p.customerName || 'Customer'}`,
-        paymentMethod: p.paymentMethod || 'Cash',
-        amount: p.amount,
-      });
-      if (p.orderNumber) {
-        incomeMap.set(p.orderNumber, incomeMap.get(key));
+      const key = p.orderNumber || (p.orderId ? p.orderId.toString() : p._id.toString());
+      if (!incomeMap.has(key)) {
+        incomeMap.set(key, {
+          id: p._id.toString(),
+          refNumber: ref,
+          date: p.paidAt,
+          type: 'Income' as const,
+          category: 'Order Payment',
+          description: `Order #${p.orderNumber || ''} payment from ${p.customerName || 'Customer'}`,
+          paymentMethod: p.paymentMethod || 'Cash',
+          amount: p.amount,
+        });
       }
     });
 
     orders.forEach((o: any) => {
       const amt = o.paymentStatus === 'Paid' ? o.totalAmount : (o.advancePaid > 0 ? o.advancePaid : 0);
       const ref = `#${o.orderNumber}`;
-      const oId = o._id.toString();
       const oNum = o.orderNumber;
-      if (amt > 0 && !incomeMap.has(oId) && !incomeMap.has(oNum)) {
-        incomeMap.set(oId, {
+      const oId = o._id.toString();
+      if (amt > 0 && !incomeMap.has(oNum) && !incomeMap.has(oId)) {
+        incomeMap.set(oNum || oId, {
           id: oId,
           refNumber: ref,
           date: o.orderDate || o.createdAt,
