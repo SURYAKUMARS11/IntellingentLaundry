@@ -389,3 +389,46 @@ export const deleteOrder = async (req: Request, res: Response) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+export const updateOrder = async (req: Request, res: Response) => {
+  try {
+    const { items, status, paymentStatus, paymentMethod, advancePaid, expectedDeliveryDate, notes, discount } = req.body;
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Order not found' });
+    }
+
+    if (items && Array.isArray(items)) {
+      order.items = items;
+      const subtotal = items.reduce((sum: number, item: any) => sum + (Number(item.subtotal) || Number(item.price || 0) * Number(item.quantity || 1)), 0);
+      const disc = Number(discount !== undefined ? discount : order.discount || 0);
+      order.discount = disc;
+      order.subtotal = subtotal;
+      order.totalAmount = Math.max(0, subtotal - disc);
+    } else if (discount !== undefined) {
+      const disc = Number(discount);
+      order.discount = disc;
+      order.totalAmount = Math.max(0, order.subtotal - disc);
+    }
+
+    if (status) order.status = status;
+    if (paymentStatus) order.paymentStatus = paymentStatus;
+    if (paymentMethod) order.paymentMethod = paymentMethod;
+    if (advancePaid !== undefined) order.advancePaid = Number(advancePaid);
+    if (expectedDeliveryDate) order.expectedDeliveryDate = new Date(expectedDeliveryDate);
+    if (notes !== undefined) order.notes = notes;
+
+    order.remainingBalance = Math.max(0, order.totalAmount - order.advancePaid);
+
+    await order.save();
+
+    res.json({
+      success: true,
+      message: 'Order updated successfully',
+      order,
+    });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};

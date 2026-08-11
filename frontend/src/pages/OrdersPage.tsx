@@ -12,6 +12,7 @@ import { StatusBadge } from '../components/ui/Badge';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
 import { OrderDetailModal } from '../components/orders/OrderDetailModal';
 import { PaymentModal } from '../components/orders/PaymentModal';
+import { EditOrderModal } from '../components/orders/EditOrderModal';
 import { InvoiceView } from '../components/invoice/InvoiceView';
 import {
   Search,
@@ -21,6 +22,7 @@ import {
   CreditCard,
   Trash2,
   Eye,
+  Edit,
   RefreshCw,
   ShoppingBag,
   ChevronLeft,
@@ -46,6 +48,8 @@ export const OrdersPage: React.FC = () => {
 
   // Selected Order Modals
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [editingOrder, setEditingOrder] = useState<Order | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const [deleteOrderId, setDeleteOrderId] = useState<string | null>(null);
@@ -305,6 +309,17 @@ export const OrdersPage: React.FC = () => {
 
                           <button
                             onClick={() => {
+                              setEditingOrder(ord);
+                              setShowEditModal(true);
+                            }}
+                            title="Edit Order Details"
+                            className="p-1.5 rounded-lg hover:bg-amber-50 text-amber-600 dark:hover:bg-amber-950/60"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+
+                          <button
+                            onClick={() => {
                               setSelectedOrder(ord);
                               setShowInvoiceModal(true);
                             }}
@@ -392,6 +407,15 @@ export const OrdersPage: React.FC = () => {
                     </button>
                     <button
                       onClick={() => {
+                        setEditingOrder(ord);
+                        setShowEditModal(true);
+                      }}
+                      className="px-3 py-1.5 rounded-xl bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 text-xs font-semibold flex items-center gap-1"
+                    >
+                      <Edit className="w-3.5 h-3.5" /> Edit
+                    </button>
+                    <button
+                      onClick={() => {
                         setSelectedOrder(ord);
                         setShowInvoiceModal(true);
                       }}
@@ -462,7 +486,7 @@ export const OrdersPage: React.FC = () => {
       </div>
 
       {/* Modals */}
-      {selectedOrder && !showInvoiceModal && !showPaymentModal && (
+      {selectedOrder && !showInvoiceModal && !showPaymentModal && !showEditModal && (
         <OrderDetailModal
           order={selectedOrder}
           setting={setting}
@@ -472,6 +496,21 @@ export const OrdersPage: React.FC = () => {
           }}
           onRecordPayment={() => setShowPaymentModal(true)}
           onOpenInvoice={() => setShowInvoiceModal(true)}
+        />
+      )}
+
+      {showEditModal && editingOrder && (
+        <EditOrderModal
+          order={editingOrder}
+          setting={setting}
+          isOpen={showEditModal}
+          onClose={() => {
+            setShowEditModal(false);
+            setEditingOrder(null);
+          }}
+          onSave={() => {
+            loadOrders();
+          }}
         />
       )}
 

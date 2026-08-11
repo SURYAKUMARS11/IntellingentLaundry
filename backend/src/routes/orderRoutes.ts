@@ -4,6 +4,7 @@ import {
   getOrderById,
   getPublicOrderByNumber,
   createOrder,
+  updateOrder,
   updateOrderStatus,
   recordOrderPayment,
   deleteOrder,
@@ -21,6 +22,7 @@ router.use(authMiddleware);
 router.get('/', getOrders);
 router.get('/:id', getOrderById);
 router.post('/', createOrder);
+router.put('/:id', updateOrder);
 router.patch('/:id/status', updateOrderStatus);
 router.post('/:id/payments', recordOrderPayment);
 router.delete('/:id', deleteOrder);

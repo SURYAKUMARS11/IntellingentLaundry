@@ -678,6 +678,27 @@ export const updateOrderStatusApi = async (id: string, status: string, note?: st
   }
 };
 
+export const updateOrderApi = async (id: string, orderData: any) => {
+  try {
+    return await fetchApi(`/orders/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(orderData),
+    });
+  } catch (err) {
+    const orders = getMockOrders();
+    const idx = orders.findIndex((o) => o._id === id);
+    if (idx !== -1) {
+      orders[idx] = {
+        ...orders[idx],
+        ...orderData,
+        updatedAt: new Date().toISOString(),
+      };
+      saveMockOrders(orders);
+    }
+    return { success: true, order: orders[idx] };
+  }
+};
+
 export const recordOrderPaymentApi = async (id: string, paymentData: any) => {
   try {
     return await fetchApi(`/orders/${id}/payments`, {
