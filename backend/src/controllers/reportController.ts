@@ -339,7 +339,7 @@ export const getProfitAndLossReport = async (req: Request, res: Response) => {
     // 1. Calculate Gross Payments Revenue within period
     const payments = await Payment.find({
       paidAt: { $gte: startDate, $lte: endDate },
-    });
+    }).lean();
 
     let grossRevenue = 0;
     let cashIncome = 0;
@@ -357,8 +357,8 @@ export const getProfitAndLossReport = async (req: Request, res: Response) => {
     if (grossRevenue === 0) {
       const orders = await Order.find({
         orderDate: { $gte: startDate, $lte: endDate },
-      });
-      orders.forEach((o) => {
+      }).lean();
+      orders.forEach((o: any) => {
         const amt = o.paymentStatus === 'Paid' ? (o.totalAmount || 0) : (o.advancePaid || 0);
         grossRevenue += amt;
         if (o.paymentMethod === 'Cash') cashIncome += amt;
@@ -371,7 +371,7 @@ export const getProfitAndLossReport = async (req: Request, res: Response) => {
     // 2. Calculate Operating Expenses within period
     const expenses = await Expense.find({
       expenseDate: { $gte: startDate, $lte: endDate },
-    });
+    }).lean();
 
     let totalExpenses = 0;
     let cashExpenses = 0;
@@ -398,34 +398,39 @@ export const getProfitAndLossReport = async (req: Request, res: Response) => {
       percentage: totalExpenses > 0 ? Number(((categoryTotals[cat] / totalExpenses) * 100).toFixed(1)) : 0,
     })).sort((a, b) => b.amount - a.amount);
 
-    // 5. Monthly Comparison (Last 6 Months)
-    const monthlyTrends = [];
-    for (let i = 5; i >= 0; i--) {
-      const mStart = new Date(now.getFullYear(), now.getMonth() - i, 1, 0, 0, 0, 0);
-      const mEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0, 23, 59, 59, 999);
-      const monthLabel = mStart.toLocaleString('default', { month: 'short', year: '2-digit' });
+    // 5. Monthly Comparison (Last 6 Months) in parallel with Promise.all
+    const monthIndexes = [5, 4, 3, 2, 1, 0];
+    const monthlyTrends = await Promise.all(
+      monthIndexes.map(async (i) => {
+        const mStart = new Date(now.getFullYear(), now.getMonth() - i, 1, 0, 0, 0, 0);
+        const mEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0, 23, 59, 59, 999);
+        const monthLabel = mStart.toLocaleString('default', { month: 'short', year: '2-digit' });
 
-      const mPayments = await Payment.find({ paidAt: { $gte: mStart, $lte: mEnd } });
-      let mRev = mPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
-      if (mRev === 0) {
-        const mOrders = await Order.find({ orderDate: { $gte: mStart, $lte: mEnd } });
-        mRev = mOrders.reduce(
-          (sum, o) => sum + (o.paymentStatus === 'Paid' ? (o.totalAmount || 0) : (o.advancePaid || 0)),
-          0
-        );
-      }
+        const [mPayments, mExpenses] = await Promise.all([
+          Payment.find({ paidAt: { $gte: mStart, $lte: mEnd } }).lean(),
+          Expense.find({ expenseDate: { $gte: mStart, $lte: mEnd } }).lean(),
+        ]);
 
-      const mExpenses = await Expense.find({ expenseDate: { $gte: mStart, $lte: mEnd } });
-      const mExp = mExpenses.reduce((sum, e) => sum + (e.amount || 0), 0);
+        let mRev = mPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
+        if (mRev === 0) {
+          const mOrders = await Order.find({ orderDate: { $gte: mStart, $lte: mEnd } }).lean();
+          mRev = mOrders.reduce(
+            (sum, o: any) => sum + (o.paymentStatus === 'Paid' ? (o.totalAmount || 0) : (o.advancePaid || 0)),
+            0
+          );
+        }
 
-      const mNet = mRev - mExp;
-      monthlyTrends.push({
-        month: monthLabel,
-        revenue: mRev,
-        expenses: mExp,
-        netProfit: mNet,
-      });
-    }
+        const mExp = mExpenses.reduce((sum, e) => sum + (e.amount || 0), 0);
+        const mNet = mRev - mExp;
+
+        return {
+          month: monthLabel,
+          revenue: mRev,
+          expenses: mExp,
+          netProfit: mNet,
+        };
+      })
+    );
 
     res.json({
       success: true,

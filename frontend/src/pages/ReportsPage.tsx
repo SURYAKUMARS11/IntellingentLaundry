@@ -27,6 +27,7 @@ import {
   Receipt,
   ArrowUpRight,
   ArrowDownRight,
+  RefreshCw,
 } from 'lucide-react';
 
 export const ReportsPage: React.FC = () => {
@@ -60,13 +61,18 @@ export const ReportsPage: React.FC = () => {
   const [setting, setSetting] = useState<Setting | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(true);
 
+  useEffect(() => {
+    fetchSettings().then((res) => {
+      if (res?.success) setSetting(res.setting);
+    }).catch(() => {});
+  }, []);
+
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const [revRes, pnlRes, setRes] = await Promise.all([
+      const [revRes, pnlRes] = await Promise.all([
         fetchRevenueReport(period),
         fetchProfitLossReport({ preset: periodPreset }),
-        fetchSettings(),
       ]);
 
       if (revRes.success) {
@@ -78,8 +84,6 @@ export const ReportsPage: React.FC = () => {
       if (pnlRes.success) {
         setPnlData(pnlRes);
       }
-
-      if (setRes.success) setSetting(setRes.setting);
     } catch (err) {
       console.error('Failed to load reports', err);
     } finally {
@@ -215,69 +219,105 @@ export const ReportsPage: React.FC = () => {
           {/* 4 Key P&L Summary Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* 1. Gross Revenue */}
-            <div className="glass-card p-5 space-y-2 border-l-4 border-l-emerald-500">
+            <div className="glass-card p-5 space-y-2 border-l-4 border-l-emerald-500 relative overflow-hidden">
               <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
                 <span className="text-xs font-bold uppercase tracking-wider">Gross Income</span>
                 <div className="w-8 h-8 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
                   <ArrowUpRight className="w-4 h-4" />
                 </div>
               </div>
-              <p className="text-2xl font-black text-slate-900 dark:text-white">
-                {currencySymbol}{summary.grossRevenue.toLocaleString()}
-              </p>
-              <div className="flex items-center gap-2 text-[11px] font-semibold text-slate-500">
-                <span>Cash: {currencySymbol}{summary.cashIncome}</span>
-                <span>•</span>
-                <span>UPI: {currencySymbol}{summary.upiIncome}</span>
-              </div>
+              {isLoading ? (
+                <div className="flex items-center gap-2 py-2">
+                  <RefreshCw className="w-4 h-4 animate-spin text-emerald-500" />
+                  <span className="text-xs font-semibold text-slate-400">Loading...</span>
+                </div>
+              ) : (
+                <>
+                  <p className="text-2xl font-black text-slate-900 dark:text-white">
+                    {currencySymbol}{summary.grossRevenue.toLocaleString()}
+                  </p>
+                  <div className="flex items-center gap-2 text-[11px] font-semibold text-slate-500">
+                    <span>Cash: {currencySymbol}{summary.cashIncome}</span>
+                    <span>•</span>
+                    <span>UPI: {currencySymbol}{summary.upiIncome}</span>
+                  </div>
+                </>
+              )}
             </div>
 
             {/* 2. Total Operating Expenses */}
-            <div className="glass-card p-5 space-y-2 border-l-4 border-l-rose-500">
+            <div className="glass-card p-5 space-y-2 border-l-4 border-l-rose-500 relative overflow-hidden">
               <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
                 <span className="text-xs font-bold uppercase tracking-wider">Operating Expenses</span>
                 <div className="w-8 h-8 rounded-xl bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center">
                   <ArrowDownRight className="w-4 h-4" />
                 </div>
               </div>
-              <p className="text-2xl font-black text-rose-600 dark:text-rose-400">
-                {currencySymbol}{summary.totalExpenses.toLocaleString()}
-              </p>
-              <div className="flex items-center gap-2 text-[11px] font-semibold text-slate-500">
-                <span>Utility & Supplies & Wages</span>
-              </div>
+              {isLoading ? (
+                <div className="flex items-center gap-2 py-2">
+                  <RefreshCw className="w-4 h-4 animate-spin text-rose-500" />
+                  <span className="text-xs font-semibold text-slate-400">Loading...</span>
+                </div>
+              ) : (
+                <>
+                  <p className="text-2xl font-black text-rose-600 dark:text-rose-400">
+                    {currencySymbol}{summary.totalExpenses.toLocaleString()}
+                  </p>
+                  <div className="flex items-center gap-2 text-[11px] font-semibold text-slate-500">
+                    <span>Utility & Supplies & Wages</span>
+                  </div>
+                </>
+              )}
             </div>
 
             {/* 3. Net Profit / Loss */}
-            <div className={`glass-card p-5 space-y-2 border-l-4 ${summary.isProfit ? 'border-l-emerald-500 bg-emerald-50/20 dark:bg-emerald-950/20' : 'border-l-rose-500 bg-rose-50/20'}`}>
+            <div className={`glass-card p-5 space-y-2 border-l-4 relative overflow-hidden ${summary.isProfit ? 'border-l-emerald-500 bg-emerald-50/20 dark:bg-emerald-950/20' : 'border-l-rose-500 bg-rose-50/20'}`}>
               <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
                 <span className="text-xs font-bold uppercase tracking-wider">Net Profit / Loss</span>
                 <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${summary.isProfit ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'}`}>
                   {summary.isProfit ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
                 </div>
               </div>
-              <p className={`text-2xl font-black ${summary.isProfit ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-600'}`}>
-                {summary.isProfit ? '+' : ''}{currencySymbol}{summary.netProfit.toLocaleString()}
-              </p>
-              <div className="text-[11px] font-bold text-slate-600 dark:text-slate-400">
-                {summary.isProfit ? '🟢 Net Business Profit' : '🔴 Net Loss Recorded'}
-              </div>
+              {isLoading ? (
+                <div className="flex items-center gap-2 py-2">
+                  <RefreshCw className="w-4 h-4 animate-spin text-brand-500" />
+                  <span className="text-xs font-semibold text-slate-400">Loading...</span>
+                </div>
+              ) : (
+                <>
+                  <p className={`text-2xl font-black ${summary.isProfit ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-600'}`}>
+                    {summary.isProfit ? '+' : ''}{currencySymbol}{summary.netProfit.toLocaleString()}
+                  </p>
+                  <div className="text-[11px] font-bold text-slate-600 dark:text-slate-400">
+                    {summary.isProfit ? '🟢 Net Business Profit' : '🔴 Net Loss Recorded'}
+                  </div>
+                </>
+              )}
             </div>
 
             {/* 4. Profit Margin % */}
-            <div className="glass-card p-5 space-y-2 border-l-4 border-l-brand-500">
+            <div className="glass-card p-5 space-y-2 border-l-4 border-l-brand-500 relative overflow-hidden">
               <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
                 <span className="text-xs font-bold uppercase tracking-wider">Net Margin (%)</span>
                 <div className="w-8 h-8 rounded-xl bg-brand-100 dark:bg-brand-950/60 text-brand-600 dark:text-brand-400 flex items-center justify-center">
                   <Percent className="w-4 h-4" />
                 </div>
               </div>
-              <p className="text-2xl font-black text-brand-600 dark:text-brand-400">
-                {summary.profitMargin}%
-              </p>
-              <div className="text-[11px] font-semibold text-slate-500">
-                Net Profit Rate per ₹100 Revenue
-              </div>
+              {isLoading ? (
+                <div className="flex items-center gap-2 py-2">
+                  <RefreshCw className="w-4 h-4 animate-spin text-brand-500" />
+                  <span className="text-xs font-semibold text-slate-400">Loading...</span>
+                </div>
+              ) : (
+                <>
+                  <p className="text-2xl font-black text-brand-600 dark:text-brand-400">
+                    {summary.profitMargin}%
+                  </p>
+                  <div className="text-[11px] font-semibold text-slate-500">
+                    Net Profit Rate per ₹100 Revenue
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
