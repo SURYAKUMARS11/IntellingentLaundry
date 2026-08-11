@@ -197,12 +197,13 @@ const run = async () => {
 
     const remBal = Math.max(0, totalPrice - paidAmount);
 
-    // Order status mapping: strictly match 77 overdue orders
+    // Order status mapping: match overdue.txt or pending status from new orders
     let orderStatus: any = 'Delivered';
-    if (isOverdue) {
+    const rawOrdStatus = (oldOrd.status || '').toLowerCase();
+    if (isOverdue || rawOrdStatus === 'pending' || rawOrdStatus === 'ready_to_delivery') {
       orderStatus = 'Received'; // Active processing order
       markedOverdueCount++;
-    } else if ((oldOrd.status || '').toLowerCase() === 'cancelled') {
+    } else if (rawOrdStatus === 'cancelled') {
       orderStatus = 'Cancelled';
     } else {
       orderStatus = 'Delivered';
