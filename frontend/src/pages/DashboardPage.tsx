@@ -212,7 +212,7 @@ export const DashboardPage: React.FC = () => {
   const paginatedList = activeList.slice((dashPage - 1) * dashLimit, dashPage * dashLimit);
 
   return (
-    <div className="space-y-4 sm:space-y-6 pb-12">
+    <div className="flex flex-col gap-4 sm:gap-6 pb-12">
       {/* Header Banner & Quick Action Buttons (Hidden on Desktop, Visible on Mobile) */}
       <div className="md:hidden flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 bg-gradient-to-r from-brand-600 to-cyan-600 rounded-2xl sm:rounded-3xl p-3.5 sm:p-6 text-white shadow-lg shadow-brand-600/20">
         <div>
@@ -248,11 +248,11 @@ export const DashboardPage: React.FC = () => {
         </div>
       </div>
 
-      {/* COLLAPSIBLE DASHBOARD FILTERS ACCORDION */}
+      {/* COLLAPSIBLE DASHBOARD FILTERS ACCORDION (Sits right at top on Desktop) */}
       <div className="glass-card p-3 sm:p-5 border-l-4 border-l-brand-600 space-y-2.5">
         {/* Header Summary & Toggle Bar */}
         <div className="flex flex-row justify-between items-center gap-2">
-          <div className="flex items-center gap-1.5 overflow-hidden">
+          <div className="flex items-center gap-2 overflow-hidden">
             <Filter className="w-4 h-4 text-brand-600 dark:text-brand-400 shrink-0" />
             <h2 className="font-extrabold text-xs sm:text-sm text-slate-900 dark:text-white truncate">
               Filters
@@ -262,7 +262,32 @@ export const DashboardPage: React.FC = () => {
             </span>
           </div>
 
-          <div className="flex items-center gap-1.5 shrink-0">
+          <div className="flex items-center gap-2 shrink-0">
+            {/* Quick Action Buttons for Desktop View */}
+            <div className="hidden md:flex items-center gap-2 mr-2">
+              <button
+                onClick={() => navigate('/orders/new')}
+                className="px-3.5 py-1.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-extrabold shadow-xs flex items-center justify-center gap-1.5 active:scale-95 transition-all"
+              >
+                <PlusCircle className="w-4 h-4" />
+                <span>New Order</span>
+              </button>
+              <button
+                onClick={() => navigate('/customers')}
+                className="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold flex items-center justify-center gap-1.5 transition-all"
+              >
+                <UserPlus className="w-4 h-4 text-brand-600" />
+                <span>Customer</span>
+              </button>
+              <button
+                onClick={loadData}
+                title="Refresh Dashboard"
+                className="p-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-all"
+              >
+                <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+              </button>
+            </div>
+
             {(preset || paymentStatus || orderStatus || dateFrom || dateTo) && (
               <button
                 onClick={handleClearFilters}
