@@ -24,7 +24,7 @@ const SettingSchema: Schema = new Schema(
   {
     shopName: { type: String, required: true, default: 'IntelligentLaundry' },
     shopTagline: { type: String, default: 'Smart & Premium Laundry Management' },
-    logoUrl: { type: String, default: '/Intelligent Laundry.jpg.jpeg' },
+    logoUrl: { type: String, default: '/logo.jpg' },
     phone: { type: String, required: true, default: '+91 98765 43210' },
     email: { type: String, required: true, default: 'contact@intelligentlaundry.com' },
     address: { type: String, required: true, default: '123 Sparkle Avenue, Suite 4B, Commercial Hub' },

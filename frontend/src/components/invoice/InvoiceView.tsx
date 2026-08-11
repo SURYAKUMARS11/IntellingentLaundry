@@ -192,7 +192,11 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ order, setting, onClos
             <div className="w-full sm:w-auto">
               <div className="flex items-center gap-3 text-slate-900 font-black text-xl sm:text-2xl tracking-tight">
                 <img
-                  src={setting?.logoUrl || "/Intelligent Laundry.jpg.jpeg"}
+                  src={
+                    setting?.logoUrl && !setting.logoUrl.includes('unsplash.com')
+                      ? setting.logoUrl
+                      : "/logo.jpg"
+                  }
                   alt="IntelligentLaundry Logo"
                   className="h-10 sm:h-12 w-auto object-contain rounded-xl border border-slate-200 shadow-xs"
                 />
