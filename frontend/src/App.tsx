@@ -19,6 +19,7 @@ import { GarmentCategoriesPage } from './pages/GarmentCategoriesPage';
 import { ReportsPage } from './pages/ReportsPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { PublicReceiptPage } from './pages/PublicReceiptPage';
+import { LandingWebsitePage } from './pages/LandingWebsitePage';
 import { AccountsPage } from './pages/AccountsPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 
@@ -170,7 +171,8 @@ export const AppContent: React.FC = () => {
         }
       />
 
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/" element={<LandingWebsitePage />} />
+      <Route path="/website" element={<LandingWebsitePage />} />
       <Route
         path="*"
         element={
