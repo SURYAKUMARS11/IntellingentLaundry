@@ -130,5 +130,10 @@ const OrderSchema: Schema = new Schema(
 );
 
 OrderSchema.index({ orderNumber: 'text', 'customerSnapshot.name': 'text', 'customerSnapshot.mobile': 'text' });
+OrderSchema.index({ orderDate: -1, createdAt: -1 });
+OrderSchema.index({ status: 1 });
+OrderSchema.index({ paymentStatus: 1 });
+OrderSchema.index({ customer: 1 });
+OrderSchema.index({ expectedDeliveryDate: 1 });
 
 export default mongoose.model<IOrder>('Order', OrderSchema);

@@ -21,8 +21,15 @@ export const getAuthToken = () => localStorage.getItem('auth_token');
 export const setAuthToken = (token: string) => localStorage.setItem('auth_token', token);
 export const removeAuthToken = () => localStorage.removeItem('auth_token');
 
-// Utility API fetch wrapper with auto-retry for cold starts
-const fetchApi = async (endpoint: string, options: RequestInit = {}, retries = 2): Promise<any> => {
+// In-Memory API Response Cache for instant 0ms loads
+const apiMemoryCache = new Map<string, { data: any; timestamp: number }>();
+const CACHE_TTL_MS = 60 * 1000; // 60 seconds
+
+export const clearApiCache = () => {
+  apiMemoryCache.clear();
+};
+
+const fetchApiNetwork = async (endpoint: string, options: RequestInit = {}, retries = 1): Promise<any> => {
   const token = getAuthToken();
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
@@ -45,11 +52,41 @@ const fetchApi = async (endpoint: string, options: RequestInit = {}, retries = 2
     return data;
   } catch (err: any) {
     if (retries > 0) {
-      await new Promise((res) => setTimeout(res, 2500));
-      return fetchApi(endpoint, options, retries - 1);
+      await new Promise((res) => setTimeout(res, 500));
+      return fetchApiNetwork(endpoint, options, retries - 1);
     }
     throw err;
   }
+};
+
+// Utility API fetch wrapper with instant memory cache & auto-retry
+const fetchApi = async (endpoint: string, options: RequestInit = {}, retries = 1): Promise<any> => {
+  const method = (options.method || 'GET').toUpperCase();
+
+  // Invalidate cache on mutations
+  if (method !== 'GET') {
+    clearApiCache();
+  }
+
+  // Serve GET requests instantly from cache if fresh
+  if (method === 'GET') {
+    const cached = apiMemoryCache.get(endpoint);
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
+      // Revalidate silently in background
+      fetchApiNetwork(endpoint, options, 0)
+        .then((freshData) => {
+          apiMemoryCache.set(endpoint, { data: freshData, timestamp: Date.now() });
+        })
+        .catch(() => {});
+      return cached.data;
+    }
+  }
+
+  const data = await fetchApiNetwork(endpoint, options, retries);
+  if (method === 'GET') {
+    apiMemoryCache.set(endpoint, { data, timestamp: Date.now() });
+  }
+  return data;
 };
 
 // --- Auth API ---

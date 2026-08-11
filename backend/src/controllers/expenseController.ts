@@ -184,9 +184,9 @@ export const getAccountsSummary = async (req: Request, res: Response) => {
       expenseQuery.paymentMethod = paymentMethod;
     }
 
-    const payments = await Payment.find(paymentQuery).sort({ paidAt: -1 });
-    const orders = await Order.find(orderQuery).sort({ createdAt: -1 });
-    const expenses = await Expense.find(expenseQuery).sort({ expenseDate: -1 });
+    const payments = await Payment.find(paymentQuery).sort({ paidAt: -1 }).lean();
+    const orders = await Order.find(orderQuery).sort({ createdAt: -1 }).lean();
+    const expenses = await Expense.find(expenseQuery).sort({ expenseDate: -1 }).lean();
 
     const incomeMap = new Map<string, any>();
 

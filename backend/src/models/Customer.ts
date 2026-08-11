@@ -26,5 +26,7 @@ const CustomerSchema: Schema = new Schema(
 );
 
 CustomerSchema.index({ name: 'text', mobile: 'text' });
+CustomerSchema.index({ createdAt: -1, _id: -1 });
+CustomerSchema.index({ name: 1 });
 
 export default mongoose.model<ICustomer>('Customer', CustomerSchema);

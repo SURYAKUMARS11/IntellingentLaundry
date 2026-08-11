@@ -1,5 +1,6 @@
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
+import compression from 'compression';
 import dotenv from 'dotenv';
 import { connectDB } from './config/db';
 import { seedDatabase } from './seed';
@@ -25,6 +26,7 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middlewares
+app.use(compression());
 app.use(cors({
   origin: '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],

@@ -88,7 +88,7 @@ export const getDashboardStats = async (req: Request, res: Response) => {
 
     // 1. Total Orders List & Count
     const totalOrdersCount = await Order.countDocuments(orderQuery);
-    const ordersList = await Order.find(orderQuery).sort({ orderDate: -1, createdAt: -1 });
+    const ordersList = await Order.find(orderQuery).sort({ orderDate: -1, createdAt: -1 }).lean();
 
     // 2. Payments Received List & Total
     let paymentMatch: any = {};
@@ -97,7 +97,7 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       if (startDate) paymentMatch.paidAt.$gte = startDate;
       if (endDate) paymentMatch.paidAt.$lte = endDate;
     }
-    let paymentsList = await Payment.find(paymentMatch).sort({ paidAt: -1 });
+    let paymentsList = await Payment.find(paymentMatch).sort({ paidAt: -1 }).lean();
     const periodPayments = await Payment.aggregate([
       { $match: paymentMatch },
       { $group: { _id: null, total: { $sum: '$amount' } } },
@@ -111,7 +111,7 @@ export const getDashboardStats = async (req: Request, res: Response) => {
     };
 
     const activeOrdersCount = await Order.countDocuments(activeQuery);
-    const activeOrdersList = await Order.find(activeQuery).sort({ orderDate: -1, createdAt: -1 });
+    const activeOrdersList = await Order.find(activeQuery).sort({ orderDate: -1, createdAt: -1 }).lean();
 
     // 4. New Customers List & Count
     let customerQuery: any = {};
@@ -121,7 +121,7 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       if (endDate) customerQuery.createdAt.$lte = endDate;
     }
     const newCustomersCount = await Customer.countDocuments(customerQuery);
-    const newCustomersList = await Customer.find(customerQuery).sort({ createdAt: -1, _id: -1 });
+    const newCustomersList = await Customer.find(customerQuery).sort({ createdAt: -1, _id: -1 }).lean();
 
     // 5. Overdue Orders List & Count (Respects active date filter if selected)
     const overdueQuery: any = {
@@ -130,7 +130,7 @@ export const getDashboardStats = async (req: Request, res: Response) => {
     };
 
     const overdueOrdersCount = await Order.countDocuments(overdueQuery);
-    const overdueOrdersList = await Order.find(overdueQuery).sort({ expectedDeliveryDate: 1 });
+    const overdueOrdersList = await Order.find(overdueQuery).sort({ expectedDeliveryDate: 1 }).lean();
 
     // Calculate revenue from payments & order totals
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);

@@ -25,21 +25,23 @@ export const getCustomers = async (req: Request, res: Response) => {
     const rawCustomers = await Customer.find(query)
       .sort({ createdAt: -1, _id: -1 })
       .skip(skip)
-      .limit(limit);
+      .limit(limit)
+      .lean();
 
-    const allOrders = await Order.find();
+    const allOrders = await Order.find({}, 'customer customerSnapshot.mobile totalAmount').lean();
 
     // Dynamically calculate totalOrders & totalSpent for every customer
-    const customers = rawCustomers.map((c) => {
-      const obj = c.toObject();
+    const customers = rawCustomers.map((c: any) => {
       const custOrders = allOrders.filter(
-        (o) =>
+        (o: any) =>
           (o.customer && String(o.customer) === String(c._id)) ||
           (o.customerSnapshot && o.customerSnapshot.mobile === c.mobile)
       );
-      obj.totalOrders = custOrders.length;
-      obj.totalSpent = custOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
-      return obj;
+      return {
+        ...c,
+        totalOrders: custOrders.length,
+        totalSpent: custOrders.reduce((sum: number, o: any) => sum + (o.totalAmount || 0), 0),
+      };
     });
 
     res.json({

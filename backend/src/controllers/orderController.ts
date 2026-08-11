@@ -59,7 +59,8 @@ export const getOrders = async (req: Request, res: Response) => {
       .populate('customer', 'name mobile address email')
       .sort({ orderDate: -1, createdAt: -1 })
       .skip(skip)
-      .limit(limitNum);
+      .limit(limitNum)
+      .lean();
 
     res.json({
       success: true,
