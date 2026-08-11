@@ -1484,3 +1484,27 @@ export const importOldAppOrdersJsonApi = async (jsonPayload: any) => {
     body: JSON.stringify(jsonPayload),
   });
 };
+
+// ==========================================
+// BACKGROUND DATA PRE-WARMING ENGINE
+// ==========================================
+let isPrewarmingDone = false;
+
+export const prefetchAllAppData = async () => {
+  if (isPrewarmingDone) return;
+  isPrewarmingDone = true;
+
+  try {
+    // Non-blocking background pre-fetch of all main section data into 0ms memory cache
+    await Promise.all([
+      fetchOrders({ page: 1, limit: 10 }).catch(() => {}),
+      fetchCustomers({ page: 1, limit: 10 }).catch(() => {}),
+      fetchAccountsSummary({}).catch(() => {}),
+      fetchExpenses({ page: 1, limit: 10 }).catch(() => {}),
+      fetchProfitLossReport({ preset: 'current_month' }).catch(() => {}),
+      fetchRevenueReport('30days').catch(() => {}),
+    ]);
+  } catch (err) {
+    console.error('Background pre-warming error:', err);
+  }
+};

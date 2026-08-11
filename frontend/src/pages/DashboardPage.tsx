@@ -5,6 +5,7 @@ import {
   fetchSettings,
   updateOrderStatusApi,
   recordOrderPaymentApi,
+  prefetchAllAppData,
 } from '../services/api';
 import { DashboardStats, Order, OrderStatus, Setting, Customer, Payment } from '../types';
 import { StatusBadge } from '../components/ui/Badge';
@@ -110,6 +111,9 @@ export const DashboardPage: React.FC = () => {
       console.error('Error loading dashboard data:', err);
     } finally {
       setIsLoading(false);
+      setTimeout(() => {
+        prefetchAllAppData();
+      }, 50);
     }
   };
 
