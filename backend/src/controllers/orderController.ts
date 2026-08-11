@@ -9,8 +9,31 @@ import { sendAutomatedWhatsAppMessage } from '../services/whatsappGateway';
 
 export const getPublicOrderByNumber = async (req: Request, res: Response) => {
   try {
-    const { orderNumber } = req.params;
-    const order = await Order.findOne({ orderNumber });
+    let orderNum = (req.query.r as string) || (req.query.orderNumber as string) || req.params.orderNumber || (req.params as any)[0];
+
+    if (!orderNum && req.url) {
+      orderNum = req.url.replace(/^\/(public-receipt|public)\/?/, '').split('?')[0];
+    }
+
+    if (orderNum) {
+      orderNum = decodeURIComponent(orderNum).replace(/^\/+/, '').trim();
+    }
+
+    if (!orderNum) {
+      return res.status(400).json({ success: false, message: 'Order number is required' });
+    }
+
+    let order = await Order.findOne({ orderNumber: orderNum });
+    if (!order) {
+      order = await Order.findOne({ orderNumber: new RegExp('^' + orderNum.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', 'i') });
+    }
+    if (!order) {
+      const digits = orderNum.replace(/\D/g, '');
+      if (digits) {
+        order = await Order.findOne({ orderNumber: new RegExp(digits + '(/|$)') });
+      }
+    }
+
     if (!order) {
       return res.status(404).json({ success: false, message: 'Receipt not found' });
     }

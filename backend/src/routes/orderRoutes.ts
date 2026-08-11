@@ -13,8 +13,10 @@ import { authMiddleware } from '../middleware/auth';
 
 const router = Router();
 
-// Public route for customer digital receipt access
+// Public routes for customer digital receipt access
+router.get('/public-receipt', getPublicOrderByNumber);
 router.get('/public/:orderNumber', getPublicOrderByNumber);
+router.get('/public/*', getPublicOrderByNumber);
 
 // Protected routes (Admin Auth required)
 router.use(authMiddleware);

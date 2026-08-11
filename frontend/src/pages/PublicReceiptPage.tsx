@@ -9,7 +9,12 @@ export const PublicReceiptPage: React.FC = () => {
   const { orderNumber: paramOrderNumber } = useParams<{ orderNumber: string }>();
   const searchParams = new URLSearchParams(window.location.search);
   const queryOrderNumber = searchParams.get('receipt') || searchParams.get('order') || searchParams.get('r');
-  const orderNumber = paramOrderNumber || queryOrderNumber;
+
+  let pathOrder = window.location.pathname.replace(/^\/receipt\/?/, '');
+  if (pathOrder === 'receipt') pathOrder = '';
+  if (pathOrder) pathOrder = decodeURIComponent(pathOrder);
+
+  const orderNumber = queryOrderNumber || pathOrder || paramOrderNumber;
 
   const [order, setOrder] = useState<Order | null>(null);
   const [setting, setSetting] = useState<Setting | undefined>(undefined);
