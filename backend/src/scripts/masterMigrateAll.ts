@@ -67,6 +67,14 @@ const run = async () => {
     "338"
   ]);
 
+  const preAugust32Set = new Set([
+    "334", "328", "321", "302", "298", "293", "280", "278", "276", "269", "268", "264",
+    "261", "258", "257", "256", "252", "247", "244", "243", "236", "229", "225", "220",
+    "210", "209", "208", "184", "165", "164", "160", "91"
+  ]);
+
+  const allPending81Set = new Set([...august49Set, ...preAugust32Set]);
+
   // STEP 1: IMPORT ALL CUSTOMERS FROM CSV
   const csvPath = path.join(__dirname, '../../customers_export (1).csv');
   if (!fs.existsSync(csvPath)) {
@@ -205,16 +213,18 @@ const run = async () => {
 
     const remBal = Math.max(0, totalPrice - paidAmount);
 
-    // Order status mapping: match overdue.txt or august49Set
+    // Order status mapping: strictly match exact 81 all-time pending orders list
     let orderStatus: any = 'Delivered';
     const oldIdStr = String(oldOrd.id || oldOrd.order_no || '');
-    if (isOverdue || august49Set.has(oldIdStr)) {
+    if (allPending81Set.has(oldIdStr)) {
       orderStatus = 'Received'; // Active processing order
       markedOverdueCount++;
     } else if ((oldOrd.status || '').toLowerCase() === 'cancelled') {
       orderStatus = 'Cancelled';
     } else {
       orderStatus = 'Delivered';
+      payStatus = 'Paid'; // All other orders completed & payment received
+      paidAmount = totalPrice;
     }
 
     // Find linked Customer
