@@ -213,8 +213,8 @@ export const DashboardPage: React.FC = () => {
 
   return (
     <div className="space-y-4 sm:space-y-6 pb-12">
-      {/* Header Banner & Quick Action Buttons (Optimized for Mobile) */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 bg-gradient-to-r from-brand-600 to-cyan-600 rounded-2xl sm:rounded-3xl p-3.5 sm:p-6 text-white shadow-lg shadow-brand-600/20">
+      {/* Header Banner & Quick Action Buttons (Hidden on Desktop, Visible on Mobile) */}
+      <div className="md:hidden flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 bg-gradient-to-r from-brand-600 to-cyan-600 rounded-2xl sm:rounded-3xl p-3.5 sm:p-6 text-white shadow-lg shadow-brand-600/20">
         <div>
           <h1 className="text-sm sm:text-2xl font-black tracking-tight">
             Dashboard Overview
