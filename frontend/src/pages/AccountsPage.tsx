@@ -38,10 +38,14 @@ import {
   Tag,
 } from 'lucide-react';
 
+import { useToast } from '../context/ToastContext';
+
 export const AccountsPage: React.FC = () => {
+  const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState<'orders' | 'shop'>('orders');
   const [setting, setSetting] = useState<Setting | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSavingExpense, setIsSavingExpense] = useState(false);
   const [showFilterPanel, setShowFilterPanel] = useState(false);
   const [showExpFilterPanel, setShowExpFilterPanel] = useState(false);
 
@@ -164,12 +168,12 @@ export const AccountsPage: React.FC = () => {
     const categoryName = expFormData.category.trim();
 
     if (!categoryName) {
-      alert('Please enter an expense category');
+      showToast('Please enter an expense category', 'error');
       return;
     }
 
     if (!expFormData.amount || Number(expFormData.amount) <= 0) {
-      alert('Please enter a valid expense amount');
+      showToast('Please enter a valid expense amount', 'error');
       return;
     }
 
@@ -179,16 +183,21 @@ export const AccountsPage: React.FC = () => {
       description: categoryName,
     };
 
+    setIsSavingExpense(true);
     try {
       if (editingExpense) {
         await updateExpenseApi(editingExpense._id, payload);
+        showToast('✅ Expense record updated successfully!', 'success');
       } else {
         await createExpenseApi(payload);
+        showToast('✅ Expense logged successfully!', 'success');
       }
       setShowExpModal(false);
       loadData();
     } catch (err: any) {
-      alert(err.message || 'Failed to save expense record');
+      showToast(err.message || 'Failed to save expense record', 'error');
+    } finally {
+      setIsSavingExpense(false);
     }
   };
 
@@ -199,8 +208,9 @@ export const AccountsPage: React.FC = () => {
     try {
       await deleteExpenseApi(deleteExpenseId);
       loadData();
+      showToast('✅ Expense record deleted successfully!', 'success');
     } catch (err: any) {
-      console.error('Could not delete expense', err);
+      showToast('Could not delete expense', 'error');
     } finally {
       setDeleteExpenseId(null);
     }
@@ -929,9 +939,17 @@ export const AccountsPage: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-2 rounded-xl bg-brand-600 text-white text-xs font-bold shadow-md"
+                  disabled={isSavingExpense}
+                  className="flex-1 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold shadow-md flex items-center justify-center gap-1.5 disabled:opacity-50"
                 >
-                  Save Expense
+                  {isSavingExpense ? (
+                    <>
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                      <span>Saving Expense...</span>
+                    </>
+                  ) : (
+                    <span>Save Expense</span>
+                  )}
                 </button>
               </div>
             </form>

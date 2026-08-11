@@ -18,6 +18,7 @@ import {
   KgServiceRate,
   getItemPriceForService,
 } from '../data/posCatalogData';
+import { useToast } from '../context/ToastContext';
 import {
   User,
   Search,
@@ -36,12 +37,14 @@ import {
   Check,
   Zap,
   AlertCircle,
+  RefreshCw,
 } from 'lucide-react';
 
 export const CreateOrderPage: React.FC = () => {
+  const { showToast } = useToast();
   const navigate = useNavigate();
 
-  // Reference data
+  // Master State
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [setting, setSetting] = useState<Setting | undefined>(undefined);
 
@@ -50,6 +53,7 @@ export const CreateOrderPage: React.FC = () => {
   const [customerSearch, setCustomerSearch] = useState<string>('');
   const [isCustDropdownOpen, setIsCustDropdownOpen] = useState<boolean>(false);
   const [showNewCustModal, setShowNewCustModal] = useState(false);
+  const [isCreatingCustomer, setIsCreatingCustomer] = useState(false);
 
   // New inline customer form
   const [newCustName, setNewCustName] = useState('');
@@ -237,6 +241,7 @@ export const CreateOrderPage: React.FC = () => {
   const handleCreateInlineCustomer = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCustName || !newCustMobile) return;
+    setIsCreatingCustomer(true);
     try {
       const res = await createCustomerApi({
         name: newCustName,
@@ -252,9 +257,14 @@ export const CreateOrderPage: React.FC = () => {
         setNewCustMobile('');
         setNewCustAddress('');
         setNewCustEmail('');
+        showToast(`✅ Customer "${res.customer.name}" created & selected!`, 'success');
+      } else {
+        showToast(res.message || 'Failed to create customer', 'error');
       }
-    } catch (err) {
-      console.error('Failed to create customer', err);
+    } catch (err: any) {
+      showToast(err.message || 'Failed to create customer', 'error');
+    } finally {
+      setIsCreatingCustomer(false);
     }
   };
 
@@ -273,15 +283,21 @@ export const CreateOrderPage: React.FC = () => {
     setPosError('');
 
     if (!selectedCustomerId) {
-      setPosError('Please select a customer or add a new customer before creating order.');
+      const msg = 'Please select a customer or add a new customer before creating order.';
+      setPosError(msg);
+      showToast(msg, 'error');
       return;
     }
     if (orderItems.length === 0) {
-      setPosError('Please add at least one garment or service item to the order.');
+      const msg = 'Please add at least one garment or service item to the order.';
+      setPosError(msg);
+      showToast(msg, 'error');
       return;
     }
     if (!expectedDeliveryDate) {
-      setPosError('Please select an Expected Delivery Date for the order.');
+      const msg = 'Please select an Expected Delivery Date for the order.';
+      setPosError(msg);
+      showToast(msg, 'error');
       return;
     }
 
@@ -316,9 +332,16 @@ export const CreateOrderPage: React.FC = () => {
 
       if (res.success && res.order) {
         setCreatedOrder(res.order);
+        showToast(`✅ Order #${res.order.orderNumber} created successfully!`, 'success');
+      } else {
+        const msg = res.message || 'Failed to create order';
+        setPosError(msg);
+        showToast(msg, 'error');
       }
     } catch (err: any) {
-      setPosError(err.message || 'Failed to create order');
+      const msg = err.message || 'Failed to create order';
+      setPosError(msg);
+      showToast(msg, 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -698,8 +721,17 @@ export const CreateOrderPage: React.FC = () => {
                 onClick={handleSubmitOrder}
                 className="w-full mt-4 py-3.5 rounded-2xl bg-gradient-to-r from-brand-600 to-cyan-600 hover:from-brand-700 hover:to-cyan-700 text-white font-black text-sm shadow-lg shadow-brand-600/30 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 transition-all flex items-center justify-center gap-2"
               >
-                <CheckCircle className="w-5 h-5" />
-                <span>Create Order & Open Invoice</span>
+                {isSubmitting ? (
+                  <>
+                    <RefreshCw className="w-5 h-5 animate-spin" />
+                    <span>Creating Order & Opening Invoice...</span>
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="w-5 h-5" />
+                    <span>Create Order & Open Invoice</span>
+                  </>
+                )}
               </button>
             </div>
           </div>
@@ -1094,9 +1126,17 @@ export const CreateOrderPage: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-2 rounded-xl bg-brand-600 text-white text-xs font-bold shadow-md"
+                  disabled={isCreatingCustomer}
+                  className="flex-1 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold shadow-md flex items-center justify-center gap-1.5 disabled:opacity-50"
                 >
-                  Save & Select
+                  {isCreatingCustomer ? (
+                    <>
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                      <span>Creating...</span>
+                    </>
+                  ) : (
+                    <span>Save & Select</span>
+                  )}
                 </button>
               </div>
             </form>

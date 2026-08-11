@@ -11,6 +11,7 @@ import {
 import { Customer, Order, Setting } from '../types';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
 import { StatusBadge } from '../components/ui/Badge';
+import { useToast } from '../context/ToastContext';
 import {
   Users,
   Search,
@@ -29,10 +30,12 @@ import {
 } from 'lucide-react';
 
 export const CustomersPage: React.FC = () => {
+  const { showToast } = useToast();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [search, setSearch] = useState('');
   const [setting, setSetting] = useState<Setting | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Pagination & Limit States
   const [page, setPage] = useState<number>(1);
@@ -111,22 +114,31 @@ export const CustomersPage: React.FC = () => {
 
   const handleSaveCustomer = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSaving(true);
     try {
       if (editingCustomer) {
         const res = await updateCustomerApi(editingCustomer._id, formData);
         if (res.success) {
           setShowModal(false);
           loadCustomers();
+          showToast(`✅ Customer "${formData.name}" updated successfully!`, 'success');
+        } else {
+          showToast(res.message || 'Failed to update customer', 'error');
         }
       } else {
         const res = await createCustomerApi(formData);
         if (res.success) {
           setShowModal(false);
           loadCustomers();
+          showToast(`✅ Customer "${formData.name}" created successfully!`, 'success');
+        } else {
+          showToast(res.message || 'Failed to create customer', 'error');
         }
       }
     } catch (err: any) {
-      console.error('Failed to save customer', err);
+      showToast(err.message || 'Failed to save customer', 'error');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -140,8 +152,9 @@ export const CustomersPage: React.FC = () => {
     try {
       await deleteCustomerApi(targetId);
       loadCustomers();
+      showToast('✅ Customer profile deleted successfully!', 'success');
     } catch (err: any) {
-      console.error('Could not delete customer', err);
+      showToast('Could not delete customer', 'error');
       loadCustomers();
     }
   };
@@ -494,9 +507,17 @@ export const CustomersPage: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-2 rounded-xl bg-brand-600 text-white text-xs font-semibold shadow-md"
+                  disabled={isSaving}
+                  className="flex-1 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold shadow-md flex items-center justify-center gap-1.5 disabled:opacity-50"
                 >
-                  Save Customer
+                  {isSaving ? (
+                    <>
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                      <span>Saving...</span>
+                    </>
+                  ) : (
+                    <span>Save Customer</span>
+                  )}
                 </button>
               </div>
             </form>

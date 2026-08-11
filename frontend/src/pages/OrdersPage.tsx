@@ -29,7 +29,10 @@ import {
   ChevronRight,
 } from 'lucide-react';
 
+import { useToast } from '../context/ToastContext';
+
 export const OrdersPage: React.FC = () => {
+  const { showToast } = useToast();
   const [searchParams] = useSearchParams();
   const initialSearch = searchParams.get('search') || '';
 
@@ -101,8 +104,9 @@ export const OrdersPage: React.FC = () => {
       if (selectedOrder && selectedOrder._id === orderId) {
         setSelectedOrder((prev) => (prev ? { ...prev, status: newStatus } : null));
       }
-    } catch (err) {
-      console.error('Failed to update status', err);
+      showToast(`✅ Order status updated to "${newStatus}"!`, 'success');
+    } catch (err: any) {
+      showToast(err.message || 'Failed to update order status', 'error');
     }
   };
 
@@ -112,8 +116,9 @@ export const OrdersPage: React.FC = () => {
       await deleteOrderApi(deleteOrderId);
       setDeleteOrderId(null);
       loadOrders();
-    } catch (err) {
-      console.error('Failed to delete order', err);
+      showToast('✅ Order permanently deleted successfully!', 'success');
+    } catch (err: any) {
+      showToast(err.message || 'Failed to delete order', 'error');
     }
   };
 
@@ -510,6 +515,7 @@ export const OrdersPage: React.FC = () => {
           }}
           onSave={() => {
             loadOrders();
+            showToast('✅ Order details updated successfully!', 'success');
           }}
         />
       )}
@@ -524,6 +530,7 @@ export const OrdersPage: React.FC = () => {
             setShowPaymentModal(false);
             loadOrders();
             setSelectedOrder(null);
+            showToast('✅ Payment recorded successfully!', 'success');
           }}
         />
       )}

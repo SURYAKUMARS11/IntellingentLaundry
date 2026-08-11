@@ -11,11 +11,13 @@ import {
   importOldAppOrdersJsonApi,
 } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import { Setting } from '../types';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
 import { Settings, Store, Receipt, Lock, CheckCircle, Save, Trash2, Upload, X, FileSpreadsheet, Download, UploadCloud, CheckCircle2, Smartphone, RefreshCw, QrCode, FileJson } from 'lucide-react';
 
 export const SettingsPage: React.FC = () => {
+  const { showToast } = useToast();
   const { admin, updateAdminState } = useAuth();
   const [setting, setSetting] = useState<Setting>({
     shopName: 'IntelligentLaundry',
@@ -144,10 +146,11 @@ export const SettingsPage: React.FC = () => {
       const res = await updateSettingsApi(setting);
       if (res.success) {
         setIsSaved(true);
+        showToast('✅ Shop settings saved successfully!', 'success');
         setTimeout(() => setIsSaved(false), 3000);
       }
     } catch (err: any) {
-      alert(err.message || 'Failed to update settings');
+      showToast(err.message || 'Failed to update settings', 'error');
     }
   };
 
@@ -164,11 +167,13 @@ export const SettingsPage: React.FC = () => {
       if (res.success) {
         updateAdminState(res.admin);
         setAccountMsg('Account updated successfully');
+        showToast('✅ Account details updated successfully!', 'success');
         setCurrentPassword('');
         setNewPassword('');
       }
     } catch (err: any) {
       setAccountMsg(err.message || 'Failed to update profile');
+      showToast(err.message || 'Failed to update profile', 'error');
     }
   };
 
@@ -178,6 +183,7 @@ export const SettingsPage: React.FC = () => {
     setShowResetModal(false);
     try {
       await clearAllDataApi();
+      showToast('✅ All data cleared successfully!', 'info');
       window.location.reload();
     } catch (err: any) {
       console.error('Failed to reset data', err);
