@@ -28,19 +28,39 @@ export const getCustomers = async (req: Request, res: Response) => {
       .limit(limit)
       .lean();
 
-    const allOrders = await Order.find({}, 'customer customerSnapshot.mobile totalAmount').lean();
+    // Fast MongoDB Aggregation for order totals
+    const orderStats = await Order.aggregate([
+      {
+        $group: {
+          _id: '$customer',
+          mobiles: { $addToSet: '$customerSnapshot.mobile' },
+          totalOrders: { $sum: 1 },
+          totalSpent: { $sum: '$totalAmount' },
+        },
+      },
+    ]);
 
-    // Dynamically calculate totalOrders & totalSpent for every customer
+    const statsMapByCustId = new Map<string, { totalOrders: number; totalSpent: number }>();
+    const statsMapByMobile = new Map<string, { totalOrders: number; totalSpent: number }>();
+
+    orderStats.forEach((s) => {
+      if (s._id) {
+        statsMapByCustId.set(String(s._id), { totalOrders: s.totalOrders, totalSpent: s.totalSpent });
+      }
+      if (Array.isArray(s.mobiles)) {
+        s.mobiles.forEach((m: string) => {
+          if (m) statsMapByMobile.set(m, { totalOrders: s.totalOrders, totalSpent: s.totalSpent });
+        });
+      }
+    });
+
     const customers = rawCustomers.map((c: any) => {
-      const custOrders = allOrders.filter(
-        (o: any) =>
-          (o.customer && String(o.customer) === String(c._id)) ||
-          (o.customerSnapshot && o.customerSnapshot.mobile === c.mobile)
-      );
+      const cIdStr = String(c._id);
+      const st = statsMapByCustId.get(cIdStr) || statsMapByMobile.get(c.mobile) || { totalOrders: 0, totalSpent: 0 };
       return {
         ...c,
-        totalOrders: custOrders.length,
-        totalSpent: custOrders.reduce((sum: number, o: any) => sum + (o.totalAmount || 0), 0),
+        totalOrders: st.totalOrders,
+        totalSpent: st.totalSpent,
       };
     });
 

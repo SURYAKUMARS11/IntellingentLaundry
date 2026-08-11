@@ -56,14 +56,18 @@ export const CustomersPage: React.FC = () => {
 
   const navigate = useNavigate();
 
-  const loadCustomers = async () => {
-    setIsLoading(true);
-    try {
-      const [custRes, setRes] = await Promise.all([
-        fetchCustomers({ search, page, limit }),
-        fetchSettings(),
-      ]);
+  useEffect(() => {
+    fetchSettings().then((res) => {
+      if (res?.success) setSetting(res.setting);
+    }).catch(() => {});
+  }, []);
 
+  const loadCustomers = async () => {
+    if (customers.length === 0) {
+      setIsLoading(true);
+    }
+    try {
+      const custRes = await fetchCustomers({ search, page, limit });
       if (custRes.success) {
         setCustomers(custRes.customers);
         if (custRes.pagination) {
@@ -74,7 +78,6 @@ export const CustomersPage: React.FC = () => {
           setTotalPages(1);
         }
       }
-      if (setRes.success) setSetting(setRes.setting);
     } catch (err) {
       console.error('Failed to load customers', err);
     } finally {
@@ -90,7 +93,7 @@ export const CustomersPage: React.FC = () => {
 
   const handleOpenAddModal = () => {
     setEditingCustomer(null);
-    setFormData({ name: '', mobile: '', address: '', email: '', notes: '' });
+    setFormData({ name: '', mobile: '', email: '', address: '', notes: '' });
     setShowModal(true);
   };
 
@@ -106,16 +109,22 @@ export const CustomersPage: React.FC = () => {
     setShowModal(true);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSaveCustomer = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       if (editingCustomer) {
-        await updateCustomerApi(editingCustomer._id, formData);
+        const res = await updateCustomerApi(editingCustomer._id, formData);
+        if (res.success) {
+          setShowModal(false);
+          loadCustomers();
+        }
       } else {
-        await createCustomerApi(formData);
+        const res = await createCustomerApi(formData);
+        if (res.success) {
+          setShowModal(false);
+          loadCustomers();
+        }
       }
-      setShowModal(false);
-      loadCustomers();
     } catch (err: any) {
       console.error('Failed to save customer', err);
     }
@@ -123,15 +132,17 @@ export const CustomersPage: React.FC = () => {
 
   const confirmDeleteCustomer = async () => {
     if (!deleteCustId) return;
+    const targetId = deleteCustId;
+    setCustomers((prev) => prev.filter((c) => c._id !== targetId));
+    setTotalCustomers((prev) => Math.max(0, prev - 1));
+    setDeleteCustId(null);
+
     try {
-      const res = await deleteCustomerApi(deleteCustId);
-      if (res.success) {
-        loadCustomers();
-      }
+      await deleteCustomerApi(targetId);
+      loadCustomers();
     } catch (err: any) {
       console.error('Could not delete customer', err);
-    } finally {
-      setDeleteCustId(null);
+      loadCustomers();
     }
   };
 
@@ -404,7 +415,7 @@ export const CustomersPage: React.FC = () => {
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-3">
+            <form onSubmit={handleSaveCustomer} className="space-y-3">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                   Full Name *
