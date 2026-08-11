@@ -190,9 +190,17 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ order, setting, onClos
           {/* Header Banner */}
           <div className="border-b border-slate-200 pb-5 flex flex-col sm:flex-row justify-between items-start gap-4">
             <div className="w-full sm:w-auto">
-              <div className="flex items-center gap-2 text-brand-700 font-black text-lg sm:text-xl tracking-tight">
-                <img src={setting?.logoUrl || "/logo.jpg"} alt="Logo" className="w-9 h-9 object-cover rounded-xl shadow-xs border border-slate-200" />
-                <span>{setting?.shopName || 'Intelligent Laundry & Dry Cleaners'}</span>
+              <div className="flex items-center gap-3 text-slate-900 font-black text-xl sm:text-2xl tracking-tight">
+                <img
+                  src={setting?.logoUrl || "/Intelligent Laundry.jpg.jpeg"}
+                  alt="IntelligentLaundry Logo"
+                  className="h-10 sm:h-12 w-auto object-contain rounded-xl border border-slate-200 shadow-xs"
+                />
+                <span className="text-brand-700 font-black tracking-tight">
+                  {setting?.shopName && setting.shopName !== 'IntelligentLaundry & Dry Cleaners'
+                    ? setting.shopName
+                    : 'IntelligentLaundry'}
+                </span>
               </div>
               <p className="text-xs font-semibold text-slate-500 mt-0.5">
                 {setting?.shopTagline || 'Smart & Premium Laundry Management'}

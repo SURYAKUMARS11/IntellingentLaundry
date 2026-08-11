@@ -18,9 +18,9 @@ import { Settings, Store, Receipt, Lock, CheckCircle, Save, Trash2, Upload, X, F
 export const SettingsPage: React.FC = () => {
   const { admin, updateAdminState } = useAuth();
   const [setting, setSetting] = useState<Setting>({
-    shopName: 'IntelligentLaundry & Dry Cleaners',
+    shopName: 'IntelligentLaundry',
     shopTagline: 'Smart & Premium Laundry Management',
-    logoUrl: '/logo.jpg',
+    logoUrl: '/Intelligent Laundry.jpg.jpeg',
     phone: '+91 98765 43210',
     email: 'contact@intelligentlaundry.com',
     address: '123 Sparkle Avenue, Suite 4B, Commercial Hub',

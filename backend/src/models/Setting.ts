@@ -22,9 +22,9 @@ export interface ISetting extends Document {
 
 const SettingSchema: Schema = new Schema(
   {
-    shopName: { type: String, required: true, default: 'IntelligentLaundry & Dry Cleaners' },
+    shopName: { type: String, required: true, default: 'IntelligentLaundry' },
     shopTagline: { type: String, default: 'Smart & Premium Laundry Management' },
-    logoUrl: { type: String, default: 'https://images.unsplash.com/photo-1545173168-9f1947eebb7f?w=200&auto=format&fit=crop&q=80' },
+    logoUrl: { type: String, default: '/Intelligent Laundry.jpg.jpeg' },
     phone: { type: String, required: true, default: '+91 98765 43210' },
     email: { type: String, required: true, default: 'contact@intelligentlaundry.com' },
     address: { type: String, required: true, default: '123 Sparkle Avenue, Suite 4B, Commercial Hub' },

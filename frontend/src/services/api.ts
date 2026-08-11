@@ -1190,9 +1190,9 @@ const getMockSettings = (): Setting => {
   const stored = localStorage.getItem('mock_settings');
   if (stored) return JSON.parse(stored);
   const initial: Setting = {
-    shopName: 'IntelligentLaundry & Dry Cleaners',
+    shopName: 'IntelligentLaundry',
     shopTagline: 'Smart & Premium Laundry Management',
-    logoUrl: 'https://images.unsplash.com/photo-1545173168-9f1947eebb7f?w=200&auto=format&fit=crop&q=80',
+    logoUrl: '/Intelligent Laundry.jpg.jpeg',
     phone: '+91 98765 43210',
     email: 'contact@intelligentlaundry.com',
     address: '42 Commercial Street, Sector 15, Metro City, 400001',
