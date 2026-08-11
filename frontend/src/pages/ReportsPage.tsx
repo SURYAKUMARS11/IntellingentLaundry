@@ -68,7 +68,7 @@ export const ReportsPage: React.FC = () => {
   }, []);
 
   const loadData = async () => {
-    setIsLoading(true);
+    if (chartData.length === 0 && !pnlData?.summary?.grossRevenue) setIsLoading(true);
     try {
       const [revRes, pnlRes] = await Promise.all([
         fetchRevenueReport(period),

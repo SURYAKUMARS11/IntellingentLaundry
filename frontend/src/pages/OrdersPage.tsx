@@ -57,7 +57,7 @@ export const OrdersPage: React.FC = () => {
   const navigate = useNavigate();
 
   const loadOrders = async () => {
-    setIsLoading(true);
+    if (orders.length === 0) setIsLoading(true);
     try {
       const [orderRes, setRes] = await Promise.all([
         fetchOrders({

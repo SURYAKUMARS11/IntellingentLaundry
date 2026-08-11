@@ -84,7 +84,7 @@ export const AccountsPage: React.FC = () => {
   });
 
   const loadData = async () => {
-    setIsLoading(true);
+    if (!accountsSummary) setIsLoading(true);
     try {
       const [setRes, accRes, expRes] = await Promise.all([
         fetchSettings(),

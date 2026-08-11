@@ -81,7 +81,7 @@ export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
 
   const loadData = async () => {
-    setIsLoading(true);
+    if (!stats) setIsLoading(true);
     try {
       const [dashRes, setRes] = await Promise.all([
         fetchDashboardStats({

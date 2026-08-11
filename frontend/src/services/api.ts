@@ -23,10 +23,18 @@ export const removeAuthToken = () => localStorage.removeItem('auth_token');
 
 // In-Memory API Response Cache for instant 0ms loads
 const apiMemoryCache = new Map<string, { data: any; timestamp: number }>();
-const CACHE_TTL_MS = 60 * 1000; // 60 seconds
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
 export const clearApiCache = () => {
   apiMemoryCache.clear();
+};
+
+export const peekApiCache = (endpoint: string) => {
+  const cached = apiMemoryCache.get(endpoint);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
+    return cached.data;
+  }
+  return null;
 };
 
 const fetchApiNetwork = async (endpoint: string, options: RequestInit = {}, retries = 1): Promise<any> => {
