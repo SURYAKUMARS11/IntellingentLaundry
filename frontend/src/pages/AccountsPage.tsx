@@ -42,6 +42,8 @@ export const AccountsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'orders' | 'shop'>('orders');
   const [setting, setSetting] = useState<Setting | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(true);
+  const [showFilterPanel, setShowFilterPanel] = useState(false);
+  const [showExpFilterPanel, setShowExpFilterPanel] = useState(false);
 
   // --- Order Accounts State ---
   const [accountsSummary, setAccountsSummary] = useState<AccountsSummary | null>(null);
@@ -278,7 +280,7 @@ export const AccountsPage: React.FC = () => {
           {/* THE 4 DASHBOARD METRICS CARDS */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             {/* Card 1: Total Income */}
-            <div className="glass-card p-4 flex flex-col justify-between border-l-4 border-l-emerald-500">
+            <div className="glass-card p-4 flex flex-col justify-between border-l-4 border-l-emerald-500 relative overflow-hidden">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-slate-500">Total Income</span>
                 <div className="p-2 rounded-xl bg-emerald-100 dark:bg-emerald-950 text-emerald-600">
@@ -286,15 +288,24 @@ export const AccountsPage: React.FC = () => {
                 </div>
               </div>
               <div className="mt-3">
-                <p className="text-2xl font-black text-emerald-600 dark:text-emerald-400">
-                  {currencySymbol}{accountsSummary?.totalIncome || 0}
-                </p>
-                <p className="text-[11px] text-slate-400 font-semibold mt-0.5">Order payments collected</p>
+                {isLoading ? (
+                  <div className="flex items-center gap-2 py-1">
+                    <RefreshCw className="w-4 h-4 animate-spin text-emerald-500" />
+                    <span className="text-xs font-semibold text-slate-400">Loading...</span>
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-2xl font-black text-emerald-600 dark:text-emerald-400">
+                      {currencySymbol}{accountsSummary?.totalIncome || 0}
+                    </p>
+                    <p className="text-[11px] text-slate-400 font-semibold mt-0.5">Order payments collected</p>
+                  </>
+                )}
               </div>
             </div>
 
             {/* Card 2: Total Expenses */}
-            <div className="glass-card p-4 flex flex-col justify-between border-l-4 border-l-rose-500">
+            <div className="glass-card p-4 flex flex-col justify-between border-l-4 border-l-rose-500 relative overflow-hidden">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-slate-500">Total Expenses</span>
                 <div className="p-2 rounded-xl bg-rose-100 dark:bg-rose-950 text-rose-600">
@@ -302,15 +313,24 @@ export const AccountsPage: React.FC = () => {
                 </div>
               </div>
               <div className="mt-3">
-                <p className="text-2xl font-black text-rose-600 dark:text-rose-400">
-                  {currencySymbol}{accountsSummary?.totalExpenses || 0}
-                </p>
-                <p className="text-[11px] text-slate-400 font-semibold mt-0.5">Shop operating costs</p>
+                {isLoading ? (
+                  <div className="flex items-center gap-2 py-1">
+                    <RefreshCw className="w-4 h-4 animate-spin text-rose-500" />
+                    <span className="text-xs font-semibold text-slate-400">Loading...</span>
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-2xl font-black text-rose-600 dark:text-rose-400">
+                      {currencySymbol}{accountsSummary?.totalExpenses || 0}
+                    </p>
+                    <p className="text-[11px] text-slate-400 font-semibold mt-0.5">Shop operating costs</p>
+                  </>
+                )}
               </div>
             </div>
 
             {/* Card 3: Cash Balance */}
-            <div className="glass-card p-4 flex flex-col justify-between border-l-4 border-l-amber-500">
+            <div className="glass-card p-4 flex flex-col justify-between border-l-4 border-l-amber-500 relative overflow-hidden">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-slate-500">Cash Balance</span>
                 <div className="p-2 rounded-xl bg-amber-100 dark:bg-amber-950 text-amber-600">
@@ -318,15 +338,24 @@ export const AccountsPage: React.FC = () => {
                 </div>
               </div>
               <div className="mt-3">
-                <p className="text-2xl font-black text-slate-900 dark:text-white">
-                  {currencySymbol}{accountsSummary?.cashBalance || 0}
-                </p>
-                <p className="text-[11px] text-amber-600 dark:text-amber-400 font-semibold mt-0.5">Physical cash drawer</p>
+                {isLoading ? (
+                  <div className="flex items-center gap-2 py-1">
+                    <RefreshCw className="w-4 h-4 animate-spin text-amber-500" />
+                    <span className="text-xs font-semibold text-slate-400">Loading...</span>
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-2xl font-black text-slate-900 dark:text-white">
+                      {currencySymbol}{accountsSummary?.cashBalance || 0}
+                    </p>
+                    <p className="text-[11px] text-amber-600 dark:text-amber-400 font-semibold mt-0.5">Physical cash drawer</p>
+                  </>
+                )}
               </div>
             </div>
 
             {/* Card 4: Bank / UPI Balance */}
-            <div className="glass-card p-4 flex flex-col justify-between border-l-4 border-l-blue-500">
+            <div className="glass-card p-4 flex flex-col justify-between border-l-4 border-l-blue-500 relative overflow-hidden">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-slate-500">Bank / UPI Balance</span>
                 <div className="p-2 rounded-xl bg-blue-100 dark:bg-blue-950 text-blue-600">
@@ -334,52 +363,93 @@ export const AccountsPage: React.FC = () => {
                 </div>
               </div>
               <div className="mt-3">
-                <p className="text-2xl font-black text-blue-600 dark:text-blue-400">
-                  {currencySymbol}{accountsSummary?.bankBalance || 0}
-                </p>
-                <p className="text-[11px] text-blue-600 dark:text-blue-400 font-semibold mt-0.5">Digital bank payments</p>
+                {isLoading ? (
+                  <div className="flex items-center gap-2 py-1">
+                    <RefreshCw className="w-4 h-4 animate-spin text-blue-500" />
+                    <span className="text-xs font-semibold text-slate-400">Loading...</span>
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-2xl font-black text-blue-600 dark:text-blue-400">
+                      {currencySymbol}{accountsSummary?.bankBalance || 0}
+                    </p>
+                    <p className="text-[11px] text-blue-600 dark:text-blue-400 font-semibold mt-0.5">Digital bank payments</p>
+                  </>
+                )}
               </div>
             </div>
           </div>
 
-          {/* Filter Bar */}
-          <div className="glass-card p-4">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div>
-                <label className="block text-[11px] font-bold text-slate-500 mb-1">Payment Method</label>
-                <select
-                  value={transPaymentMethod}
-                  onChange={(e) => setTransPaymentMethod(e.target.value)}
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none"
-                >
-                  <option value="">All Payment Methods</option>
-                  <option value="Cash">Cash Only</option>
-                  <option value="Bank / UPI">Bank / UPI Only</option>
-                  <option value="Card">Card Only</option>
-                </select>
-              </div>
+          {/* Filter Toggle Button */}
+          <div className="flex items-center justify-between">
+            <button
+              onClick={() => setShowFilterPanel(!showFilterPanel)}
+              className={`px-4 py-2 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 border shadow-sm ${
+                showFilterPanel || transPaymentMethod || transDateFrom || transDateTo
+                  ? 'bg-brand-50 dark:bg-brand-950/50 border-brand-500 text-brand-600 dark:text-brand-400'
+                  : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50'
+              }`}
+            >
+              <Filter className="w-4 h-4 text-brand-500" />
+              <span>{showFilterPanel ? 'Hide Filters' : 'Filter Options'}</span>
+              {(transPaymentMethod || transDateFrom || transDateTo) && (
+                <span className="px-2 py-0.5 rounded-full bg-brand-500 text-white text-[10px] font-extrabold">Active</span>
+              )}
+            </button>
+            {(transPaymentMethod || transDateFrom || transDateTo) && (
+              <button
+                onClick={() => {
+                  setTransPaymentMethod('');
+                  setTransDateFrom('');
+                  setTransDateTo('');
+                }}
+                className="text-xs text-slate-400 hover:text-rose-500 font-semibold flex items-center gap-1"
+              >
+                <X className="w-3.5 h-3.5" /> Clear Filters
+              </button>
+            )}
+          </div>
 
-              <div>
-                <label className="block text-[11px] font-bold text-slate-500 mb-1">From Date</label>
-                <input
-                  type="date"
-                  value={transDateFrom}
-                  onChange={(e) => setTransDateFrom(e.target.value)}
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none"
-                />
-              </div>
+          {/* Collapsible Filter Bar */}
+          {showFilterPanel && (
+            <div className="glass-card p-4 transition-all">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-500 mb-1">Payment Method</label>
+                  <select
+                    value={transPaymentMethod}
+                    onChange={(e) => setTransPaymentMethod(e.target.value)}
+                    className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none"
+                  >
+                    <option value="">All Payment Methods</option>
+                    <option value="Cash">Cash Only</option>
+                    <option value="Bank / UPI">Bank / UPI Only</option>
+                    <option value="Card">Card Only</option>
+                  </select>
+                </div>
 
-              <div>
-                <label className="block text-[11px] font-bold text-slate-500 mb-1">To Date</label>
-                <input
-                  type="date"
-                  value={transDateTo}
-                  onChange={(e) => setTransDateTo(e.target.value)}
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none"
-                />
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-500 mb-1">From Date</label>
+                  <input
+                    type="date"
+                    value={transDateFrom}
+                    onChange={(e) => setTransDateFrom(e.target.value)}
+                    className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-500 mb-1">To Date</label>
+                  <input
+                    type="date"
+                    value={transDateTo}
+                    onChange={(e) => setTransDateTo(e.target.value)}
+                    className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none"
+                  />
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* TRANSACTIONS TABLE LIST */}
           <div className="glass-card overflow-hidden">
@@ -498,88 +568,146 @@ export const AccountsPage: React.FC = () => {
         <div className="space-y-6">
           {/* Shop Expenses Metric Summary */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="glass-card p-4 border-l-4 border-l-rose-500">
+            <div className="glass-card p-4 border-l-4 border-l-rose-500 relative overflow-hidden">
               <span className="text-xs font-bold text-slate-500">Total Shop Expenses</span>
-              <p className="text-2xl font-black text-rose-600 dark:text-rose-400 mt-2">
-                {currencySymbol}{expenseSummary.totalExpenseAmount}
-              </p>
-              <p className="text-[11px] text-slate-400 mt-0.5">Electricity, Wages, Solvents & Custom bills</p>
+              {isLoading ? (
+                <div className="flex items-center gap-2 mt-2 py-1">
+                  <RefreshCw className="w-4 h-4 animate-spin text-rose-500" />
+                  <span className="text-xs font-semibold text-slate-400">Loading...</span>
+                </div>
+              ) : (
+                <>
+                  <p className="text-2xl font-black text-rose-600 dark:text-rose-400 mt-2">
+                    {currencySymbol}{expenseSummary.totalExpenseAmount}
+                  </p>
+                  <p className="text-[11px] text-slate-400 mt-0.5">Electricity, Wages, Solvents & Custom bills</p>
+                </>
+              )}
             </div>
 
-            <div className="glass-card p-4 border-l-4 border-l-amber-500">
+            <div className="glass-card p-4 border-l-4 border-l-amber-500 relative overflow-hidden">
               <span className="text-xs font-bold text-slate-500">Cash Paid Expenses</span>
-              <p className="text-2xl font-black text-slate-900 dark:text-white mt-2">
-                {currencySymbol}{expenseSummary.cashExpenses}
-              </p>
-              <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-0.5">Paid from cash drawer</p>
+              {isLoading ? (
+                <div className="flex items-center gap-2 mt-2 py-1">
+                  <RefreshCw className="w-4 h-4 animate-spin text-amber-500" />
+                  <span className="text-xs font-semibold text-slate-400">Loading...</span>
+                </div>
+              ) : (
+                <>
+                  <p className="text-2xl font-black text-slate-900 dark:text-white mt-2">
+                    {currencySymbol}{expenseSummary.cashExpenses}
+                  </p>
+                  <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-0.5">Paid from cash drawer</p>
+                </>
+              )}
             </div>
 
-            <div className="glass-card p-4 border-l-4 border-l-blue-500">
+            <div className="glass-card p-4 border-l-4 border-l-blue-500 relative overflow-hidden">
               <span className="text-xs font-bold text-slate-500">Bank / UPI Paid Expenses</span>
-              <p className="text-2xl font-black text-blue-600 dark:text-blue-400 mt-2">
-                {currencySymbol}{expenseSummary.bankExpenses}
-              </p>
-              <p className="text-[11px] text-blue-600 dark:text-blue-400 mt-0.5">Online transfer payments</p>
+              {isLoading ? (
+                <div className="flex items-center gap-2 mt-2 py-1">
+                  <RefreshCw className="w-4 h-4 animate-spin text-blue-500" />
+                  <span className="text-xs font-semibold text-slate-400">Loading...</span>
+                </div>
+              ) : (
+                <>
+                  <p className="text-2xl font-black text-blue-600 dark:text-blue-400 mt-2">
+                    {currencySymbol}{expenseSummary.bankExpenses}
+                  </p>
+                  <p className="text-[11px] text-blue-600 dark:text-blue-400 mt-0.5">Online transfer payments</p>
+                </>
+              )}
             </div>
           </div>
 
-          {/* Shop Expenses Filters */}
-          <div className="glass-card p-4 space-y-3">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div className="relative">
-                <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
-                <input
-                  type="text"
-                  placeholder="Search expense description, vendor..."
-                  value={expSearch}
-                  onChange={(e) => {
-                    setExpSearch(e.target.value);
-                    setExpPage(1);
-                  }}
-                  className="w-full pl-9 pr-4 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-brand-500"
-                />
-              </div>
+          {/* Shop Expenses Filter Toggle & Bar */}
+          <div className="flex items-center justify-between">
+            <button
+              onClick={() => setShowExpFilterPanel(!showExpFilterPanel)}
+              className={`px-4 py-2 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 border shadow-sm ${
+                showExpFilterPanel || expCategoryFilter || expPaymentMethodFilter || expSearch
+                  ? 'bg-brand-50 dark:bg-brand-950/50 border-brand-500 text-brand-600 dark:text-brand-400'
+                  : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50'
+              }`}
+            >
+              <Filter className="w-4 h-4 text-brand-500" />
+              <span>{showExpFilterPanel ? 'Hide Filters' : 'Filter Options'}</span>
+              {(expCategoryFilter || expPaymentMethodFilter || expSearch) && (
+                <span className="px-2 py-0.5 rounded-full bg-brand-500 text-white text-[10px] font-extrabold">Active</span>
+              )}
+            </button>
+            {(expCategoryFilter || expPaymentMethodFilter || expSearch) && (
+              <button
+                onClick={() => {
+                  setExpCategoryFilter('');
+                  setExpPaymentMethodFilter('');
+                  setExpSearch('');
+                }}
+                className="text-xs text-slate-400 hover:text-rose-500 font-semibold flex items-center gap-1"
+              >
+                <X className="w-3.5 h-3.5" /> Clear Filters
+              </button>
+            )}
+          </div>
 
-              <div>
-                {(() => {
-                  const allCategories = Array.from(new Set(expenses.map((e) => e.category).filter(Boolean)));
-                  return (
-                    <select
-                      value={expCategoryFilter}
-                      onChange={(e) => {
-                        setExpCategoryFilter(e.target.value);
-                        setExpPage(1);
-                      }}
-                      className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none"
-                    >
-                      <option value="">All Expense Categories</option>
-                      {allCategories.map((cat) => (
-                        <option key={cat} value={cat}>
-                          {cat}
-                        </option>
-                      ))}
-                    </select>
-                  );
-                })()}
-              </div>
+          {showExpFilterPanel && (
+            <div className="glass-card p-4 space-y-3 transition-all">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="relative">
+                  <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder="Search expense description, vendor..."
+                    value={expSearch}
+                    onChange={(e) => {
+                      setExpSearch(e.target.value);
+                      setExpPage(1);
+                    }}
+                    className="w-full pl-9 pr-4 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-brand-500"
+                  />
+                </div>
 
-              <div>
-                <select
-                  value={expPaymentMethodFilter}
-                  onChange={(e) => {
-                    setExpPaymentMethodFilter(e.target.value);
-                    setExpPage(1);
-                  }}
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none"
-                >
-                  <option value="">All Payment Methods</option>
-                  <option value="Cash">Cash</option>
-                  <option value="Bank / UPI">Bank / UPI</option>
-                  <option value="Card">Card</option>
-                </select>
+                <div>
+                  {(() => {
+                    const allCategories = Array.from(new Set(expenses.map((e) => e.category).filter(Boolean)));
+                    return (
+                      <select
+                        value={expCategoryFilter}
+                        onChange={(e) => {
+                          setExpCategoryFilter(e.target.value);
+                          setExpPage(1);
+                        }}
+                        className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none"
+                      >
+                        <option value="">All Expense Categories</option>
+                        {allCategories.map((cat) => (
+                          <option key={cat} value={cat}>
+                            {cat}
+                          </option>
+                        ))}
+                      </select>
+                    );
+                  })()}
+                </div>
+
+                <div>
+                  <select
+                    value={expPaymentMethodFilter}
+                    onChange={(e) => {
+                      setExpPaymentMethodFilter(e.target.value);
+                      setExpPage(1);
+                    }}
+                    className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none"
+                  >
+                    <option value="">All Payment Methods</option>
+                    <option value="Cash">Cash</option>
+                    <option value="Bank / UPI">Bank / UPI</option>
+                    <option value="Card">Card</option>
+                  </select>
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* SHOP EXPENSES TABLE */}
           <div className="glass-card overflow-hidden">
