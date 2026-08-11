@@ -59,6 +59,14 @@ const run = async () => {
     }
   }
 
+  const august49Set = new Set([
+    "414", "413", "411", "409", "408", "406", "403", "402", "401", "400", "399", "398",
+    "397", "396", "395", "394", "390", "385", "384", "382", "381", "380", "379", "377",
+    "376", "375", "374", "373", "372", "370", "368", "367", "366", "364", "362", "361",
+    "359", "358", "357", "355", "353", "351", "350", "347", "346", "341", "340", "339",
+    "338"
+  ]);
+
   // STEP 1: IMPORT ALL CUSTOMERS FROM CSV
   const csvPath = path.join(__dirname, '../../customers_export (1).csv');
   if (!fs.existsSync(csvPath)) {
@@ -197,13 +205,13 @@ const run = async () => {
 
     const remBal = Math.max(0, totalPrice - paidAmount);
 
-    // Order status mapping: match overdue.txt or pending status from new orders
+    // Order status mapping: match overdue.txt or august49Set
     let orderStatus: any = 'Delivered';
-    const rawOrdStatus = (oldOrd.status || '').toLowerCase();
-    if (isOverdue || rawOrdStatus === 'pending' || rawOrdStatus === 'ready_to_delivery') {
+    const oldIdStr = String(oldOrd.id || oldOrd.order_no || '');
+    if (isOverdue || august49Set.has(oldIdStr)) {
       orderStatus = 'Received'; // Active processing order
       markedOverdueCount++;
-    } else if (rawOrdStatus === 'cancelled') {
+    } else if ((oldOrd.status || '').toLowerCase() === 'cancelled') {
       orderStatus = 'Cancelled';
     } else {
       orderStatus = 'Delivered';
