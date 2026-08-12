@@ -319,7 +319,7 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
     }
 
     order.status = status;
-    if (status === 'Delivered') {
+    if (status.toLowerCase() === 'delivered') {
       order.deliveredAt = new Date();
     }
 
@@ -332,14 +332,36 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
     await order.save();
 
     // Automated Background WhatsApp PDF Document Delivery on Order Completion / Delivery
-    if (status === 'Delivered' && order.customerSnapshot && order.customerSnapshot.mobile) {
-      try {
-        const setting = await Setting.findOne();
-        const pdfBuffer = await generateInvoicePDFBuffer(order, setting);
-        const fileName = `Invoice_${order.orderNumber.replace(/[\/\\]/g, '_')}.pdf`;
-        sendAutomatedWhatsAppDocument(order.customerSnapshot.mobile, pdfBuffer, fileName);
-      } catch (pdfErr: any) {
-        console.error('[WhatsApp PDF Invoice Error]:', pdfErr.message);
+    let whatsappSent = false;
+    let whatsappMsg = '';
+
+    if (status.toLowerCase() === 'delivered') {
+      let mobile = order.customerSnapshot?.mobile;
+      if (!mobile && order.customer) {
+        const cust = await Customer.findById(order.customer);
+        if (cust) mobile = cust.mobile;
+      }
+
+      if (mobile) {
+        try {
+          const setting = await Setting.findOne();
+          const pdfBuffer = await generateInvoicePDFBuffer(order, setting);
+          const fileName = `Invoice_${order.orderNumber.replace(/[\/\\]/g, '_')}.pdf`;
+          
+          whatsappSent = await sendAutomatedWhatsAppDocument(mobile, pdfBuffer, fileName);
+          if (whatsappSent) {
+            whatsappMsg = `Invoice PDF sent automatically to +${mobile} via WhatsApp!`;
+          } else {
+            whatsappMsg = `WhatsApp gateway is not connected. Connect in Settings to send automated PDF invoices.`;
+          }
+          console.log(`[WhatsApp Order Delivered PDF]: ${whatsappMsg}`);
+        } catch (pdfErr: any) {
+          console.error('[WhatsApp PDF Invoice Error]:', pdfErr.message);
+          whatsappMsg = `PDF Generation Error: ${pdfErr.message}`;
+        }
+      } else {
+        whatsappMsg = `No mobile number found for order ${order.orderNumber}`;
+        console.log(`[WhatsApp Order Delivered PDF]: ${whatsappMsg}`);
       }
     }
 
@@ -347,7 +369,42 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
       success: true,
       message: `Order status updated to ${status}`,
       order,
+      whatsappSent,
+      whatsappMsg,
     });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const sendOrderWhatsAppPDF = async (req: Request, res: Response) => {
+  try {
+    const order = await Order.findById(req.params.id);
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Order not found' });
+    }
+
+    let mobile = order.customerSnapshot?.mobile;
+    if (!mobile && order.customer) {
+      const cust = await Customer.findById(order.customer);
+      if (cust) mobile = cust.mobile;
+    }
+
+    if (!mobile) {
+      return res.status(400).json({ success: false, message: 'No mobile number found for this order' });
+    }
+
+    const setting = await Setting.findOne();
+    const pdfBuffer = await generateInvoicePDFBuffer(order, setting);
+    const fileName = `Invoice_${order.orderNumber.replace(/[\/\\]/g, '_')}.pdf`;
+
+    const sent = await sendAutomatedWhatsAppDocument(mobile, pdfBuffer, fileName);
+
+    if (sent) {
+      res.json({ success: true, message: `PDF Invoice sent successfully to +${mobile} over WhatsApp!` });
+    } else {
+      res.status(400).json({ success: false, message: 'WhatsApp Gateway is not connected. Scan QR code in Settings.' });
+    }
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });
   }

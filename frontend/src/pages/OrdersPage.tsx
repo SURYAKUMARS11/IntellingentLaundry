@@ -99,12 +99,22 @@ export const OrdersPage: React.FC = () => {
 
   const handleUpdateStatus = async (orderId: string, newStatus: OrderStatus) => {
     try {
-      await updateOrderStatusApi(orderId, newStatus);
+      const res = await updateOrderStatusApi(orderId, newStatus);
       loadOrders();
       if (selectedOrder && selectedOrder._id === orderId) {
         setSelectedOrder((prev) => (prev ? { ...prev, status: newStatus } : null));
       }
-      showToast(`✅ Order status updated to "${newStatus}"!`, 'success');
+      if (newStatus === 'Delivered') {
+        if (res.whatsappSent) {
+          showToast(`✅ Order Delivered! WhatsApp PDF Invoice sent to customer.`, 'success');
+        } else if (res.whatsappMsg) {
+          showToast(`✅ Order Delivered! (${res.whatsappMsg})`, 'info');
+        } else {
+          showToast(`✅ Order status updated to Delivered!`, 'success');
+        }
+      } else {
+        showToast(`✅ Order status updated to "${newStatus}"!`, 'success');
+      }
     } catch (err: any) {
       showToast(err.message || 'Failed to update order status', 'error');
     }

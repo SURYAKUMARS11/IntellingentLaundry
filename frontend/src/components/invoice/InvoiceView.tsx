@@ -2,9 +2,11 @@ import React, { useRef } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import { sendOrderWhatsAppPdfApi } from '../../services/api';
+import { useToast } from '../../context/ToastContext';
 import { Order, Setting } from '../../types';
 import { StatusBadge } from '../ui/Badge';
-import { Printer, Smartphone, X, CheckCircle, Sparkles, Phone, Mail, MapPin, FileText } from 'lucide-react';
+import { Printer, Smartphone, X, CheckCircle, Sparkles, Phone, Mail, MapPin, FileText, Send } from 'lucide-react';
 
 interface InvoiceViewProps {
   order: Order;
@@ -15,6 +17,7 @@ interface InvoiceViewProps {
 
 export const InvoiceView: React.FC<InvoiceViewProps> = ({ order, setting, onClose, isPublicView = false }) => {
   const receiptRef = useRef<HTMLDivElement>(null);
+  const { showToast } = useToast();
   const currencySymbol = setting?.currencySymbol || '₹';
 
   // UPI Payment Details & QR Code Generator
@@ -97,25 +100,22 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ order, setting, onClos
 
   // Handle Smart WhatsApp Share targeted directly to customer phone number
   const handleWhatsAppShare = async () => {
-    const mobile = order.customerSnapshot.mobile.replace(/\D/g, '');
-    const phoneWithCountry = mobile.length === 10 ? '91' + mobile : mobile;
-    const receiptUrl = `${window.location.origin}/receipt/${order.orderNumber}?r=${order.orderNumber}`;
-    const isDelivered = order.status === 'Delivered';
-
-    if (isDelivered) {
-      // Delivered Order: Trigger local PDF download for records & open targeted customer WhatsApp chat!
-      generatePDFBlob().then((res) => {
-        if (res) res.pdf.save(`Invoice_${order.orderNumber}.pdf`);
-      });
-
-      const text = `Hello *${order.customerSnapshot.name}*,\n\nYour laundry Order *#${order.orderNumber}* has been successfully delivered! 🎉\n\n📄 *View & Download Tax Invoice PDF*:\n${receiptUrl}\n\nThank you for choosing *${setting?.shopName || 'IntelligentLaundry'}*!`;
-      const url = `https://wa.me/${phoneWithCountry}?text=${encodeURIComponent(text)}`;
-      window.open(url, '_blank');
-    } else {
-      // Active / Received Order: Open targeted customer WhatsApp chat with summary details & invoice link!
-      const text = `Hello *${order.customerSnapshot.name}*,\n\nYour official laundry invoice & receipt for Order *#${order.orderNumber}* from *${setting?.shopName || 'IntelligentLaundry'}* is ready!\n\n📋 *Invoice Summary*:\n• Order Date: ${new Date(order.orderDate).toLocaleDateString('en-GB')}\n• Status: ${order.status}\n• Payment: ${order.paymentStatus}\n• Total Amount: ${currencySymbol}${order.totalAmount}\n• Advance Paid: ${currencySymbol}${order.advancePaid}\n• Remaining Balance: ${currencySymbol}${order.remainingBalance}\n\n🔗 *View & Print Invoice Directly*:\n${receiptUrl}\n\nThank you for choosing ${setting?.shopName || 'IntelligentLaundry'}!`;
-      const url = `https://wa.me/${phoneWithCountry}?text=${encodeURIComponent(text)}`;
-      window.open(url, '_blank');
+    try {
+      const res = await sendOrderWhatsAppPdfApi(order._id);
+      if (res.success) {
+        showToast(`✅ PDF Invoice sent directly to +${order.customerSnapshot.mobile} via WhatsApp!`, 'success');
+      } else {
+        // Fallback to wa.me if gateway is not connected
+        const mobile = order.customerSnapshot.mobile.replace(/\D/g, '');
+        const phoneWithCountry = mobile.length === 10 ? '91' + mobile : mobile;
+        const receiptUrl = `${window.location.origin}/receipt/${order.orderNumber}?r=${order.orderNumber}`;
+        const text = `Hello *${order.customerSnapshot.name}*,\n\nYour official laundry invoice & receipt for Order *#${order.orderNumber}* is ready!\n\n🔗 *View & Print Invoice*:\n${receiptUrl}`;
+        const url = `https://wa.me/${phoneWithCountry}?text=${encodeURIComponent(text)}`;
+        window.open(url, '_blank');
+        showToast(res.message || 'WhatsApp Gateway disconnected. Opened WhatsApp Web fallback.', 'info');
+      }
+    } catch (err: any) {
+      showToast(err.message || 'Failed to send WhatsApp message', 'error');
     }
   };
 

@@ -686,6 +686,16 @@ export const updateOrderStatusApi = async (id: string, status: string, note?: st
   }
 };
 
+export const sendOrderWhatsAppPdfApi = async (id: string) => {
+  try {
+    return await fetchApi(`/orders/${id}/send-whatsapp-pdf`, {
+      method: 'POST',
+    });
+  } catch (err: any) {
+    return { success: false, message: err.message || 'Failed to send WhatsApp PDF' };
+  }
+};
+
 export const updateOrderApi = async (id: string, orderData: any) => {
   try {
     return await fetchApi(`/orders/${id}`, {
