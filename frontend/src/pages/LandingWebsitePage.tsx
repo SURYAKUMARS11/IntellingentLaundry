@@ -28,6 +28,10 @@ import {
   Crown,
   Feather,
   Check,
+  HelpCircle,
+  ExternalLink,
+  ThumbsUp,
+  HeartHandshake,
 } from 'lucide-react';
 
 export const LandingWebsitePage: React.FC = () => {
@@ -36,6 +40,7 @@ export const LandingWebsitePage: React.FC = () => {
   const [activeFaq, setActiveFaq] = useState<number | null>(0);
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [selectedServiceId, setSelectedServiceId] = useState<string>('wash-fold');
+  const [activeStainTab, setActiveStainTab] = useState<number>(0);
 
   useEffect(() => {
     fetchSettings().then((res) => {
@@ -49,6 +54,7 @@ export const LandingWebsitePage: React.FC = () => {
   const cleanPhone = phone.replace(/\D/g, '');
   const email = 'intelligentno1laundry@gmail.com';
   const address = '2/516 B Thiruvalluvar Nagar, Near ambal hospital, Malumichampatti, Coimbatore 641050';
+  const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
 
   // Services Catalog
   const servicesList = [
@@ -195,6 +201,65 @@ export const LandingWebsitePage: React.FC = () => {
     { key: 'household', label: 'House & Alterations' },
   ];
 
+  // Interactive Stain & Fabric Guide Data
+  const stainGuide = [
+    {
+      stain: '🍷 Wine / Coffee / Tea',
+      treatment: 'Targeted Oxygen Enzyme Pre-Soak',
+      desc: 'Cold water flush followed by specialized organic enzyme spotting that breaks down tannin compounds without bleaching fabric color.',
+      recommendedService: 'Bleaching & Stain Removal',
+    },
+    {
+      stain: '✒️ Ink / Ballpoint Pen',
+      treatment: 'Non-Polar Solvent Pre-Treatment',
+      desc: 'Solvent spot treatment dissolving ink pigments while preserving delicate thread weaving and preventing bleed marks.',
+      recommendedService: 'Dry Cleaning',
+    },
+    {
+      stain: '🛢️ Oil / Grease / Food',
+      treatment: 'High-Efficiency Degreasing Wash',
+      desc: 'Controlled temperature wash using bio-degradeable degreaser agents that lift grease particles out of cottons and synthetics.',
+      recommendedService: 'Wash and Iron',
+    },
+    {
+      stain: '🍛 Turmeric / Curry / Gravy',
+      treatment: 'Color-Safe Sunlight & Bio-Clean',
+      desc: 'Specialized pre-spotting bath targeting natural curcumin stains, leaving white shirts and ethnic wear spotlessly clean.',
+      recommendedService: 'Bleaching & Stain Removal',
+    },
+    {
+      stain: '👟 Scuffs / Sole Dirt on Shoes',
+      treatment: 'Deep Hand Scrub & Sole Whitening',
+      desc: 'Manual detail scrubbing with specialized suede/leather brush, followed by anti-bacterial sole de-yellowing treatment.',
+      recommendedService: 'Shoe Laundry',
+    },
+  ];
+
+  // Customer Reviews
+  const reviews = [
+    {
+      name: 'Priya Sundaram',
+      location: 'Malumichampatti, Coimbatore',
+      rating: 5,
+      comment: 'IntelligentLaundry handled my silk saree and wedding suit dry cleaning perfectly! No chemical smell and crisp packaging.',
+      tag: 'Verified Customer',
+    },
+    {
+      name: 'Karthik Raja',
+      location: 'Thiruvalluvar Nagar, Coimbatore',
+      rating: 5,
+      comment: 'My white sneakers were completely restored like brand new. The shoe laundry service here is unbelievable!',
+      tag: 'Sneaker Care Review',
+    },
+    {
+      name: 'Anita Raman',
+      location: 'Coimbatore',
+      rating: 5,
+      comment: 'Very polite store staff, fast 24h turnaround for my office formal shirts. Highly recommended for daily laundry!',
+      tag: 'Regular Wash & Iron',
+    },
+  ];
+
   const filteredServices = activeCategory === 'all'
     ? servicesList
     : servicesList.filter((s) => s.catKey === activeCategory);
@@ -207,8 +272,12 @@ export const LandingWebsitePage: React.FC = () => {
       a: 'Simply call us directly on ' + phone + '! You can also tap any "Call Store" button on this website to talk to our store team immediately.',
     },
     {
-      q: 'Do you provide doorstep pickup and delivery?',
-      a: 'Yes! We offer doorstep pickup and delivery across the city. Call our store number to arrange your convenient time slot.',
+      q: 'What are your store working hours?',
+      a: 'We are open Monday to Friday from 08:00 AM to 09:00 PM for all laundry drop-offs, pickups, and customer service.',
+    },
+    {
+      q: 'Do you provide doorstep pickup and delivery in Coimbatore?',
+      a: 'Yes! We offer doorstep pickup and delivery. Call our store number to arrange your convenient time slot.',
     },
     {
       q: 'Are your detergents safe for baby clothes and sensitive skin?',
@@ -244,7 +313,9 @@ export const LandingWebsitePage: React.FC = () => {
           {/* Desktop Nav Links */}
           <nav className="hidden md:flex items-center gap-7 text-xs font-extrabold text-slate-300">
             <a href="#services" className="hover:text-brand-400 transition-colors">Our Services</a>
-            <a href="#why-us" className="hover:text-brand-400 transition-colors">Why Choose Us</a>
+            <a href="#stain-guide" className="hover:text-brand-400 transition-colors">Stain Guide</a>
+            <a href="#why-us" className="hover:text-brand-400 transition-colors">Why Us</a>
+            <a href="#reviews" className="hover:text-brand-400 transition-colors">Reviews</a>
             <a href="#faq" className="hover:text-brand-400 transition-colors">FAQ</a>
             <a href="#contact" className="hover:text-brand-400 transition-colors">Contact</a>
           </nav>
@@ -274,7 +345,7 @@ export const LandingWebsitePage: React.FC = () => {
           <div className="lg:col-span-7 space-y-5 text-center lg:text-left">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-brand-950/90 border border-brand-800/80 text-brand-300 text-[11px] sm:text-xs font-extrabold shadow-inner">
               <Sparkles className="w-3.5 h-3.5 text-brand-400 animate-spin" />
-              <span>Premium Eco-Friendly Garment Care</span>
+              <span>Premium Eco-Friendly Garment Care in Coimbatore</span>
             </div>
 
             <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-[1.12]">
@@ -284,6 +355,12 @@ export const LandingWebsitePage: React.FC = () => {
             <p className="text-xs sm:text-base text-slate-300 leading-relaxed max-w-2xl mx-auto lg:mx-0 font-medium">
               Experience world-class garment cleaning, organic dry cleaning, steam pressing, shoe restoration, and heavy household fabric care. Specialized solutions for every fabric type.
             </p>
+
+            {/* Working Hours Badge */}
+            <div className="inline-flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-slate-900 border border-slate-800 text-slate-200 text-xs font-bold">
+              <Clock className="w-4 h-4 text-emerald-400" />
+              <span>Store Hours: <strong className="text-white">Monday - Friday (08:00 AM - 09:00 PM)</strong></span>
+            </div>
 
             {/* Call Action Bar */}
             <div className="pt-2 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3">
@@ -481,9 +558,78 @@ export const LandingWebsitePage: React.FC = () => {
       </section>
 
       {/* ========================================================================= */}
-      {/* 4. WHY CHOOSE INTELLIGENTLAUNDRY */}
+      {/* 4. FEATURE 1: INTERACTIVE GARMENT STAIN & FABRIC CARE GUIDE */}
       {/* ========================================================================= */}
-      <section id="why-us" className="py-14 sm:py-20">
+      <section id="stain-guide" className="py-14 sm:py-20">
+        <div className="max-w-5xl mx-auto px-4 sm:px-8 space-y-10">
+          <div className="text-center space-y-2.5 max-w-2xl mx-auto">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-950 border border-emerald-800/70 text-emerald-300 text-xs font-bold">
+              <HelpCircle className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Interactive Stain Care Helper</span>
+            </div>
+            <h2 className="text-2xl sm:text-4xl font-black text-white tracking-tight">
+              Tough Stain? Find the Right Treatment
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-300">
+              Tap a stain type below to see how our store experts safely treat and remove it.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-12 gap-6 items-stretch">
+            {/* Stain Selector Tabs */}
+            <div className="md:col-span-5 space-y-2">
+              {stainGuide.map((item, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setActiveStainTab(idx)}
+                  className={`w-full text-left p-4 rounded-2xl border transition-all text-xs font-extrabold flex items-center justify-between ${
+                    activeStainTab === idx
+                      ? 'bg-gradient-to-r from-brand-600 to-cyan-600 text-white border-brand-400 shadow-lg shadow-brand-600/30'
+                      : 'bg-slate-900/90 text-slate-300 border-slate-800 hover:border-slate-700'
+                  }`}
+                >
+                  <span>{item.stain}</span>
+                  <ArrowRight className={`w-4 h-4 ${activeStainTab === idx ? 'text-white' : 'text-slate-600'}`} />
+                </button>
+              ))}
+            </div>
+
+            {/* Stain Details Display */}
+            <div className="md:col-span-7 p-6 sm:p-8 rounded-3xl bg-slate-900/90 border border-slate-800 shadow-2xl flex flex-col justify-between space-y-4">
+              <div className="space-y-3">
+                <span className="px-3 py-1 rounded-full bg-brand-950 text-brand-300 font-extrabold text-[10px] border border-brand-800">
+                  RECOMMENDED CARE PROCESS
+                </span>
+                <h3 className="text-xl sm:text-2xl font-black text-white">{stainGuide[activeStainTab].stain}</h3>
+                <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 text-xs font-extrabold text-cyan-300 flex items-center gap-2">
+                  <Zap className="w-4 h-4 text-cyan-400 shrink-0" />
+                  <span>Treatment: {stainGuide[activeStainTab].treatment}</span>
+                </div>
+                <p className="text-xs text-slate-300 leading-relaxed">{stainGuide[activeStainTab].desc}</p>
+              </div>
+
+              <div className="pt-4 border-t border-slate-800/80 flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase">Best Store Service</p>
+                  <p className="text-xs font-extrabold text-emerald-400">{stainGuide[activeStainTab].recommendedService}</p>
+                </div>
+                <a
+                  href={`tel:${cleanPhone}`}
+                  className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-extrabold text-xs shadow-md flex items-center justify-center gap-2"
+                >
+                  <PhoneCall className="w-3.5 h-3.5" />
+                  <span>Consult Store Team</span>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ========================================================================= */}
+      {/* 5. WHY CHOOSE INTELLIGENTLAUNDRY */}
+      {/* ========================================================================= */}
+      <section id="why-us" className="py-14 sm:py-20 bg-slate-900/40 border-y border-slate-800/80">
         <div className="max-w-7xl mx-auto px-4 sm:px-8 space-y-10">
           <div className="text-center space-y-2.5 max-w-2xl mx-auto">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-950 border border-amber-800/70 text-amber-300 text-xs font-bold">
@@ -544,7 +690,49 @@ export const LandingWebsitePage: React.FC = () => {
       </section>
 
       {/* ========================================================================= */}
-      {/* 5. FAQ ACCORDION SECTION */}
+      {/* 6. FEATURE 2: CUSTOMER REVIEWS & RATINGS */}
+      {/* ========================================================================= */}
+      <section id="reviews" className="py-14 sm:py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-8 space-y-10">
+          <div className="text-center space-y-2.5 max-w-2xl mx-auto">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-950 border border-brand-800/70 text-brand-300 text-xs font-bold">
+              <ThumbsUp className="w-3.5 h-3.5 text-brand-400" />
+              <span>Customer Satisfaction</span>
+            </div>
+            <h2 className="text-2xl sm:text-4xl font-black text-white tracking-tight">
+              What Our Customers Say
+            </h2>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            {reviews.map((rev, idx) => (
+              <div key={idx} className="p-6 rounded-3xl bg-slate-900/90 border border-slate-800 shadow-xl space-y-4 flex flex-col justify-between">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1 text-amber-400">
+                      {[...Array(rev.rating)].map((_, rIdx) => (
+                        <Star key={rIdx} className="w-4 h-4 fill-amber-400 text-amber-400" />
+                      ))}
+                    </div>
+                    <span className="px-2.5 py-0.5 rounded-full bg-slate-950 text-emerald-400 font-extrabold text-[10px] border border-slate-800">
+                      {rev.tag}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-200 leading-relaxed font-medium">"{rev.comment}"</p>
+                </div>
+
+                <div className="pt-3 border-t border-slate-800/80">
+                  <p className="text-xs font-black text-white">{rev.name}</p>
+                  <p className="text-[11px] text-slate-400">{rev.location}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ========================================================================= */}
+      {/* 7. FAQ ACCORDION SECTION */}
       {/* ========================================================================= */}
       <section id="faq" className="py-14 sm:py-18 bg-slate-900/50 border-t border-slate-800/80">
         <div className="max-w-3xl mx-auto px-4 sm:px-8 space-y-8">
@@ -583,7 +771,7 @@ export const LandingWebsitePage: React.FC = () => {
       </section>
 
       {/* ========================================================================= */}
-      {/* 6. CALL STORE BANNER & HIGH-CONTRAST FOOTER */}
+      {/* 8. CALL STORE BANNER & HIGH-CONTRAST FOOTER */}
       {/* ========================================================================= */}
       <section id="contact" className="py-14 bg-gradient-to-r from-brand-950 via-slate-950 to-slate-950 border-t border-slate-800">
         <div className="max-w-4xl mx-auto px-4 sm:px-8 text-center space-y-6">
@@ -617,36 +805,61 @@ export const LandingWebsitePage: React.FC = () => {
             </p>
           </div>
 
-          {/* Contact Details (Highlighted Email) */}
+          {/* Contact Details (Highlighted Email & Google Maps Button) */}
           <div className="space-y-3">
             <h4 className="font-extrabold text-white uppercase text-[11px] tracking-wider">Store Contact</h4>
+            
             <p className="flex items-center gap-2 text-slate-200">
               <PhoneCall className="w-4 h-4 text-brand-400 shrink-0" />
               <span className="font-bold">{phone}</span>
             </p>
-            
+
             {/* Highlighted Email Pill */}
-            <div className="p-3 rounded-2xl bg-brand-950/80 border border-brand-800/80 shadow-md inline-block">
-              <p className="text-[10px] font-extrabold uppercase text-brand-300 mb-0.5">Official Store Email</p>
-              <p className="flex items-center gap-2 text-white font-black text-xs break-all">
+            <div className="p-3.5 rounded-2xl bg-gradient-to-r from-brand-950 to-slate-900 border border-brand-800/80 shadow-lg">
+              <p className="text-[10px] font-extrabold uppercase text-brand-300 mb-1">Official Store Email</p>
+              <a
+                href={`mailto:${email}`}
+                className="flex items-center gap-2 text-white font-black text-xs hover:text-brand-300 transition-colors break-all"
+              >
                 <Mail className="w-4 h-4 text-cyan-400 shrink-0" />
                 <span>{email}</span>
-              </p>
+              </a>
             </div>
 
-            <p className="flex items-start gap-2 text-slate-300 leading-relaxed pt-1">
-              <MapPin className="w-4 h-4 text-brand-400 shrink-0 mt-0.5" />
-              <span>{address}</span>
-            </p>
+            {/* Address with Google Maps button */}
+            <div className="space-y-2 pt-1">
+              <p className="flex items-start gap-2 text-slate-200 leading-relaxed">
+                <MapPin className="w-4 h-4 text-brand-400 shrink-0 mt-0.5" />
+                <span>{address}</span>
+              </p>
+              <a
+                href={googleMapsUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs font-bold text-cyan-300 hover:text-white transition-all"
+              >
+                <MapPin className="w-3.5 h-3.5 text-cyan-400" />
+                <span>Get Directions on Google Maps</span>
+                <ExternalLink className="w-3 h-3" />
+              </a>
+            </div>
           </div>
 
-          {/* Timings */}
+          {/* Working Hours (Monday - Friday Only) */}
           <div className="space-y-3">
             <h4 className="font-extrabold text-white uppercase text-[11px] tracking-wider">Working Hours</h4>
-            <div className="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-1">
-              <p className="text-white font-bold">Monday - Sunday</p>
-              <p className="text-brand-300 font-extrabold text-sm">08:00 AM - 09:00 PM</p>
-              <p className="text-[10px] text-slate-400 pt-1">All 7 days store pickup & customer service</p>
+            <div className="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-2">
+              <div>
+                <p className="text-white font-bold flex items-center gap-1.5">
+                  <Clock className="w-4 h-4 text-emerald-400" /> Monday - Friday
+                </p>
+                <p className="text-emerald-400 font-black text-sm">08:00 AM - 09:00 PM</p>
+              </div>
+
+              <div className="pt-2 border-t border-slate-800/80">
+                <p className="text-slate-400 font-semibold text-[11px]">Saturday - Sunday</p>
+                <p className="text-amber-400 font-bold text-xs">Closed / By Appointment</p>
+              </div>
             </div>
           </div>
         </div>
