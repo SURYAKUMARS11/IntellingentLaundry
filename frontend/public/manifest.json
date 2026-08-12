@@ -1,12 +1,18 @@
 {
   "short_name": "IntelligentLaundry",
-  "name": "IntelligentLaundry POS & Management",
-  "description": "Smart, fast & eco-friendly laundry POS management system for desktop and mobile",
+  "name": "IntelligentLaundry",
+  "description": "IntelligentLaundry POS & Management System",
   "icons": [
+    {
+      "src": "/logo.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any"
+    },
     {
       "src": "/logo.jpg",
       "type": "image/jpeg",
-      "sizes": "192x192 512x512",
+      "sizes": "512x512",
       "purpose": "any maskable"
     }
   ],

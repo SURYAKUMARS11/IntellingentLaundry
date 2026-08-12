@@ -1,9 +1,10 @@
-const CACHE_NAME = 'intelligent-laundry-v2';
+const CACHE_NAME = 'intelligent-laundry-v3';
 const ASSETS_TO_CACHE = [
   '/',
   '/login',
   '/index.html',
   '/logo.jpg',
+  '/logo.png',
   '/manifest.json'
 ];
 
