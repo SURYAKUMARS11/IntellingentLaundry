@@ -2,6 +2,7 @@ import { Router } from 'express';
 import {
   getOrders,
   getOrderById,
+  getOrderPDF,
   getPublicOrderByNumber,
   createOrder,
   updateOrder,
@@ -23,6 +24,7 @@ router.use(authMiddleware);
 
 router.get('/', getOrders);
 router.get('/:id', getOrderById);
+router.get('/:id/pdf', getOrderPDF);
 router.post('/', createOrder);
 router.put('/:id', updateOrder);
 router.patch('/:id/status', updateOrderStatus);

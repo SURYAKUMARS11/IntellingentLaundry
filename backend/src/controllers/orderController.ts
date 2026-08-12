@@ -3,9 +3,11 @@ import mongoose from 'mongoose';
 import Order, { OrderStatus, PaymentStatus } from '../models/Order';
 import Customer from '../models/Customer';
 import Payment from '../models/Payment';
+import Setting from '../models/Setting';
 import { generateOrderNumber } from '../utils/orderNumberGenerator';
 import { generateQRCodeDataUrl } from '../utils/qrGenerator';
-import { sendAutomatedWhatsAppMessage } from '../services/whatsappGateway';
+import { sendAutomatedWhatsAppMessage, sendAutomatedWhatsAppDocument } from '../services/whatsappGateway';
+import { generateInvoicePDFBuffer } from '../utils/pdfGenerator';
 
 export const getPublicOrderByNumber = async (req: Request, res: Response) => {
   try {
@@ -329,11 +331,16 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
 
     await order.save();
 
-    // Automated Background WhatsApp Notification on Order Delivery
+    // Automated Background WhatsApp PDF Document Delivery on Order Completion / Delivery
     if (status === 'Delivered' && order.customerSnapshot && order.customerSnapshot.mobile) {
-      const receiptUrl = `https://intellingentlaundry-1.onrender.com/receipt/${order.orderNumber}?r=${order.orderNumber}`;
-      const msg = `Hello *${order.customerSnapshot.name}*,\n\nYour laundry Order *#${order.orderNumber}* has been successfully delivered! 🎉\n\n📄 *View & Download Tax Invoice PDF*:\n${receiptUrl}\n\nThank you for choosing Intelligent Laundry!`;
-      sendAutomatedWhatsAppMessage(order.customerSnapshot.mobile, msg);
+      try {
+        const setting = await Setting.findOne();
+        const pdfBuffer = await generateInvoicePDFBuffer(order, setting);
+        const fileName = `Invoice_${order.orderNumber.replace(/[\/\\]/g, '_')}.pdf`;
+        sendAutomatedWhatsAppDocument(order.customerSnapshot.mobile, pdfBuffer, fileName);
+      } catch (pdfErr: any) {
+        console.error('[WhatsApp PDF Invoice Error]:', pdfErr.message);
+      }
     }
 
     res.json({
@@ -341,6 +348,25 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
       message: `Order status updated to ${status}`,
       order,
     });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const getOrderPDF = async (req: Request, res: Response) => {
+  try {
+    const order = await Order.findById(req.params.id);
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Order not found' });
+    }
+
+    const setting = await Setting.findOne();
+    const pdfBuffer = await generateInvoicePDFBuffer(order, setting);
+    const fileName = `Invoice_${order.orderNumber.replace(/[\/\\]/g, '_')}.pdf`;
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="${fileName}"`);
+    res.send(pdfBuffer);
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });
   }

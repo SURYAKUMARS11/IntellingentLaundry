@@ -122,3 +122,34 @@ export const sendAutomatedWhatsAppMessage = async (mobile: string, text: string)
     return false;
   }
 };
+
+// Send Automated Document (PDF Invoice) Helper
+export const sendAutomatedWhatsAppDocument = async (
+  mobile: string,
+  pdfBuffer: Buffer,
+  fileName: string,
+  caption?: string
+) => {
+  if (!waSocket || !isConnected) {
+    console.log('[WhatsApp Gateway] Document skipped: Gateway is not connected.');
+    return false;
+  }
+
+  try {
+    const rawDigits = mobile.replace(/\D/g, '');
+    const formattedNum = rawDigits.length === 10 ? '91' + rawDigits : rawDigits;
+    const jid = `${formattedNum}@s.whatsapp.net`;
+
+    await waSocket.sendMessage(jid, {
+      document: pdfBuffer,
+      mimetype: 'application/pdf',
+      fileName: fileName,
+      caption: caption || undefined,
+    });
+    console.log(`[WhatsApp Gateway] PDF document ${fileName} sent successfully to +${formattedNum}`);
+    return true;
+  } catch (err: any) {
+    console.error(`[WhatsApp Gateway Send Document Error to ${mobile}]:`, err.message);
+    return false;
+  }
+};
