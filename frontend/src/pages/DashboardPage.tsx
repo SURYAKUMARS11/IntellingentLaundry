@@ -613,7 +613,9 @@ export const DashboardPage: React.FC = () => {
                 {stats?.overdueOrders ?? overdueOrdersList.length}
               </p>
             )}
-            <p className="hidden sm:block text-[10px] font-semibold text-rose-600 mt-0.5">View overdue</p>
+            <p className="text-[10px] font-bold text-rose-600 dark:text-rose-400 mt-0.5 truncate">
+              Due: {currencySymbol}{overdueOrdersList.reduce((sum: number, o: any) => sum + Math.max(0, o.remainingBalance !== undefined ? Number(o.remainingBalance) : (Number(o.totalAmount || 0) - Number(o.advancePaid || 0))), 0).toLocaleString('en-IN')}
+            </p>
           </div>
         </div>
       </div>
