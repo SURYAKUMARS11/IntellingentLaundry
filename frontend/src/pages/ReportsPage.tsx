@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { fetchRevenueReport, fetchProfitLossReport, fetchSettings, getApiBaseUrl, getAuthToken } from '../services/api';
+import { useToast } from '../context/ToastContext';
 import { Customer, Setting } from '../types';
 import {
   ResponsiveContainer,
@@ -31,6 +32,7 @@ import {
 } from 'lucide-react';
 
 export const ReportsPage: React.FC = () => {
+  const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState<'pnl' | 'revenue' | 'customers'>('pnl');
   const [periodPreset, setPeriodPreset] = useState<string>('current_month');
 
@@ -97,10 +99,35 @@ export const ReportsPage: React.FC = () => {
 
   const currencySymbol = setting?.currencySymbol || '₹';
 
-  const handleExportCSV = (type: 'orders' | 'customers' | 'pnl') => {
-    const token = getAuthToken();
-    const baseUrl = getApiBaseUrl();
-    window.open(`${baseUrl}/reports/export?type=${type}&token=${encodeURIComponent(token || '')}`, '_blank');
+  const handleExportCSV = async (type: 'orders' | 'customers' | 'pnl') => {
+    try {
+      showToast('⏳ Generating export file...', 'info');
+      const token = getAuthToken();
+      const baseUrl = getApiBaseUrl();
+      const res = await fetch(`${baseUrl}/reports/export?type=${type}&token=${encodeURIComponent(token || '')}`, {
+        headers: {
+          'Authorization': `Bearer ${token || ''}`,
+        },
+      });
+
+      if (!res.ok) {
+        throw new Error(`Export failed with status ${res.status}`);
+      }
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = type === 'pnl' ? 'laundry_profit_loss_statement.csv' : type === 'orders' ? 'laundry_orders.csv' : 'laundry_customers.csv';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+      showToast('✅ Export downloaded successfully!', 'success');
+    } catch (err: any) {
+      console.error('Export error:', err);
+      showToast(err.message || 'Failed to export CSV', 'error');
+    }
   };
 
   const handlePrintPnl = () => {
