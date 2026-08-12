@@ -321,54 +321,8 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ order, setting, onClos
             </div>
           </div>
 
-          {/* Calculation Breakdown & QR Verification */}
-          <div className="border-t border-slate-200 pt-5 flex flex-col sm:flex-row justify-between items-start gap-6">
-            {/* UPI Payment Scan & Pay Box */}
-            <div className="w-full sm:w-auto flex items-start gap-3 bg-slate-50 p-3.5 rounded-2xl border border-slate-200 shadow-xs">
-              <div className="bg-white p-1.5 rounded-xl border border-slate-200 shadow-xs shrink-0">
-                {setting?.paymentQrUrl ? (
-                  <img
-                    src={setting.paymentQrUrl}
-                    alt="Shop Payment QR"
-                    className="w-[85px] h-[85px] object-contain rounded-lg"
-                  />
-                ) : (
-                  <QRCodeSVG
-                    value={upiPaymentUrl}
-                    size={85}
-                    level="M"
-                  />
-                )}
-              </div>
-
-              <div className="text-xs space-y-1">
-                <div className="flex items-center gap-1.5">
-                  <span className="font-extrabold text-slate-900">Scan & Pay via UPI</span>
-                  <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800">
-                    GPay / PhonePe
-                  </span>
-                </div>
-
-                <p className="text-[11px] text-slate-600">
-                  Amount Due: <strong className="text-emerald-700 font-extrabold">{setting?.currencySymbol || '₹'}{dueAmount}</strong>
-                </p>
-
-                {shopGPayPhone && (
-                  <p className="text-[11px] font-semibold text-slate-800">
-                    GPay No: <span className="font-extrabold text-slate-900">{shopGPayPhone}</span>
-                  </p>
-                )}
-
-                <p className="text-[10px] font-mono font-bold text-brand-600 truncate max-w-[170px]">
-                  UPI: {shopUpiId}
-                </p>
-
-                <p className="text-[9px] text-slate-400 font-semibold">
-                  GPay • PhonePe • Paytm • BHIM
-                </p>
-              </div>
-            </div>
-
+          {/* Calculation Breakdown */}
+          <div className="border-t border-slate-200 pt-5 flex justify-end">
             {/* Calculations Breakdown */}
             <div className="w-full sm:w-64 text-xs space-y-2">
               <div className="flex justify-between text-slate-600">

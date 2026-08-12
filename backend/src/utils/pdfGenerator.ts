@@ -166,26 +166,8 @@ export const generateInvoicePDFBuffer = async (order: any, setting?: any): Promi
       // Table Bottom Border Line
       doc.moveTo(40, tableY).lineTo(555, tableY).strokeColor('#e2e8f0').lineWidth(1).stroke();
 
-      // Calculation Summary Box & UPI Payment Scan Box
+      // Calculation Summary Box
       tableY += 15;
-
-      // Left: UPI Payment Notice Box with Rendered QR Code
-      doc.rect(40, tableY, 240, 75).fill('#f8fafc').stroke('#e2e8f0');
-      
-      let textX = 50;
-      if (qrBuffer) {
-        try {
-          doc.image(qrBuffer, 48, tableY + 7.5, { width: 60, height: 60 });
-          textX = 118;
-        } catch (e) {
-          textX = 50;
-        }
-      }
-
-      doc.fontSize(8.5).fillColor('#0f172a').font('Helvetica-Bold').text('Scan & Pay via UPI', textX, tableY + 10);
-      doc.fontSize(7.5).fillColor('#475569').font('Helvetica').text(`UPI ID: ${upiId}`, textX, tableY + 24, { width: 150 });
-      doc.text(`Accepted: GPay / PhonePe / Paytm`, textX, tableY + 37, { width: 150 });
-      doc.fontSize(7).fillColor('#0369a1').font('Helvetica-Bold').text('Instant Online Payment', textX, tableY + 52);
 
       // Right: Financial Summary Breakdown
       const summaryLeft = 360;
