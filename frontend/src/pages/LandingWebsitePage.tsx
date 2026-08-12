@@ -282,8 +282,8 @@ export const LandingWebsitePage: React.FC = () => {
             Experience world-class garment washing, dry cleaning, steam pressing, saree pre-pleating, shoe cleaning, and bag care. Specialized solutions for every fabric type.
           </p>
 
-          {/* Working Hours Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-slate-900/90 border border-slate-800 text-slate-200 text-xs font-bold shadow-lg">
+          {/* Working Hours Badge (Desktop Only) */}
+          <div className="hidden sm:inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-slate-900/90 border border-slate-800 text-slate-200 text-xs font-bold shadow-lg">
             <Clock className="w-4 h-4 text-emerald-400 shrink-0" />
             <span>Store Hours: <strong className="text-white">Monday - Friday (08:00 AM - 09:00 PM)</strong></span>
           </div>
