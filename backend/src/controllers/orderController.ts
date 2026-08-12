@@ -331,7 +331,7 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
 
     await order.save();
 
-    // Automated Background WhatsApp PDF Document Delivery on Order Completion / Delivery
+    // Automated Background WhatsApp Invoice Delivery on Order Completion / Delivery
     let whatsappSent = false;
     let whatsappMsg = '';
 
@@ -345,23 +345,32 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
       if (mobile) {
         try {
           const setting = await Setting.findOne();
+          const receiptUrl = `https://intellingentlaundry-1.onrender.com/receipt/${order.orderNumber}?r=${order.orderNumber}`;
+          const custName = order.customerSnapshot?.name || 'Customer';
+
+          // 1. Send exact invoice template message with receipt link
+          const msg = `Hello *${custName}*,\n\nYour official laundry invoice & receipt for Order *#${order.orderNumber}* is ready!\n\n📋 *Invoice Summary*:\n• Order Date: ${new Date(order.orderDate).toLocaleDateString('en-GB')}\n• Status: Delivered 🎉\n• Total Amount: ₹${order.totalAmount}\n• Advance Paid: ₹${order.advancePaid}\n• Remaining Balance: ₹${order.remainingBalance}\n\n🔗 *View & Print Invoice Directly*:\n${receiptUrl}\n\nThank you for choosing Intelligent Laundry!`;
+          const textSent = await sendAutomatedWhatsAppMessage(mobile, msg);
+
+          // 2. Send PDF document attachment
           const pdfBuffer = await generateInvoicePDFBuffer(order, setting);
           const fileName = `Invoice_${order.orderNumber.replace(/[\/\\]/g, '_')}.pdf`;
-          
-          whatsappSent = await sendAutomatedWhatsAppDocument(mobile, pdfBuffer, fileName);
+          const pdfSent = await sendAutomatedWhatsAppDocument(mobile, pdfBuffer, fileName);
+
+          whatsappSent = textSent || pdfSent;
           if (whatsappSent) {
-            whatsappMsg = `Invoice PDF sent automatically to +${mobile} via WhatsApp!`;
+            whatsappMsg = `Invoice link & PDF sent automatically to +${mobile} via WhatsApp!`;
           } else {
-            whatsappMsg = `WhatsApp gateway is not connected. Connect in Settings to send automated PDF invoices.`;
+            whatsappMsg = `WhatsApp gateway is not connected. Connect in Settings to send automated invoices.`;
           }
-          console.log(`[WhatsApp Order Delivered PDF]: ${whatsappMsg}`);
+          console.log(`[WhatsApp Order Delivered]: ${whatsappMsg}`);
         } catch (pdfErr: any) {
-          console.error('[WhatsApp PDF Invoice Error]:', pdfErr.message);
-          whatsappMsg = `PDF Generation Error: ${pdfErr.message}`;
+          console.error('[WhatsApp Delivered Invoice Error]:', pdfErr.message);
+          whatsappMsg = `Invoice Error: ${pdfErr.message}`;
         }
       } else {
         whatsappMsg = `No mobile number found for order ${order.orderNumber}`;
-        console.log(`[WhatsApp Order Delivered PDF]: ${whatsappMsg}`);
+        console.log(`[WhatsApp Order Delivered]: ${whatsappMsg}`);
       }
     }
 
