@@ -21,26 +21,19 @@ import {
   Scissors,
   Layers,
   Award,
-  Phone,
   Flame,
   Droplets,
   Sun,
   Crown,
   Feather,
-  Check,
-  HelpCircle,
   ExternalLink,
   ThumbsUp,
-  HeartHandshake,
 } from 'lucide-react';
 
 export const LandingWebsitePage: React.FC = () => {
   const navigate = useNavigate();
   const [setting, setSetting] = useState<Setting | undefined>(undefined);
   const [activeFaq, setActiveFaq] = useState<number | null>(0);
-  const [activeCategory, setActiveCategory] = useState<string>('all');
-  const [selectedServiceId, setSelectedServiceId] = useState<string>('wash-fold');
-  const [activeStainTab, setActiveStainTab] = useState<number>(0);
 
   useEffect(() => {
     fetchSettings().then((res) => {
@@ -56,27 +49,23 @@ export const LandingWebsitePage: React.FC = () => {
   const address = '2/516 B Thiruvalluvar Nagar, Near ambal hospital, Malumichampatti, Coimbatore 641050';
   const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
 
-  // Services Catalog
+  // Complete List of Services
   const servicesList = [
     {
       id: 'wash-fold',
-      catKey: 'laundry',
       title: 'Wash and Fold',
       category: 'Daily Laundry',
       icon: WashingMachine,
-      image: '/hero_laundry.jpg',
-      badge: 'Most Popular',
+      badge: 'Popular',
       color: 'from-brand-600 to-cyan-600',
       desc: 'Hygienic machine wash with organic softeners, color segregation, anti-bacterial rinse, and neat precision folding.',
       features: ['Separated Customer Loads', 'Hypoallergenic Detergents', 'Anti-Bacterial Rinse', 'Neat Folded Packaging'],
     },
     {
       id: 'wash-iron',
-      catKey: 'laundry',
       title: 'Wash and Iron',
       category: 'Daily Care',
       icon: Droplets,
-      image: '/hero_laundry.jpg',
       badge: 'Complete Care',
       color: 'from-cyan-600 to-blue-600',
       desc: 'Thorough fabric wash followed by high-pressure steam pressing to keep your daily wear fresh, crisp, and wrinkle-free.',
@@ -84,11 +73,9 @@ export const LandingWebsitePage: React.FC = () => {
     },
     {
       id: 'steam-iron',
-      catKey: 'dryclean',
       title: 'Steam Ironing',
       category: 'Pressing',
       icon: Flame,
-      image: '/dry_cleaning_care.jpg',
       badge: 'Crisp Finish',
       color: 'from-amber-600 to-orange-600',
       desc: 'Wrinkle-free steam pressing using temperature-controlled steam ironers that protect delicate fibers and original garment shape.',
@@ -96,11 +83,9 @@ export const LandingWebsitePage: React.FC = () => {
     },
     {
       id: 'dry-cleaning',
-      catKey: 'dryclean',
       title: 'Dry Cleaning',
       category: 'Premium Care',
       icon: Sparkles,
-      image: '/dry_cleaning_care.jpg',
       badge: 'Expert Dry Clean',
       color: 'from-violet-600 to-purple-600',
       desc: 'Gentle chemical-free dry cleaning for suits, blazers, silk sarees, heavy lehengas, and designer ethnic wear.',
@@ -108,11 +93,9 @@ export const LandingWebsitePage: React.FC = () => {
     },
     {
       id: 'shoe-laundry',
-      catKey: 'footwear',
       title: 'Shoe Laundry',
       category: 'Footwear Care',
       icon: Crown,
-      image: '/shoe_laundry.jpg',
       badge: 'Restoration',
       color: 'from-emerald-600 to-teal-600',
       desc: 'Deep hand-scrubbing, sole whitening, suede & leather polishing, and anti-bacterial deodorizing for all types of shoes.',
@@ -120,11 +103,9 @@ export const LandingWebsitePage: React.FC = () => {
     },
     {
       id: 'starching',
-      catKey: 'dryclean',
       title: 'Starching',
       category: 'Stiffening',
       icon: Sun,
-      image: '/dry_cleaning_care.jpg',
       badge: 'Traditional',
       color: 'from-amber-500 to-yellow-600',
       desc: 'Crisp stiff starching for cotton shirts, dhotis, uniform trousers, and sarees to maintain a formal posture and sharp feel.',
@@ -132,11 +113,9 @@ export const LandingWebsitePage: React.FC = () => {
     },
     {
       id: 'bleaching-stain',
-      catKey: 'laundry',
       title: 'Bleaching & Stain Removal',
       category: 'Spot Treatment',
       icon: ShieldCheck,
-      image: '/hero_laundry.jpg',
       badge: 'Specialist',
       color: 'from-rose-600 to-pink-600',
       desc: 'Specialized enzyme stain treatment for tough oil, ink, wine, and grease stains along with safe white fabric brightening.',
@@ -144,11 +123,9 @@ export const LandingWebsitePage: React.FC = () => {
     },
     {
       id: 'curtains-household',
-      catKey: 'household',
       title: 'Curtains & Household Care',
       category: 'Home Fabrics',
       icon: Layers,
-      image: '/pickup_delivery.jpg',
       badge: 'Heavy Fabric',
       color: 'from-blue-600 to-indigo-600',
       desc: 'Deep steam washing and sanitization for heavy window curtains, bedsheets, blankets, duvets, and sofa covers.',
@@ -156,11 +133,9 @@ export const LandingWebsitePage: React.FC = () => {
     },
     {
       id: 'darning-alterations',
-      catKey: 'household',
       title: 'Darning & Garment Alterations',
       category: 'Mending',
       icon: Scissors,
-      image: '/dry_cleaning_care.jpg',
       badge: 'Garment Repair',
       color: 'from-cyan-600 to-emerald-600',
       desc: 'Professional invisible darning, seam stitching, button replacement, zip repairs, and size fitting alterations.',
@@ -168,11 +143,9 @@ export const LandingWebsitePage: React.FC = () => {
     },
     {
       id: 'leather-jacket',
-      catKey: 'footwear',
       title: 'Leather & Jacket Care',
       category: 'Specialty Wear',
       icon: Feather,
-      image: '/shoe_laundry.jpg',
       badge: 'Luxury Care',
       color: 'from-yellow-600 to-amber-700',
       desc: 'Nourishing leather conditioner treatment, mold removal, and shine restoration for leather jackets, coats & bags.',
@@ -180,58 +153,13 @@ export const LandingWebsitePage: React.FC = () => {
     },
     {
       id: 'express-delivery',
-      catKey: 'household',
       title: 'Express 24-Hour Delivery',
       category: 'Priority Service',
       icon: Zap,
-      image: '/pickup_delivery.jpg',
       badge: '24h Express',
       color: 'from-red-600 to-orange-600',
       desc: 'Same-day urgent priority turnaround for business travelers, events, weddings, and emergency laundry needs.',
       features: ['24h Rapid Turnaround', 'Priority Machine Slot', 'Direct Store Contact', 'Express Delivery'],
-    },
-  ];
-
-  // Category Filter
-  const categories = [
-    { key: 'all', label: 'All Services' },
-    { key: 'laundry', label: 'Daily Laundry' },
-    { key: 'dryclean', label: 'Dry Clean & Press' },
-    { key: 'footwear', label: 'Footwear & Leather' },
-    { key: 'household', label: 'House & Alterations' },
-  ];
-
-  // Interactive Stain & Fabric Guide Data
-  const stainGuide = [
-    {
-      stain: '🍷 Wine / Coffee / Tea',
-      treatment: 'Targeted Oxygen Enzyme Pre-Soak',
-      desc: 'Cold water flush followed by specialized organic enzyme spotting that breaks down tannin compounds without bleaching fabric color.',
-      recommendedService: 'Bleaching & Stain Removal',
-    },
-    {
-      stain: '✒️ Ink / Ballpoint Pen',
-      treatment: 'Non-Polar Solvent Pre-Treatment',
-      desc: 'Solvent spot treatment dissolving ink pigments while preserving delicate thread weaving and preventing bleed marks.',
-      recommendedService: 'Dry Cleaning',
-    },
-    {
-      stain: '🛢️ Oil / Grease / Food',
-      treatment: 'High-Efficiency Degreasing Wash',
-      desc: 'Controlled temperature wash using bio-degradeable degreaser agents that lift grease particles out of cottons and synthetics.',
-      recommendedService: 'Wash and Iron',
-    },
-    {
-      stain: '🍛 Turmeric / Curry / Gravy',
-      treatment: 'Color-Safe Sunlight & Bio-Clean',
-      desc: 'Specialized pre-spotting bath targeting natural curcumin stains, leaving white shirts and ethnic wear spotlessly clean.',
-      recommendedService: 'Bleaching & Stain Removal',
-    },
-    {
-      stain: '👟 Scuffs / Sole Dirt on Shoes',
-      treatment: 'Deep Hand Scrub & Sole Whitening',
-      desc: 'Manual detail scrubbing with specialized suede/leather brush, followed by anti-bacterial sole de-yellowing treatment.',
-      recommendedService: 'Shoe Laundry',
     },
   ];
 
@@ -259,12 +187,6 @@ export const LandingWebsitePage: React.FC = () => {
       tag: 'Regular Wash & Iron',
     },
   ];
-
-  const filteredServices = activeCategory === 'all'
-    ? servicesList
-    : servicesList.filter((s) => s.catKey === activeCategory);
-
-  const selectedService = servicesList.find((s) => s.id === selectedServiceId) || servicesList[0];
 
   const faqs = [
     {
@@ -294,7 +216,7 @@ export const LandingWebsitePage: React.FC = () => {
       {/* ========================================================================= */}
       {/* 1. TOP NAVBAR HEADER */}
       {/* ========================================================================= */}
-      <header className="sticky top-0 z-40 bg-slate-950/90 backdrop-blur-xl border-b border-slate-800/80 transition-all">
+      <header className="sticky top-0 z-40 bg-slate-950/95 backdrop-blur-xl border-b border-slate-800/80 transition-all">
         <div className="max-w-7xl mx-auto px-4 sm:px-8 py-3 flex items-center justify-between">
           {/* Logo */}
           <div
@@ -313,7 +235,6 @@ export const LandingWebsitePage: React.FC = () => {
           {/* Desktop Nav Links */}
           <nav className="hidden md:flex items-center gap-7 text-xs font-extrabold text-slate-300">
             <a href="#services" className="hover:text-brand-400 transition-colors">Our Services</a>
-            <a href="#stain-guide" className="hover:text-brand-400 transition-colors">Stain Guide</a>
             <a href="#why-us" className="hover:text-brand-400 transition-colors">Why Us</a>
             <a href="#reviews" className="hover:text-brand-400 transition-colors">Reviews</a>
             <a href="#faq" className="hover:text-brand-400 transition-colors">FAQ</a>
@@ -336,9 +257,9 @@ export const LandingWebsitePage: React.FC = () => {
       {/* ========================================================================= */}
       {/* 2. HERO SECTION */}
       {/* ========================================================================= */}
-      <section className="relative pt-8 sm:pt-14 pb-16 overflow-hidden">
+      <section className="relative pt-8 sm:pt-14 pb-14 sm:pb-20 overflow-hidden">
         {/* Background glow */}
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[320px] sm:w-[600px] h-[250px] sm:h-[350px] bg-gradient-to-r from-brand-600/25 via-cyan-600/25 to-emerald-600/25 blur-[100px] rounded-full pointer-events-none" />
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] sm:w-[600px] h-[200px] sm:h-[350px] bg-gradient-to-r from-brand-600/25 via-cyan-600/25 to-emerald-600/25 blur-[100px] rounded-full pointer-events-none" />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-8 relative z-10 grid lg:grid-cols-12 gap-8 lg:gap-12 items-center">
           {/* Left Text */}
@@ -357,8 +278,8 @@ export const LandingWebsitePage: React.FC = () => {
             </p>
 
             {/* Working Hours Badge */}
-            <div className="inline-flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-slate-900 border border-slate-800 text-slate-200 text-xs font-bold">
-              <Clock className="w-4 h-4 text-emerald-400" />
+            <div className="inline-flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-slate-900/90 border border-slate-800 text-slate-200 text-xs font-bold">
+              <Clock className="w-4 h-4 text-emerald-400 shrink-0" />
               <span>Store Hours: <strong className="text-white">Monday - Friday (08:00 AM - 09:00 PM)</strong></span>
             </div>
 
@@ -409,7 +330,7 @@ export const LandingWebsitePage: React.FC = () => {
               <img
                 src="/hero_laundry.jpg"
                 alt="IntelligentLaundry Store"
-                className="w-full h-[280px] sm:h-[420px] object-cover group-hover:scale-105 transition-transform duration-700"
+                className="w-full h-[260px] sm:h-[420px] object-cover group-hover:scale-105 transition-transform duration-700"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
 
@@ -428,126 +349,70 @@ export const LandingWebsitePage: React.FC = () => {
       </section>
 
       {/* ========================================================================= */}
-      {/* 3. UNIQUE INTERACTIVE SERVICES SHOWCASE */}
+      {/* 3. CLEAN & ELEGANT SERVICES SHOWCASE */}
       {/* ========================================================================= */}
-      <section id="services" className="py-14 sm:py-20 bg-slate-900/50 border-y border-slate-800/80">
+      <section id="services" className="py-14 sm:py-20 bg-slate-900/40 border-y border-slate-800/80">
         <div className="max-w-7xl mx-auto px-4 sm:px-8 space-y-10">
           {/* Header */}
           <div className="text-center space-y-2.5 max-w-2xl mx-auto">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-950 border border-cyan-800/70 text-cyan-300 text-xs font-bold">
               <Layers className="w-3.5 h-3.5 text-cyan-400" />
-              <span>Services Showcase</span>
+              <span>Full Service Offerings</span>
             </div>
             <h2 className="text-2xl sm:text-4xl font-black text-white tracking-tight">
-              Our Specialized Garment Care Services
+              Our Services
             </h2>
             <p className="text-xs sm:text-sm text-slate-300">
-              Select a service category below to explore specialized treatments tailored for your apparel.
+              Professional garment washing, dry cleaning, steam pressing, shoe restoration, and specialty fabric care.
             </p>
           </div>
 
-          {/* Interactive Category Filter Pills */}
-          <div className="flex flex-wrap justify-center gap-2 max-w-3xl mx-auto">
-            {categories.map((cat) => (
-              <button
-                key={cat.key}
-                onClick={() => setActiveCategory(cat.key)}
-                className={`px-4 py-2 rounded-2xl text-xs font-extrabold transition-all border ${
-                  activeCategory === cat.key
-                    ? 'bg-gradient-to-r from-brand-600 to-cyan-600 text-white border-brand-500 shadow-lg shadow-brand-600/30 scale-105'
-                    : 'bg-slate-900/90 text-slate-300 border-slate-800 hover:border-slate-700 hover:text-white'
-                }`}
-              >
-                {cat.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Featured Spotlight Banner */}
-          <div className="relative rounded-3xl overflow-hidden border border-slate-800 bg-slate-900/90 shadow-2xl p-6 sm:p-8 grid lg:grid-cols-12 gap-6 items-center">
-            <div className="lg:col-span-7 space-y-4">
-              <div className="flex items-center gap-2">
-                <span className="px-3 py-1 rounded-full bg-brand-600/90 text-white font-extrabold text-[10px] shadow-md">
-                  FEATURED SPOTLIGHT: {selectedService.badge}
-                </span>
-                <span className="text-xs font-bold text-brand-300">{selectedService.category}</span>
-              </div>
-
-              <h3 className="text-2xl sm:text-3xl font-black text-white">{selectedService.title}</h3>
-              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">{selectedService.desc}</p>
-
-              <div className="grid grid-cols-2 gap-2 pt-2">
-                {selectedService.features.map((feat, fIdx) => (
-                  <div key={fIdx} className="flex items-center gap-2 text-xs font-semibold text-slate-200">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span>{feat}</span>
-                  </div>
-                ))}
-              </div>
-
-              <div className="pt-2">
-                <a
-                  href={`tel:${cleanPhone}`}
-                  className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-brand-600 to-cyan-600 text-white font-black text-xs shadow-lg shadow-brand-600/30"
-                >
-                  <PhoneCall className="w-4 h-4" />
-                  <span>Call Store to Book {selectedService.title}</span>
-                </a>
-              </div>
-            </div>
-
-            <div className="lg:col-span-5 h-56 sm:h-72 rounded-2xl overflow-hidden border border-slate-800 relative">
-              <img
-                src={selectedService.image}
-                alt={selectedService.title}
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent" />
-            </div>
-          </div>
-
-          {/* Service Cards Grid (High Contrast Dark Styling) */}
+          {/* Service Cards Grid (Ultra High Contrast & Mobile First) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {filteredServices.map((serv) => {
+            {servicesList.map((serv) => {
               const IconComponent = serv.icon;
-              const isSelected = selectedServiceId === serv.id;
               return (
                 <div
                   key={serv.id}
-                  onClick={() => setSelectedServiceId(serv.id)}
-                  className={`p-5 rounded-3xl border transition-all cursor-pointer flex flex-col justify-between space-y-4 ${
-                    isSelected
-                      ? 'bg-slate-900 border-brand-500 shadow-xl shadow-brand-950/50 ring-1 ring-brand-500'
-                      : 'bg-slate-900/90 border-slate-800 hover:border-slate-700 hover:bg-slate-900'
-                  }`}
+                  className="bg-slate-900/95 border border-slate-800/90 hover:border-brand-500/60 shadow-xl rounded-3xl p-5 sm:p-6 transition-all group flex flex-col justify-between space-y-4"
                 >
-                  <div className="space-y-3">
+                  <div className="space-y-3.5">
+                    {/* Top Badge & Icon */}
                     <div className="flex items-center justify-between">
-                      <div className={`w-10 h-10 rounded-2xl bg-gradient-to-br ${serv.color} flex items-center justify-center text-white shadow-md`}>
-                        <IconComponent className="w-5 h-5" />
+                      <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${serv.color} flex items-center justify-center text-white shadow-md group-hover:scale-105 transition-transform`}>
+                        <IconComponent className="w-6 h-6" />
                       </div>
-                      <span className="px-2.5 py-1 rounded-full bg-slate-950 text-brand-300 font-extrabold text-[10px] border border-slate-800">
+                      <span className="px-3 py-1 rounded-full bg-slate-950 text-brand-300 font-extrabold text-[10px] border border-slate-800">
                         {serv.badge}
                       </span>
                     </div>
 
                     <div>
                       <p className="text-[10px] font-extrabold uppercase tracking-wider text-brand-400">{serv.category}</p>
-                      <h4 className="text-base font-black text-white">{serv.title}</h4>
+                      <h3 className="text-lg font-black text-white group-hover:text-brand-300 transition-colors">{serv.title}</h3>
                     </div>
 
-                    <p className="text-xs text-slate-300 leading-relaxed line-clamp-3">{serv.desc}</p>
+                    <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-normal">{serv.desc}</p>
+
+                    {/* Features list */}
+                    <div className="pt-2 space-y-1.5 border-t border-slate-800/80">
+                      {serv.features.map((feat, fIdx) => (
+                        <div key={fIdx} className="flex items-center gap-2 text-xs font-semibold text-slate-200">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                          <span>{feat}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
 
-                  <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between">
-                    <span className="text-[11px] font-bold text-slate-400">Click for Spotlight</span>
+                  {/* Call Action Button */}
+                  <div className="pt-2 border-t border-slate-800/80">
                     <a
                       href={`tel:${cleanPhone}`}
-                      onClick={(e) => e.stopPropagation()}
-                      className="px-3.5 py-1.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-extrabold text-xs flex items-center gap-1.5 shadow-md"
+                      className="w-full py-3 rounded-2xl bg-gradient-to-r from-brand-600 via-cyan-600 to-emerald-600 hover:from-brand-500 hover:to-emerald-500 text-white font-extrabold text-xs shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-all"
                     >
-                      <PhoneCall className="w-3.5 h-3.5" />
-                      <span>Call Now</span>
+                      <PhoneCall className="w-4 h-4" />
+                      <span>Call Store to Book</span>
                     </a>
                   </div>
                 </div>
@@ -558,78 +423,9 @@ export const LandingWebsitePage: React.FC = () => {
       </section>
 
       {/* ========================================================================= */}
-      {/* 4. FEATURE 1: INTERACTIVE GARMENT STAIN & FABRIC CARE GUIDE */}
+      {/* 4. WHY CHOOSE INTELLIGENTLAUNDRY */}
       {/* ========================================================================= */}
-      <section id="stain-guide" className="py-14 sm:py-20">
-        <div className="max-w-5xl mx-auto px-4 sm:px-8 space-y-10">
-          <div className="text-center space-y-2.5 max-w-2xl mx-auto">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-950 border border-emerald-800/70 text-emerald-300 text-xs font-bold">
-              <HelpCircle className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Interactive Stain Care Helper</span>
-            </div>
-            <h2 className="text-2xl sm:text-4xl font-black text-white tracking-tight">
-              Tough Stain? Find the Right Treatment
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-300">
-              Tap a stain type below to see how our store experts safely treat and remove it.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-12 gap-6 items-stretch">
-            {/* Stain Selector Tabs */}
-            <div className="md:col-span-5 space-y-2">
-              {stainGuide.map((item, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setActiveStainTab(idx)}
-                  className={`w-full text-left p-4 rounded-2xl border transition-all text-xs font-extrabold flex items-center justify-between ${
-                    activeStainTab === idx
-                      ? 'bg-gradient-to-r from-brand-600 to-cyan-600 text-white border-brand-400 shadow-lg shadow-brand-600/30'
-                      : 'bg-slate-900/90 text-slate-300 border-slate-800 hover:border-slate-700'
-                  }`}
-                >
-                  <span>{item.stain}</span>
-                  <ArrowRight className={`w-4 h-4 ${activeStainTab === idx ? 'text-white' : 'text-slate-600'}`} />
-                </button>
-              ))}
-            </div>
-
-            {/* Stain Details Display */}
-            <div className="md:col-span-7 p-6 sm:p-8 rounded-3xl bg-slate-900/90 border border-slate-800 shadow-2xl flex flex-col justify-between space-y-4">
-              <div className="space-y-3">
-                <span className="px-3 py-1 rounded-full bg-brand-950 text-brand-300 font-extrabold text-[10px] border border-brand-800">
-                  RECOMMENDED CARE PROCESS
-                </span>
-                <h3 className="text-xl sm:text-2xl font-black text-white">{stainGuide[activeStainTab].stain}</h3>
-                <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 text-xs font-extrabold text-cyan-300 flex items-center gap-2">
-                  <Zap className="w-4 h-4 text-cyan-400 shrink-0" />
-                  <span>Treatment: {stainGuide[activeStainTab].treatment}</span>
-                </div>
-                <p className="text-xs text-slate-300 leading-relaxed">{stainGuide[activeStainTab].desc}</p>
-              </div>
-
-              <div className="pt-4 border-t border-slate-800/80 flex flex-col sm:flex-row items-center justify-between gap-3">
-                <div>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase">Best Store Service</p>
-                  <p className="text-xs font-extrabold text-emerald-400">{stainGuide[activeStainTab].recommendedService}</p>
-                </div>
-                <a
-                  href={`tel:${cleanPhone}`}
-                  className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-extrabold text-xs shadow-md flex items-center justify-center gap-2"
-                >
-                  <PhoneCall className="w-3.5 h-3.5" />
-                  <span>Consult Store Team</span>
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ========================================================================= */}
-      {/* 5. WHY CHOOSE INTELLIGENTLAUNDRY */}
-      {/* ========================================================================= */}
-      <section id="why-us" className="py-14 sm:py-20 bg-slate-900/40 border-y border-slate-800/80">
+      <section id="why-us" className="py-14 sm:py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-8 space-y-10">
           <div className="text-center space-y-2.5 max-w-2xl mx-auto">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-950 border border-amber-800/70 text-amber-300 text-xs font-bold">
@@ -680,8 +476,8 @@ export const LandingWebsitePage: React.FC = () => {
                   <div className="w-10 h-10 rounded-2xl bg-brand-600/20 border border-brand-500/40 flex items-center justify-center text-brand-400">
                     <IconComponent className="w-5 h-5" />
                   </div>
-                  <h3 className="text-sm font-extrabold text-white">{item.title}</h3>
-                  <p className="text-xs text-slate-300 leading-relaxed">{item.desc}</p>
+                  <h3 className="text-sm sm:text-base font-extrabold text-white">{item.title}</h3>
+                  <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">{item.desc}</p>
                 </div>
               );
             })}
@@ -690,9 +486,9 @@ export const LandingWebsitePage: React.FC = () => {
       </section>
 
       {/* ========================================================================= */}
-      {/* 6. FEATURE 2: CUSTOMER REVIEWS & RATINGS */}
+      {/* 5. CUSTOMER REVIEWS & RATINGS */}
       {/* ========================================================================= */}
-      <section id="reviews" className="py-14 sm:py-20">
+      <section id="reviews" className="py-14 sm:py-20 bg-slate-900/40 border-y border-slate-800/80">
         <div className="max-w-7xl mx-auto px-4 sm:px-8 space-y-10">
           <div className="text-center space-y-2.5 max-w-2xl mx-auto">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-950 border border-brand-800/70 text-brand-300 text-xs font-bold">
@@ -718,7 +514,7 @@ export const LandingWebsitePage: React.FC = () => {
                       {rev.tag}
                     </span>
                   </div>
-                  <p className="text-xs text-slate-200 leading-relaxed font-medium">"{rev.comment}"</p>
+                  <p className="text-xs sm:text-sm text-slate-200 leading-relaxed font-medium">"{rev.comment}"</p>
                 </div>
 
                 <div className="pt-3 border-t border-slate-800/80">
@@ -732,13 +528,13 @@ export const LandingWebsitePage: React.FC = () => {
       </section>
 
       {/* ========================================================================= */}
-      {/* 7. FAQ ACCORDION SECTION */}
+      {/* 6. FAQ ACCORDION SECTION */}
       {/* ========================================================================= */}
-      <section id="faq" className="py-14 sm:py-18 bg-slate-900/50 border-t border-slate-800/80">
+      <section id="faq" className="py-14 sm:py-18">
         <div className="max-w-3xl mx-auto px-4 sm:px-8 space-y-8">
           <div className="text-center space-y-2">
             <h2 className="text-2xl sm:text-3xl font-black text-white">Frequently Asked Questions</h2>
-            <p className="text-xs text-slate-300">Common questions about {shopName} services.</p>
+            <p className="text-xs sm:text-sm text-slate-300">Common questions about {shopName} services.</p>
           </div>
 
           <div className="space-y-3">
@@ -759,7 +555,7 @@ export const LandingWebsitePage: React.FC = () => {
                     )}
                   </div>
                   {isOpen && (
-                    <div className="px-4 pb-5 sm:px-5 text-xs text-slate-300 leading-relaxed border-t border-slate-800/60 pt-3">
+                    <div className="px-4 pb-5 sm:px-5 text-xs sm:text-sm text-slate-300 leading-relaxed border-t border-slate-800/60 pt-3">
                       {faq.a}
                     </div>
                   )}
@@ -771,7 +567,7 @@ export const LandingWebsitePage: React.FC = () => {
       </section>
 
       {/* ========================================================================= */}
-      {/* 8. CALL STORE BANNER & HIGH-CONTRAST FOOTER */}
+      {/* 7. CALL STORE BANNER & HIGH-CONTRAST FOOTER */}
       {/* ========================================================================= */}
       <section id="contact" className="py-14 bg-gradient-to-r from-brand-950 via-slate-950 to-slate-950 border-t border-slate-800">
         <div className="max-w-4xl mx-auto px-4 sm:px-8 text-center space-y-6">
@@ -793,12 +589,12 @@ export const LandingWebsitePage: React.FC = () => {
       </section>
 
       <footer className="bg-slate-950 border-t border-slate-800/90 text-slate-300 py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-8 grid md:grid-cols-3 gap-8 text-xs">
+        <div className="max-w-7xl mx-auto px-4 sm:px-8 grid md:grid-cols-3 gap-8 text-xs sm:text-sm">
           {/* Brand */}
           <div className="space-y-3">
             <div className="flex items-center gap-2.5">
               <img src={logoUrl} alt={shopName} className="h-9 w-auto rounded-lg border border-slate-800" />
-              <span className="text-base font-black text-white">{shopName}</span>
+              <span className="text-base sm:text-lg font-black text-white">{shopName}</span>
             </div>
             <p className="text-slate-400 leading-relaxed">
               Smart & Eco Garment Cleaning, Dry Cleaning, Steam Pressing & Footwear Restoration.
@@ -819,7 +615,7 @@ export const LandingWebsitePage: React.FC = () => {
               <p className="text-[10px] font-extrabold uppercase text-brand-300 mb-1">Official Store Email</p>
               <a
                 href={`mailto:${email}`}
-                className="flex items-center gap-2 text-white font-black text-xs hover:text-brand-300 transition-colors break-all"
+                className="flex items-center gap-2 text-white font-black text-xs sm:text-sm hover:text-brand-300 transition-colors break-all"
               >
                 <Mail className="w-4 h-4 text-cyan-400 shrink-0" />
                 <span>{email}</span>
@@ -836,7 +632,7 @@ export const LandingWebsitePage: React.FC = () => {
                 href={googleMapsUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs font-bold text-cyan-300 hover:text-white transition-all"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs font-bold text-cyan-300 hover:text-white transition-all"
               >
                 <MapPin className="w-3.5 h-3.5 text-cyan-400" />
                 <span>Get Directions on Google Maps</span>
@@ -853,11 +649,11 @@ export const LandingWebsitePage: React.FC = () => {
                 <p className="text-white font-bold flex items-center gap-1.5">
                   <Clock className="w-4 h-4 text-emerald-400" /> Monday - Friday
                 </p>
-                <p className="text-emerald-400 font-black text-sm">08:00 AM - 09:00 PM</p>
+                <p className="text-emerald-400 font-black text-base">08:00 AM - 09:00 PM</p>
               </div>
 
               <div className="pt-2 border-t border-slate-800/80">
-                <p className="text-slate-400 font-semibold text-[11px]">Saturday - Sunday</p>
+                <p className="text-slate-400 font-semibold text-xs">Saturday - Sunday</p>
                 <p className="text-amber-400 font-bold text-xs">Closed / By Appointment</p>
               </div>
             </div>
@@ -874,7 +670,7 @@ export const LandingWebsitePage: React.FC = () => {
       <div className="fixed bottom-5 right-5 z-40 sm:hidden">
         <a
           href={`tel:${cleanPhone}`}
-          className="w-13 h-13 rounded-full bg-gradient-to-r from-emerald-500 to-brand-600 text-white shadow-2xl flex items-center justify-center border-2 border-slate-900 active:scale-90 transition-transform shadow-emerald-950/50"
+          className="w-14 h-14 rounded-full bg-gradient-to-r from-emerald-500 to-brand-600 text-white shadow-2xl flex items-center justify-center border-2 border-slate-900 active:scale-90 transition-transform shadow-emerald-950/50"
         >
           <PhoneCall className="w-6 h-6 animate-pulse" />
         </a>
