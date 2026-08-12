@@ -241,8 +241,8 @@ export const LandingWebsitePage: React.FC = () => {
             <a href="#contact" className="hover:text-brand-400 transition-colors">Contact</a>
           </nav>
 
-          {/* Call CTAs & POS Access */}
-          <div className="flex items-center gap-2">
+          {/* Call CTA */}
+          <div className="flex items-center gap-2.5">
             <a
               href={`tel:${cleanPhone}`}
               className="px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-xl bg-gradient-to-r from-brand-600 via-cyan-600 to-emerald-600 hover:from-brand-500 hover:to-emerald-500 text-white font-black text-xs shadow-lg shadow-brand-600/30 active:scale-95 transition-all flex items-center gap-1.5"
@@ -250,15 +250,6 @@ export const LandingWebsitePage: React.FC = () => {
               <PhoneCall className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-bounce" />
               <span>Call Store</span>
             </a>
-
-            <button
-              onClick={() => navigate('/login')}
-              className="px-3 py-2 sm:py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs font-bold text-slate-300 hover:text-white transition-all flex items-center gap-1.5"
-              title="Open Staff POS Login Portal"
-            >
-              <WashingMachine className="w-3.5 h-3.5 text-brand-400" />
-              <span className="hidden sm:inline">Staff POS</span>
-            </button>
           </div>
         </div>
       </header>
