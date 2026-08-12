@@ -25,9 +25,9 @@ import {
   Droplets,
   Sun,
   Crown,
-  Feather,
   ExternalLink,
   ThumbsUp,
+  Briefcase,
 } from 'lucide-react';
 
 export const LandingWebsitePage: React.FC = () => {
@@ -49,7 +49,7 @@ export const LandingWebsitePage: React.FC = () => {
   const address = '2/516 B Thiruvalluvar Nagar, Near ambal hospital, Malumichampatti, Coimbatore 641050';
   const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
 
-  // Complete List of Services
+  // The 11 Exact Services
   const servicesList = [
     {
       id: 'wash-fold',
@@ -58,108 +58,108 @@ export const LandingWebsitePage: React.FC = () => {
       icon: WashingMachine,
       badge: 'Popular',
       color: 'from-brand-600 to-cyan-600',
-      desc: 'Hygienic machine wash with organic softeners, color segregation, anti-bacterial rinse, and neat precision folding.',
-      features: ['Separated Customer Loads', 'Hypoallergenic Detergents', 'Anti-Bacterial Rinse', 'Neat Folded Packaging'],
+      shortDesc: 'Sanitized load wash with anti-bacterial softeners and neat precision folding.',
+      features: ['Separated Customer Loads', 'Organic Detergents', 'Anti-Bacterial Rinse', 'Neat Folded Packaging'],
     },
     {
-      id: 'wash-iron',
-      title: 'Wash and Iron',
-      category: 'Daily Care',
-      icon: Droplets,
-      badge: 'Complete Care',
-      color: 'from-cyan-600 to-blue-600',
-      desc: 'Thorough fabric wash followed by high-pressure steam pressing to keep your daily wear fresh, crisp, and wrinkle-free.',
-      features: ['Sanitized Water Wash', 'Steam Press Finish', 'Hanger or Fold Option', 'Fabric Softening'],
-    },
-    {
-      id: 'steam-iron',
-      title: 'Steam Ironing',
-      category: 'Pressing',
+      id: 'ironing',
+      title: 'Ironing',
+      category: 'Steam Press',
       icon: Flame,
-      badge: 'Crisp Finish',
+      badge: 'Crisp Press',
       color: 'from-amber-600 to-orange-600',
-      desc: 'Wrinkle-free steam pressing using temperature-controlled steam ironers that protect delicate fibers and original garment shape.',
+      shortDesc: 'High-pressure temperature-controlled steam pressing for wrinkle-free garments.',
       features: ['Zero Burn Risk', 'Crisp Crease Alignment', 'Suit & Formal Care', 'On-Hanger Packaging'],
+    },
+    {
+      id: 'laundry',
+      title: 'Laundry',
+      category: 'Regular Care',
+      icon: Droplets,
+      badge: 'Daily Wash',
+      color: 'from-cyan-600 to-blue-600',
+      shortDesc: 'Individualized machine washing for everyday wear, t-shirts, and casual garments.',
+      features: ['Hygienic Washing', 'Fabric Softening', 'Fresh Scent', 'Color Protection'],
+    },
+    {
+      id: 'premium-laundry',
+      title: 'Premium Laundry',
+      category: 'Luxury Care',
+      icon: Crown,
+      badge: 'Luxury Wash',
+      color: 'from-purple-600 to-indigo-600',
+      shortDesc: 'Delicate luxury fabric care with organic detergent conditioners and hand-finish.',
+      features: ['Gentle Low-Temp Cycle', 'Silk & Lace Safe', 'Extra Softening', 'Garment Bag Delivery'],
     },
     {
       id: 'dry-cleaning',
       title: 'Dry Cleaning',
-      category: 'Premium Care',
+      category: 'Organic Care',
       icon: Sparkles,
-      badge: 'Expert Dry Clean',
-      color: 'from-violet-600 to-purple-600',
-      desc: 'Gentle chemical-free dry cleaning for suits, blazers, silk sarees, heavy lehengas, and designer ethnic wear.',
-      features: ['Non-Toxic Solvents', 'Stain Removal Treatment', 'Color Vibrancy Protection', 'Garment Bag Delivery'],
+      badge: 'Expert Care',
+      color: 'from-violet-600 to-fuchsia-600',
+      shortDesc: 'Chemical-free organic dry cleaning for suits, blazers, silk, and heavy ethnic wear.',
+      features: ['Non-Toxic Solvents', 'Stain Removal Treatment', 'Color Protection', 'Garment Bag Delivery'],
     },
     {
-      id: 'shoe-laundry',
-      title: 'Shoe Laundry',
-      category: 'Footwear Care',
-      icon: Crown,
-      badge: 'Restoration',
-      color: 'from-emerald-600 to-teal-600',
-      desc: 'Deep hand-scrubbing, sole whitening, suede & leather polishing, and anti-bacterial deodorizing for all types of shoes.',
-      features: ['Sneaker & Leather Care', 'Sole Whitening Treatment', 'Deodorization & Polish', 'Shape Preservation'],
-    },
-    {
-      id: 'starching',
-      title: 'Starching',
+      id: 'starch-ironing',
+      title: 'Starch + Ironing',
       category: 'Stiffening',
       icon: Sun,
-      badge: 'Traditional',
+      badge: 'Stiff Finish',
       color: 'from-amber-500 to-yellow-600',
-      desc: 'Crisp stiff starching for cotton shirts, dhotis, uniform trousers, and sarees to maintain a formal posture and sharp feel.',
-      features: ['Natural Rice/Maize Starch', 'Custom Stiffness Levels', 'Uniform Finishing', 'Smooth Texture'],
+      shortDesc: 'Traditional starching with steam pressing for formal shirts, dhotis & uniforms.',
+      features: ['Natural Rice Starch', 'Custom Stiffness', 'Formal Crisp Finish', 'Wrinkle Protection'],
     },
     {
-      id: 'bleaching-stain',
-      title: 'Bleaching & Stain Removal',
-      category: 'Spot Treatment',
-      icon: ShieldCheck,
-      badge: 'Specialist',
-      color: 'from-rose-600 to-pink-600',
-      desc: 'Specialized enzyme stain treatment for tough oil, ink, wine, and grease stains along with safe white fabric brightening.',
-      features: ['Targeted Enzyme Spotting', 'Safe White Brightening', 'Zero Color Bleeding', 'Gentle Pre-Soak'],
-    },
-    {
-      id: 'curtains-household',
-      title: 'Curtains & Household Care',
-      category: 'Home Fabrics',
+      id: 'wash-starch-ironing',
+      title: 'Wash + Starch + Ironing',
+      category: 'Complete Care',
       icon: Layers,
-      badge: 'Heavy Fabric',
-      color: 'from-blue-600 to-indigo-600',
-      desc: 'Deep steam washing and sanitization for heavy window curtains, bedsheets, blankets, duvets, and sofa covers.',
-      features: ['Dust Mite Removal', 'Heavy Load Washing', 'High-Temp Steam Dry', 'Fresh Home Aroma'],
+      badge: 'Complete Starch',
+      color: 'from-emerald-600 to-teal-600',
+      shortDesc: 'Full wash, natural starch treatment, and steam ironing for a crisp formal posture.',
+      features: ['Full Sanitized Wash', 'Natural Starch Bath', 'Steam Ironing', 'Hanger Packaging'],
     },
     {
-      id: 'darning-alterations',
-      title: 'Darning & Garment Alterations',
-      category: 'Mending',
+      id: 'saree-polishing',
+      title: 'Saree Polishing',
+      category: 'Ethnic Care',
+      icon: Shirt,
+      badge: 'Saree Care',
+      color: 'from-pink-600 to-rose-600',
+      shortDesc: 'Specialized silk saree roll polishing, luster restoration, and crease-free finish.',
+      features: ['Luster Restoration', 'Silk Thread Protection', 'Roll Pressing', 'Boutique Finish'],
+    },
+    {
+      id: 'saree-prepleating',
+      title: 'Saree Pre-pleating',
+      category: 'Instant Wear',
       icon: Scissors,
-      badge: 'Garment Repair',
-      color: 'from-cyan-600 to-emerald-600',
-      desc: 'Professional invisible darning, seam stitching, button replacement, zip repairs, and size fitting alterations.',
-      features: ['Invisible Darning', 'Zip & Button Repairs', 'Precision Fitting', 'Tear Reinforcement'],
+      badge: 'Easy Wear',
+      color: 'from-teal-600 to-cyan-600',
+      shortDesc: 'Precision pre-pleating and box folding for easy, instant 2-minute saree draping.',
+      features: ['Precision Pleat Pins', 'Box Folding', 'Ready-to-Wear', 'Crease Retention'],
     },
     {
-      id: 'leather-jacket',
-      title: 'Leather & Jacket Care',
-      category: 'Specialty Wear',
-      icon: Feather,
-      badge: 'Luxury Care',
-      color: 'from-yellow-600 to-amber-700',
-      desc: 'Nourishing leather conditioner treatment, mold removal, and shine restoration for leather jackets, coats & bags.',
-      features: ['Moisture Conditioning', 'Color Restoration', 'Fungus & Mold Scrub', 'Supple Finish'],
+      id: 'shoes-cleaning',
+      title: 'Shoes Cleaning',
+      category: 'Footwear Spa',
+      icon: ShieldCheck,
+      badge: 'Footwear Care',
+      color: 'from-blue-600 to-cyan-600',
+      shortDesc: 'Deep hand-scrubbing, sole whitening, suede/leather polish & deodorizing.',
+      features: ['Sneaker & Leather Scrub', 'Sole Whitening', 'Deodorization', 'Shape Retention'],
     },
     {
-      id: 'express-delivery',
-      title: 'Express 24-Hour Delivery',
-      category: 'Priority Service',
-      icon: Zap,
-      badge: '24h Express',
-      color: 'from-red-600 to-orange-600',
-      desc: 'Same-day urgent priority turnaround for business travelers, events, weddings, and emergency laundry needs.',
-      features: ['24h Rapid Turnaround', 'Priority Machine Slot', 'Direct Store Contact', 'Express Delivery'],
+      id: 'bag-cleaning',
+      title: 'Bag Cleaning',
+      category: 'Accessory Care',
+      icon: Briefcase,
+      badge: 'Accessory Care',
+      color: 'from-indigo-600 to-violet-600',
+      shortDesc: 'Deep interior & exterior cleaning, stain removal & conditioning for bags & luggage.',
+      features: ['Interior & Zip Cleaning', 'Leather Conditioning', 'Stain Removal', 'Odor Elimination'],
     },
   ];
 
@@ -169,29 +169,29 @@ export const LandingWebsitePage: React.FC = () => {
       name: 'Priya Sundaram',
       location: 'Malumichampatti, Coimbatore',
       rating: 5,
-      comment: 'IntelligentLaundry handled my silk saree and wedding suit dry cleaning perfectly! No chemical smell and crisp packaging.',
+      comment: 'IntelligentLaundry handled my silk saree polishing and wedding suit dry cleaning perfectly! No chemical smell and crisp packaging.',
       tag: 'Verified Customer',
     },
     {
       name: 'Karthik Raja',
       location: 'Thiruvalluvar Nagar, Coimbatore',
       rating: 5,
-      comment: 'My white sneakers were completely restored like brand new. The shoe laundry service here is unbelievable!',
-      tag: 'Sneaker Care Review',
+      comment: 'My white sneakers were completely restored like brand new. The shoe cleaning service here is unbelievable!',
+      tag: 'Shoes Cleaning Review',
     },
     {
       name: 'Anita Raman',
       location: 'Coimbatore',
       rating: 5,
-      comment: 'Very polite store staff, fast 24h turnaround for my office formal shirts. Highly recommended for daily laundry!',
-      tag: 'Regular Wash & Iron',
+      comment: 'Very polite store staff, fast turnaround for my office formal shirts with Starch + Ironing. Highly recommended!',
+      tag: 'Starch + Ironing',
     },
   ];
 
   const faqs = [
     {
-      q: 'How do I book a laundry service with IntelligentLaundry?',
-      a: 'Simply call us directly on ' + phone + '! You can also tap any "Call Store" button on this website to talk to our store team immediately.',
+      q: 'How do I book a service with IntelligentLaundry?',
+      a: 'Simply call us directly on ' + phone + '! You can tap any "Call Store" button on this website to talk to our store team immediately.',
     },
     {
       q: 'What are your store working hours?',
@@ -207,7 +207,7 @@ export const LandingWebsitePage: React.FC = () => {
     },
     {
       q: 'What is the turnaround time for laundry and dry cleaning?',
-      a: 'Standard wash & fold takes 24 to 48 hours. Dry cleaning takes 48 hours. We also provide Express 24-Hour Delivery for urgent needs.',
+      a: 'Standard wash & fold takes 24 to 48 hours. Dry cleaning takes 48 hours. Express turnaround is available for urgent needs.',
     },
   ];
 
@@ -241,8 +241,8 @@ export const LandingWebsitePage: React.FC = () => {
             <a href="#contact" className="hover:text-brand-400 transition-colors">Contact</a>
           </nav>
 
-          {/* Call CTAs */}
-          <div className="flex items-center gap-2.5">
+          {/* Call CTAs & POS Access */}
+          <div className="flex items-center gap-2">
             <a
               href={`tel:${cleanPhone}`}
               className="px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-xl bg-gradient-to-r from-brand-600 via-cyan-600 to-emerald-600 hover:from-brand-500 hover:to-emerald-500 text-white font-black text-xs shadow-lg shadow-brand-600/30 active:scale-95 transition-all flex items-center gap-1.5"
@@ -250,134 +250,162 @@ export const LandingWebsitePage: React.FC = () => {
               <PhoneCall className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-bounce" />
               <span>Call Store</span>
             </a>
+
+            <button
+              onClick={() => navigate('/login')}
+              className="px-3 py-2 sm:py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs font-bold text-slate-300 hover:text-white transition-all flex items-center gap-1.5"
+              title="Open Staff POS Login Portal"
+            >
+              <WashingMachine className="w-3.5 h-3.5 text-brand-400" />
+              <span className="hidden sm:inline">Staff POS</span>
+            </button>
           </div>
         </div>
       </header>
 
       {/* ========================================================================= */}
-      {/* 2. HERO SECTION */}
+      {/* 2. HERO SECTION WITH BACKGROUND IMAGE */}
       {/* ========================================================================= */}
-      <section className="relative pt-8 sm:pt-14 pb-14 sm:pb-20 overflow-hidden">
-        {/* Background glow */}
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] sm:w-[600px] h-[200px] sm:h-[350px] bg-gradient-to-r from-brand-600/25 via-cyan-600/25 to-emerald-600/25 blur-[100px] rounded-full pointer-events-none" />
+      <section className="relative pt-12 sm:pt-20 pb-16 sm:pb-24 overflow-hidden">
+        {/* Full-width background image with dark overlay */}
+        <div className="absolute inset-0 z-0">
+          <img
+            src="/hero_laundry.jpg"
+            alt="IntelligentLaundry Store"
+            className="w-full h-full object-cover object-center scale-105"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/90 to-slate-950/80 backdrop-blur-xs" />
+        </div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-8 relative z-10 grid lg:grid-cols-12 gap-8 lg:gap-12 items-center">
-          {/* Left Text */}
-          <div className="lg:col-span-7 space-y-5 text-center lg:text-left">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-brand-950/90 border border-brand-800/80 text-brand-300 text-[11px] sm:text-xs font-extrabold shadow-inner">
-              <Sparkles className="w-3.5 h-3.5 text-brand-400 animate-spin" />
-              <span>Premium Eco-Friendly Garment Care in Coimbatore</span>
-            </div>
-
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-[1.12]">
-              Professional Garment Care by <span className="bg-gradient-to-r from-brand-400 via-cyan-300 to-emerald-400 bg-clip-text text-transparent">{shopName}</span>
-            </h1>
-
-            <p className="text-xs sm:text-base text-slate-300 leading-relaxed max-w-2xl mx-auto lg:mx-0 font-medium">
-              Experience world-class garment cleaning, organic dry cleaning, steam pressing, shoe restoration, and heavy household fabric care. Specialized solutions for every fabric type.
-            </p>
-
-            {/* Working Hours Badge */}
-            <div className="inline-flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-slate-900/90 border border-slate-800 text-slate-200 text-xs font-bold">
-              <Clock className="w-4 h-4 text-emerald-400 shrink-0" />
-              <span>Store Hours: <strong className="text-white">Monday - Friday (08:00 AM - 09:00 PM)</strong></span>
-            </div>
-
-            {/* Call Action Bar */}
-            <div className="pt-2 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3">
-              <a
-                href={`tel:${cleanPhone}`}
-                className="w-full sm:w-auto px-7 py-3.5 rounded-2xl bg-gradient-to-r from-brand-600 via-cyan-600 to-emerald-600 hover:from-brand-500 hover:to-emerald-500 text-white font-black text-xs sm:text-sm shadow-xl shadow-brand-600/30 active:scale-95 transition-all flex items-center justify-center gap-2.5"
-              >
-                <PhoneCall className="w-4 h-4 sm:w-5 sm:h-5" />
-                <span>Call Store to Book: {phone}</span>
-                <ArrowRight className="w-4 h-4" />
-              </a>
-
-              <a
-                href={`https://wa.me/${cleanPhone}`}
-                target="_blank"
-                rel="noreferrer"
-                className="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-200 hover:text-white font-bold text-xs sm:text-sm backdrop-blur-md active:scale-95 transition-all flex items-center justify-center gap-2"
-              >
-                <Truck className="w-4 h-4 text-emerald-400" />
-                <span>WhatsApp Query</span>
-              </a>
-            </div>
-
-            {/* Highlights Bar */}
-            <div className="pt-4 grid grid-cols-3 gap-3 border-t border-slate-800/80 max-w-xl mx-auto lg:mx-0 text-center lg:text-left">
-              <div>
-                <p className="text-lg sm:text-2xl font-black text-white">Full</p>
-                <p className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider">Service Range</p>
-              </div>
-              <div>
-                <p className="text-lg sm:text-2xl font-black text-brand-400">100%</p>
-                <p className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider">Fabric Safety</p>
-              </div>
-              <div>
-                <p className="text-lg sm:text-2xl font-black text-amber-400 flex items-center justify-center lg:justify-start gap-1">
-                  4.9 <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                </p>
-                <p className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider">Customer Rating</p>
-              </div>
-            </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-8 relative z-10 space-y-6 text-center sm:text-left">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-brand-950/90 border border-brand-800/80 text-brand-300 text-[11px] sm:text-xs font-extrabold shadow-inner">
+            <Sparkles className="w-3.5 h-3.5 text-brand-400 animate-spin" />
+            <span>Premium Eco-Friendly Garment Care in Coimbatore</span>
           </div>
 
-          {/* Right Image */}
-          <div className="lg:col-span-5 relative">
-            <div className="relative rounded-3xl overflow-hidden border border-slate-800/80 shadow-2xl shadow-brand-950/50 group">
-              <img
-                src="/hero_laundry.jpg"
-                alt="IntelligentLaundry Store"
-                className="w-full h-[260px] sm:h-[420px] object-cover group-hover:scale-105 transition-transform duration-700"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
+          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-[1.12] max-w-3xl">
+            Professional Garment Care by <span className="bg-gradient-to-r from-brand-400 via-cyan-300 to-emerald-400 bg-clip-text text-transparent">{shopName}</span>
+          </h1>
 
-              <div className="absolute bottom-4 left-4 right-4 p-3.5 rounded-2xl bg-slate-900/95 backdrop-blur-md border border-slate-800 flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-brand-600/30 border border-brand-500/40 flex items-center justify-center text-brand-400 shrink-0">
-                  <ShieldCheck className="w-5 h-5" />
-                </div>
-                <div>
-                  <h4 className="text-xs font-black text-white">{shopName} Care Standard</h4>
-                  <p className="text-[10px] text-slate-300">Eco-friendly solvents & individualized sanitization</p>
-                </div>
-              </div>
+          <p className="text-xs sm:text-base text-slate-200 leading-relaxed max-w-2xl font-medium">
+            Experience world-class garment washing, dry cleaning, steam pressing, saree pre-pleating, shoe cleaning, and bag care. Specialized solutions for every fabric type.
+          </p>
+
+          {/* Working Hours Badge */}
+          <div className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-slate-900/90 border border-slate-800 text-slate-200 text-xs font-bold shadow-lg">
+            <Clock className="w-4 h-4 text-emerald-400 shrink-0" />
+            <span>Store Hours: <strong className="text-white">Monday - Friday (08:00 AM - 09:00 PM)</strong></span>
+          </div>
+
+          {/* Call Action Bar */}
+          <div className="pt-2 flex flex-col sm:flex-row items-center justify-start gap-3">
+            <a
+              href={`tel:${cleanPhone}`}
+              className="w-full sm:w-auto px-7 py-4 rounded-2xl bg-gradient-to-r from-brand-600 via-cyan-600 to-emerald-600 hover:from-brand-500 hover:to-emerald-500 text-white font-black text-xs sm:text-sm shadow-xl shadow-brand-600/30 active:scale-95 transition-all flex items-center justify-center gap-2.5"
+            >
+              <PhoneCall className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span>Call Store to Book: {phone}</span>
+              <ArrowRight className="w-4 h-4" />
+            </a>
+
+            <a
+              href={`https://wa.me/${cleanPhone}`}
+              target="_blank"
+              rel="noreferrer"
+              className="w-full sm:w-auto px-6 py-4 rounded-2xl bg-slate-900/90 border border-slate-800 hover:border-slate-700 text-slate-200 hover:text-white font-bold text-xs sm:text-sm backdrop-blur-md active:scale-95 transition-all flex items-center justify-center gap-2"
+            >
+              <Truck className="w-4 h-4 text-emerald-400" />
+              <span>WhatsApp Query</span>
+            </a>
+          </div>
+
+          {/* Highlights Bar */}
+          <div className="pt-4 grid grid-cols-3 gap-3 border-t border-slate-800/80 max-w-xl text-center sm:text-left">
+            <div>
+              <p className="text-lg sm:text-2xl font-black text-white">11</p>
+              <p className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider">Expert Services</p>
+            </div>
+            <div>
+              <p className="text-lg sm:text-2xl font-black text-brand-400">100%</p>
+              <p className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider">Fabric Safety</p>
+            </div>
+            <div>
+              <p className="text-lg sm:text-2xl font-black text-amber-400 flex items-center justify-center sm:justify-start gap-1">
+                4.9 <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+              </p>
+              <p className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider">Customer Rating</p>
             </div>
           </div>
         </div>
       </section>
 
       {/* ========================================================================= */}
-      {/* 3. CLEAN & ELEGANT SERVICES SHOWCASE */}
+      {/* 3. OUR SERVICES SECTION */}
       {/* ========================================================================= */}
       <section id="services" className="py-14 sm:py-20 bg-slate-900/40 border-y border-slate-800/80">
         <div className="max-w-7xl mx-auto px-4 sm:px-8 space-y-10">
           {/* Header */}
-          <div className="text-center space-y-2.5 max-w-2xl mx-auto">
+          <div className="text-center space-y-2 max-w-2xl mx-auto">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-950 border border-cyan-800/70 text-cyan-300 text-xs font-bold">
-              <Layers className="w-3.5 h-3.5 text-cyan-400" />
-              <span>Full Service Offerings</span>
+              <WashingMachine className="w-3.5 h-3.5 text-cyan-400" />
+              <span>Full Service Catalog</span>
             </div>
             <h2 className="text-2xl sm:text-4xl font-black text-white tracking-tight">
               Our Services
             </h2>
             <p className="text-xs sm:text-sm text-slate-300">
-              Professional garment washing, dry cleaning, steam pressing, shoe restoration, and specialty fabric care.
+              Explore our complete range of specialized garment and fabric care treatments.
             </p>
           </div>
 
-          {/* Service Cards Grid (Ultra High Contrast & Mobile First) */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          {/* ===================================================================== */}
+          {/* MOBILE VIEW: Compact, Ultra-Clean & Fast (1-column cards) */}
+          {/* ===================================================================== */}
+          <div className="grid grid-cols-1 gap-3.5 sm:hidden">
+            {servicesList.map((serv, idx) => {
+              const IconComponent = serv.icon;
+              return (
+                <div
+                  key={serv.id}
+                  className="p-4 rounded-2xl bg-slate-900/95 border border-slate-800 shadow-lg flex items-center justify-between gap-3"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${serv.color} flex items-center justify-center text-white shrink-0 shadow-md`}>
+                      <IconComponent className="w-5 h-5" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-black text-brand-400 uppercase">#{idx + 1}</span>
+                        <h3 className="text-sm font-black text-white truncate">{serv.title}</h3>
+                      </div>
+                      <p className="text-[11px] text-slate-300 truncate">{serv.shortDesc}</p>
+                    </div>
+                  </div>
+
+                  <a
+                    href={`tel:${cleanPhone}`}
+                    className="p-2.5 rounded-xl bg-brand-600 text-white shrink-0 active:scale-90 transition-transform shadow-md"
+                    title={`Call Store for ${serv.title}`}
+                  >
+                    <PhoneCall className="w-4 h-4" />
+                  </a>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* ===================================================================== */}
+          {/* DESKTOP / TABLET VIEW: High-Contrast Detailed Cards */}
+          {/* ===================================================================== */}
+          <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {servicesList.map((serv) => {
               const IconComponent = serv.icon;
               return (
                 <div
                   key={serv.id}
-                  className="bg-slate-900/95 border border-slate-800/90 hover:border-brand-500/60 shadow-xl rounded-3xl p-5 sm:p-6 transition-all group flex flex-col justify-between space-y-4"
+                  className="bg-slate-900/95 border border-slate-800/90 hover:border-brand-500/60 shadow-xl rounded-3xl p-6 transition-all group flex flex-col justify-between space-y-4"
                 >
-                  <div className="space-y-3.5">
-                    {/* Top Badge & Icon */}
+                  <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${serv.color} flex items-center justify-center text-white shadow-md group-hover:scale-105 transition-transform`}>
                         <IconComponent className="w-6 h-6" />
@@ -392,9 +420,8 @@ export const LandingWebsitePage: React.FC = () => {
                       <h3 className="text-lg font-black text-white group-hover:text-brand-300 transition-colors">{serv.title}</h3>
                     </div>
 
-                    <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-normal">{serv.desc}</p>
+                    <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-normal">{serv.shortDesc}</p>
 
-                    {/* Features list */}
                     <div className="pt-2 space-y-1.5 border-t border-slate-800/80">
                       {serv.features.map((feat, fIdx) => (
                         <div key={fIdx} className="flex items-center gap-2 text-xs font-semibold text-slate-200">
@@ -405,7 +432,6 @@ export const LandingWebsitePage: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Call Action Button */}
                   <div className="pt-2 border-t border-slate-800/80">
                     <a
                       href={`tel:${cleanPhone}`}
@@ -567,7 +593,7 @@ export const LandingWebsitePage: React.FC = () => {
       </section>
 
       {/* ========================================================================= */}
-      {/* 7. CALL STORE BANNER & HIGH-CONTRAST FOOTER */}
+      {/* 7. CALL STORE BANNER & FOOTER */}
       {/* ========================================================================= */}
       <section id="contact" className="py-14 bg-gradient-to-r from-brand-950 via-slate-950 to-slate-950 border-t border-slate-800">
         <div className="max-w-4xl mx-auto px-4 sm:px-8 text-center space-y-6">
@@ -601,7 +627,7 @@ export const LandingWebsitePage: React.FC = () => {
             </p>
           </div>
 
-          {/* Contact Details (Highlighted Email & Google Maps Button) */}
+          {/* Contact Details */}
           <div className="space-y-3">
             <h4 className="font-extrabold text-white uppercase text-[11px] tracking-wider">Store Contact</h4>
             
