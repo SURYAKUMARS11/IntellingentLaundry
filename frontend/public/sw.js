@@ -1,21 +1,6 @@
-const CACHE_NAME = 'intelligent-laundry-v5';
-const ASSETS_TO_CACHE = [
-  '/',
-  '/login',
-  '/index.html',
-  '/logo.jpg',
-  '/logo.png',
-  '/pwa-192.png',
-  '/pwa-512.png',
-  '/manifest.json'
-];
+const CACHE_NAME = 'intelligent-laundry-v6';
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE);
-    })
-  );
   self.skipWaiting();
 });
 
@@ -35,20 +20,27 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Only cache GET requests for static assets, bypass API calls
+  // Always bypass API calls and non-GET requests
   if (event.request.method !== 'GET' || event.request.url.includes('/api/')) {
     return;
   }
+
+  // Network-First Strategy: Fetch fresh code from network, update cache, fallback to cache if offline
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse;
-      }
-      return fetch(event.request).then((networkResponse) => {
+    fetch(event.request)
+      .then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200) {
+          const responseClone = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseClone);
+          });
+        }
         return networkResponse;
-      }).catch(() => {
-        return caches.match('/index.html');
-      });
-    })
+      })
+      .catch(() => {
+        return caches.match(event.request).then((cachedResponse) => {
+          return cachedResponse || caches.match('/index.html');
+        });
+      })
   );
 });
