@@ -22,7 +22,7 @@ export interface ISetting extends Document {
 
 const SettingSchema: Schema = new Schema(
   {
-    shopName: { type: String, required: true, default: 'IntelligentLaundry' },
+    shopName: { type: String, required: true, default: 'Intelligent Laundry' },
     shopTagline: { type: String, default: 'Smart & Premium Laundry Management' },
     logoUrl: { type: String, default: '/logo.jpg' },
     phone: { type: String, required: true, default: '+91 98765 43210' },

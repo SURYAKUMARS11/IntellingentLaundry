@@ -41,7 +41,7 @@ export const PwaInstallButton: React.FC<{ className?: string }> = ({ className =
     } else {
       // Fallback instruction toast/modal for Chrome/Edge desktop installation
       alert(
-        "To install as a Desktop App on Windows/Mac:\n\n1. Click the 'Install App' icon in your browser address bar (top right).\nOR\n2. Open browser menu (⋮) -> Save and Share -> 'Install IntelligentLaundry as App'."
+        "To install as a Desktop App on Windows/Mac:\n\n1. Click the 'Install App' icon in your browser address bar (top right).\nOR\n2. Open browser menu (⋮) -> Save and Share -> 'Install Intelligent Laundry as App'."
       );
     }
   };
@@ -60,7 +60,7 @@ export const PwaInstallButton: React.FC<{ className?: string }> = ({ className =
       type="button"
       onClick={handleInstallClick}
       className={`px-3 py-1.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-black shadow-xs flex items-center gap-1.5 active:scale-95 transition-all cursor-pointer ${className}`}
-      title="Install IntelligentLaundry as a native Desktop App on Windows / Mac"
+      title="Install Intelligent Laundry as a native Desktop App on Windows / Mac"
     >
       <Monitor className="w-4 h-4 text-brand-200" />
       <span>Install Desktop App</span>

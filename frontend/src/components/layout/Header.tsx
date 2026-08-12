@@ -61,7 +61,7 @@ export const Header: React.FC<HeaderProps> = ({ isSidebarCollapsed, onToggleSide
             <img src="/logo.jpg" alt="Logo" className="w-full h-full object-cover rounded-md" />
           </div>
           <span className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-1">
-            IntelligentLaundry <Sparkles className="w-3 h-3 text-brand-500 fill-brand-500" />
+            Intelligent Laundry <Sparkles className="w-3 h-3 text-brand-500 fill-brand-500" />
           </span>
         </div>
 

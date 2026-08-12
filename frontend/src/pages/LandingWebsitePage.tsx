@@ -41,7 +41,7 @@ export const LandingWebsitePage: React.FC = () => {
     });
   }, []);
 
-  const shopName = 'IntelligentLaundry';
+  const shopName = 'Intelligent Laundry';
   const logoUrl = setting?.logoUrl && !setting.logoUrl.includes('unsplash.com') ? setting.logoUrl : '/logo.jpg';
   const phone = setting?.phone || '+91 98765 43210';
   const cleanPhone = phone.replace(/\D/g, '');

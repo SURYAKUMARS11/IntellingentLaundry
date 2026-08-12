@@ -14,7 +14,7 @@ export const generateInvoicePDFBuffer = async (order: any, setting?: any): Promi
   const upiId = setting?.upiId || 'intelligentno1laundry@gmail.com';
   const shopName = setting?.shopName && setting.shopName !== 'IntelligentLaundry & Dry Cleaners'
     ? setting.shopName
-    : 'IntelligentLaundry';
+    : 'Intelligent Laundry';
   const dueAmount = (order.remainingBalance && order.remainingBalance > 0) ? order.remainingBalance : order.totalAmount;
   const upiPaymentUrl = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(shopName)}&am=${dueAmount}&cu=INR&tn=${encodeURIComponent('Order #' + order.orderNumber)}`;
 

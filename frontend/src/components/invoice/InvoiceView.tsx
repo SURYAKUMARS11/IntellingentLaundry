@@ -23,7 +23,7 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ order, setting, onClos
   // UPI Payment Details & QR Code Generator
   const shopUpiId = setting?.upiId || '9876543210@paytm';
   const shopGPayPhone = setting?.gpayNumber || setting?.phone || '9876543210';
-  const shopName = setting?.shopName || 'IntelligentLaundry';
+  const shopName = setting?.shopName || 'Intelligent Laundry';
   const dueAmount = order.remainingBalance > 0 ? order.remainingBalance : order.totalAmount;
   const upiPaymentUrl = `upi://pay?pa=${encodeURIComponent(shopUpiId)}&pn=${encodeURIComponent(shopName)}&am=${dueAmount}&cu=INR&tn=${encodeURIComponent('Order #' + order.orderNumber)}`;
 
@@ -203,7 +203,7 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ order, setting, onClos
                 <span className="text-brand-700 font-black tracking-tight">
                   {setting?.shopName && setting.shopName !== 'IntelligentLaundry & Dry Cleaners'
                     ? setting.shopName
-                    : 'IntelligentLaundry'}
+                    : 'Intelligent Laundry'}
                 </span>
               </div>
               <p className="text-xs font-semibold text-slate-500 mt-0.5">

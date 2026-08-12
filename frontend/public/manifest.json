@@ -1,7 +1,7 @@
 {
-  "short_name": "IntelligentLaundry",
-  "name": "IntelligentLaundry",
-  "description": "IntelligentLaundry POS & Management System",
+  "short_name": "Intelligent Laundry",
+  "name": "Intelligent Laundry",
+  "description": "Intelligent Laundry POS & Management System",
   "icons": [
     {
       "src": "/pwa-192.png",
