@@ -378,9 +378,6 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ order, setting, onClos
               <p>2. Clothes not collected within 30 days are subject to storage charges.</p>
               <p>3. Colors may bleed on delicate items if not pre-informed.</p>
             </div>
-            {setting?.termsAndConditions && (
-              <p className="whitespace-pre-line mt-2 text-slate-400">{setting.termsAndConditions}</p>
-            )}
           </div>
         </div>
       </div>
