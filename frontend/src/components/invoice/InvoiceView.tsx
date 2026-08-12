@@ -416,10 +416,17 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ order, setting, onClos
 
           {/* Footer Terms & Thank You */}
           <div className="mt-6 pt-4 border-t border-dashed border-slate-200 text-[10px] text-slate-500 text-center leading-relaxed">
-            <p className="font-bold text-slate-800 mb-1">
+            <p className="font-bold text-slate-800 mb-1.5 text-xs">
               Thank you for choosing {setting?.shopName || 'IntelligentLaundry'}!
             </p>
-            <p className="whitespace-pre-line">{setting?.termsAndConditions}</p>
+            <div className="space-y-1 text-slate-600 font-semibold max-w-md mx-auto bg-slate-50 p-2.5 rounded-xl border border-slate-200/80 text-left sm:text-center">
+              <p>1. Please inspect clothes upon delivery.</p>
+              <p>2. Clothes not collected within 30 days are subject to storage charges.</p>
+              <p>3. Colors may bleed on delicate items if not pre-informed.</p>
+            </div>
+            {setting?.termsAndConditions && (
+              <p className="whitespace-pre-line mt-2 text-slate-400">{setting.termsAndConditions}</p>
+            )}
           </div>
         </div>
       </div>

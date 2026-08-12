@@ -1,6 +1,7 @@
 import PDFDocument from 'pdfkit';
 import path from 'path';
 import fs from 'fs';
+import QRCode from 'qrcode';
 
 const toAmount = (val: any): string => {
   const num = Number(val);
@@ -8,6 +9,30 @@ const toAmount = (val: any): string => {
 };
 
 export const generateInvoicePDFBuffer = async (order: any, setting?: any): Promise<Buffer> => {
+  // Generate QR Code PNG Buffer
+  let qrBuffer: Buffer | null = null;
+  const upiId = setting?.upiId || 'intelligentno1laundry@gmail.com';
+  const shopName = setting?.shopName && setting.shopName !== 'IntelligentLaundry & Dry Cleaners'
+    ? setting.shopName
+    : 'IntelligentLaundry';
+  const dueAmount = (order.remainingBalance && order.remainingBalance > 0) ? order.remainingBalance : order.totalAmount;
+  const upiPaymentUrl = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(shopName)}&am=${dueAmount}&cu=INR&tn=${encodeURIComponent('Order #' + order.orderNumber)}`;
+
+  if (setting?.paymentQrUrl && setting.paymentQrUrl.startsWith('data:image')) {
+    try {
+      const base64Data = setting.paymentQrUrl.replace(/^data:image\/\w+;base64,/, '');
+      qrBuffer = Buffer.from(base64Data, 'base64');
+    } catch (e) {}
+  }
+
+  if (!qrBuffer) {
+    try {
+      const qrDataUrl = await QRCode.toDataURL(upiPaymentUrl, { margin: 1, width: 200 });
+      const base64Data = qrDataUrl.replace(/^data:image\/\w+;base64,/, '');
+      qrBuffer = Buffer.from(base64Data, 'base64');
+    } catch (e) {}
+  }
+
   return new Promise((resolve, reject) => {
     try {
       const doc = new PDFDocument({ margin: 40, size: 'A4' });
@@ -17,9 +42,6 @@ export const generateInvoicePDFBuffer = async (order: any, setting?: any): Promi
       doc.on('end', () => resolve(Buffer.concat(buffers)));
       doc.on('error', (err) => reject(err));
 
-      const shopName = setting?.shopName && setting.shopName !== 'IntelligentLaundry & Dry Cleaners'
-        ? setting.shopName
-        : 'IntelligentLaundry';
       const address = setting?.address || '2/516 B Thiruvalluvar Nagar, Near ambal hospital, Malumichampatti, Coimbatore 641050';
       const phone = setting?.phone || '+91 98765 43210';
       const email = setting?.email || 'intelligentno1laundry@gmail.com';
@@ -147,12 +169,23 @@ export const generateInvoicePDFBuffer = async (order: any, setting?: any): Promi
       // Calculation Summary Box & UPI Payment Scan Box
       tableY += 15;
 
-      // Left: UPI Payment Notice Box
+      // Left: UPI Payment Notice Box with Rendered QR Code
       doc.rect(40, tableY, 240, 75).fill('#f8fafc').stroke('#e2e8f0');
-      doc.fontSize(8.5).fillColor('#0f172a').font('Helvetica-Bold').text('PAYMENT DETAILS & UPI', 50, tableY + 10);
-      doc.fontSize(8).fillColor('#475569').font('Helvetica').text(`Shop UPI ID: ${setting?.upiId || 'intelligentno1laundry@gmail.com'}`, 50, tableY + 25);
-      doc.text(`Accepted: GPay / PhonePe / Paytm / Cash`, 50, tableY + 38);
-      doc.fontSize(7.5).fillColor('#0369a1').font('Helvetica-Bold').text('Scan QR on Digital Receipt to pay online', 50, tableY + 53);
+      
+      let textX = 50;
+      if (qrBuffer) {
+        try {
+          doc.image(qrBuffer, 48, tableY + 7.5, { width: 60, height: 60 });
+          textX = 118;
+        } catch (e) {
+          textX = 50;
+        }
+      }
+
+      doc.fontSize(8.5).fillColor('#0f172a').font('Helvetica-Bold').text('Scan & Pay via UPI', textX, tableY + 10);
+      doc.fontSize(7.5).fillColor('#475569').font('Helvetica').text(`UPI ID: ${upiId}`, textX, tableY + 24, { width: 150 });
+      doc.text(`Accepted: GPay / PhonePe / Paytm`, textX, tableY + 37, { width: 150 });
+      doc.fontSize(7).fillColor('#0369a1').font('Helvetica-Bold').text('Instant Online Payment', textX, tableY + 52);
 
       // Right: Financial Summary Breakdown
       const summaryLeft = 360;
@@ -193,11 +226,15 @@ export const generateInvoicePDFBuffer = async (order: any, setting?: any): Promi
       doc.text('Balance Due:', summaryLeft, sumY, { width: 100, align: 'left' });
       doc.text(`Rs. ${toAmount(order.remainingBalance)}`, summaryLeft + 100, sumY, { width: 95, align: 'right' });
 
-      // Bottom Footer Banner
-      const footerY = 750;
+      // Bottom Footer Banner with Exact Terms & Conditions
+      const footerY = 720;
       doc.moveTo(40, footerY - 10).lineTo(555, footerY - 10).strokeColor('#e2e8f0').lineWidth(1).stroke();
       doc.fontSize(9).fillColor('#0284c7').font('Helvetica-Bold').text(`Thank you for choosing ${shopName}!`, 40, footerY, { align: 'center' });
-      doc.fontSize(8).fillColor('#94a3b8').font('Helvetica').text('This is an official computer-generated invoice.', 40, footerY + 14, { align: 'center' });
+      
+      doc.fontSize(7.5).fillColor('#475569').font('Helvetica');
+      doc.text('1. Please inspect clothes upon delivery.', 40, footerY + 14, { align: 'center' });
+      doc.text('2. Clothes not collected within 30 days are subject to storage charges.', 40, footerY + 25, { align: 'center' });
+      doc.text('3. Colors may bleed on delicate items if not pre-informed.', 40, footerY + 36, { align: 'center' });
 
       doc.end();
     } catch (error) {
