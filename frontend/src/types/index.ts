@@ -155,6 +155,7 @@ export interface DashboardStats {
   inProgress?: number;
   readyForPickup?: number;
   deliveredOrders?: number;
+  deliveredRevenue?: number;
   todayRevenue?: number;
   monthlyRevenue?: number;
   periodRevenue?: number;

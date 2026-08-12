@@ -42,7 +42,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 
-type CardType = 'orders' | 'payments' | 'active' | 'customers' | 'overdue';
+type CardType = 'orders' | 'payments' | 'active' | 'customers' | 'overdue' | 'delivered_orders' | 'delivered_revenue';
 
 export const DashboardPage: React.FC = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -56,6 +56,7 @@ export const DashboardPage: React.FC = () => {
   const [ordersList, setOrdersList] = useState<Order[]>([]);
   const [paymentsList, setPaymentsList] = useState<any[]>([]);
   const [activeOrdersList, setActiveOrdersList] = useState<Order[]>([]);
+  const [deliveredOrdersList, setDeliveredOrdersList] = useState<Order[]>([]);
   const [newCustomersList, setNewCustomersList] = useState<Customer[]>([]);
   const [overdueOrdersList, setOverdueOrdersList] = useState<Order[]>([]);
 
@@ -97,10 +98,26 @@ export const DashboardPage: React.FC = () => {
       ]);
 
       if (dashRes.success) {
-        setStats(dashRes.stats);
-        setOrdersList(dashRes.ordersList || dashRes.recentOrders || []);
+        const allOrds = dashRes.ordersList || dashRes.recentOrders || [];
+        const delOrds = (dashRes.deliveredOrdersList && dashRes.deliveredOrdersList.length > 0)
+          ? dashRes.deliveredOrdersList
+          : allOrds.filter((o: any) => /^delivered$/i.test(o.status || ''));
+
+        const calculatedDeliveredRevenue = dashRes.stats?.deliveredRevenue ?? delOrds.reduce((sum: number, o: any) => {
+          const paid = o.paymentStatus === 'Paid' ? Number(o.totalAmount || 0) : Number(o.advancePaid || 0);
+          return sum + paid;
+        }, 0);
+
+        setStats({
+          ...dashRes.stats,
+          deliveredOrders: dashRes.stats?.deliveredOrders ?? delOrds.length,
+          deliveredRevenue: calculatedDeliveredRevenue,
+        });
+
+        setOrdersList(allOrds);
         setPaymentsList(dashRes.paymentsList || []);
         setActiveOrdersList(dashRes.activeOrdersList || dashRes.pendingReminders || []);
+        setDeliveredOrdersList(delOrds);
         setNewCustomersList(dashRes.newCustomersList || []);
         setOverdueOrdersList(dashRes.overdueOrdersList || dashRes.pendingReminders || []);
       }
@@ -179,9 +196,10 @@ export const DashboardPage: React.FC = () => {
     'Cancelled',
   ];
 
-  const formatDateTime = (dateStr: string) => {
-    if (!dateStr) return '-';
+  const formatDateTime = (dateStr?: string | Date) => {
+    if (!dateStr) return 'N/A';
     const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return 'N/A';
     return `${d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}, ${d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`;
   };
 
@@ -209,6 +227,8 @@ export const DashboardPage: React.FC = () => {
     : activeCard === 'payments' ? paymentsList
     : activeCard === 'active' ? activeOrdersList
     : activeCard === 'customers' ? processedCustomersList
+    : activeCard === 'delivered_orders' ? deliveredOrdersList
+    : activeCard === 'delivered_revenue' ? deliveredOrdersList
     : overdueOrdersList;
 
   const totalDashRecords = activeList.length;
@@ -403,12 +423,12 @@ export const DashboardPage: React.FC = () => {
         )}
       </div>
 
-      {/* THE 5 DYNAMIC KEY METRIC CARDS (3 IN ROW 1 & 2 IN ROW 2 ON MOBILE) */}
-      <div className="grid grid-cols-6 lg:grid-cols-5 gap-2.5 sm:gap-4">
+      {/* THE 7 DYNAMIC KEY METRIC CARDS */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5 sm:gap-3">
         {/* CARD 1: Orders */}
         <div
           onClick={() => setActiveCard('orders')}
-          className={`col-span-2 lg:col-span-1 glass-card p-3 sm:p-4 flex flex-col justify-between cursor-pointer transition-all duration-200 select-none ${
+          className={`col-span-1 glass-card p-3 sm:p-4 flex flex-col justify-between cursor-pointer transition-all duration-200 select-none ${
             activeCard === 'orders'
               ? 'ring-2 ring-blue-500 border-blue-500 bg-blue-50/50 dark:bg-blue-950/50 shadow-md'
               : 'hover:border-blue-300'
@@ -416,7 +436,7 @@ export const DashboardPage: React.FC = () => {
         >
           <div className="flex items-center justify-between">
             <span className="text-[11px] sm:text-xs font-bold text-slate-600 dark:text-slate-300 truncate">Orders</span>
-            <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-blue-100 text-blue-600 dark:bg-blue-950 dark:text-blue-400">
+            <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-blue-100 text-blue-600 dark:bg-blue-950 dark:text-blue-400 shrink-0">
               <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
           </div>
@@ -428,14 +448,14 @@ export const DashboardPage: React.FC = () => {
                 {stats?.totalOrders ?? ordersList.length}
               </p>
             )}
-            <p className="hidden sm:block text-[11px] font-semibold text-blue-600 mt-0.5">Click to view orders</p>
+            <p className="hidden sm:block text-[10px] font-semibold text-blue-600 mt-0.5">View all orders</p>
           </div>
         </div>
 
         {/* CARD 2: Payments Received */}
         <div
           onClick={() => setActiveCard('payments')}
-          className={`col-span-2 lg:col-span-1 glass-card p-3 sm:p-4 flex flex-col justify-between cursor-pointer transition-all duration-200 select-none ${
+          className={`col-span-1 glass-card p-3 sm:p-4 flex flex-col justify-between cursor-pointer transition-all duration-200 select-none ${
             activeCard === 'payments'
               ? 'ring-2 ring-emerald-500 border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/50 shadow-md'
               : 'hover:border-emerald-300'
@@ -443,7 +463,7 @@ export const DashboardPage: React.FC = () => {
         >
           <div className="flex items-center justify-between">
             <span className="text-[11px] sm:text-xs font-bold text-slate-600 dark:text-slate-300 truncate">Income</span>
-            <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400">
+            <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400 shrink-0">
               <DollarSign className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
           </div>
@@ -455,14 +475,14 @@ export const DashboardPage: React.FC = () => {
                 {currencySymbol}{stats?.paymentsReceived ?? (paymentsList.length > 0 ? paymentsList : ordersList).reduce((acc, o: any) => acc + (o.amount || o.advancePaid || 0), 0)}
               </p>
             )}
-            <p className="hidden sm:block text-[11px] font-semibold text-emerald-600 mt-0.5">Click to view income</p>
+            <p className="hidden sm:block text-[10px] font-semibold text-emerald-600 mt-0.5">View income</p>
           </div>
         </div>
 
         {/* CARD 3: Active Orders */}
         <div
           onClick={() => setActiveCard('active')}
-          className={`col-span-2 lg:col-span-1 glass-card p-3 sm:p-4 flex flex-col justify-between cursor-pointer transition-all duration-200 select-none ${
+          className={`col-span-1 glass-card p-3 sm:p-4 flex flex-col justify-between cursor-pointer transition-all duration-200 select-none ${
             activeCard === 'active'
               ? 'ring-2 ring-cyan-500 border-cyan-500 bg-cyan-50/50 dark:bg-cyan-950/50 shadow-md'
               : 'hover:border-cyan-300'
@@ -470,7 +490,7 @@ export const DashboardPage: React.FC = () => {
         >
           <div className="flex items-center justify-between">
             <span className="text-[11px] sm:text-xs font-bold text-slate-600 dark:text-slate-300 truncate">Active</span>
-            <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-cyan-100 text-cyan-600 dark:bg-cyan-950 dark:text-cyan-400">
+            <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-cyan-100 text-cyan-600 dark:bg-cyan-950 dark:text-cyan-400 shrink-0">
               <WashingMachine className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
           </div>
@@ -482,22 +502,79 @@ export const DashboardPage: React.FC = () => {
                 {stats?.activeOrders ?? activeOrdersList.length}
               </p>
             )}
-            <p className="hidden sm:block text-[11px] font-semibold text-cyan-600 mt-0.5">Click to view active</p>
+            <p className="hidden sm:block text-[10px] font-semibold text-cyan-600 mt-0.5">View active</p>
           </div>
         </div>
 
-        {/* CARD 4: New Customers */}
+        {/* CARD 4: Delivered Orders */}
+        <div
+          onClick={() => setActiveCard('delivered_orders')}
+          className={`col-span-1 glass-card p-3 sm:p-4 flex flex-col justify-between cursor-pointer transition-all duration-200 select-none ${
+            activeCard === 'delivered_orders'
+              ? 'ring-2 ring-emerald-500 border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/50 shadow-md'
+              : 'hover:border-emerald-300'
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] sm:text-xs font-bold text-slate-600 dark:text-slate-300 truncate">Delivered</span>
+            <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400 shrink-0">
+              <PackageCheck className="w-4 h-4 sm:w-5 sm:h-5" />
+            </div>
+          </div>
+          <div className="mt-2 sm:mt-3">
+            {isLoading ? (
+              <div className="h-6 sm:h-7 w-16 bg-slate-200 dark:bg-slate-700 animate-pulse rounded-lg mt-1" />
+            ) : (
+              <p className="text-base sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 truncate">
+                {stats?.deliveredOrders ?? deliveredOrdersList.length}
+              </p>
+            )}
+            <p className="hidden sm:block text-[10px] font-semibold text-emerald-600 mt-0.5">View delivered</p>
+          </div>
+        </div>
+
+        {/* CARD 5: Delivered Income */}
+        <div
+          onClick={() => setActiveCard('delivered_revenue')}
+          className={`col-span-1 glass-card p-3 sm:p-4 flex flex-col justify-between cursor-pointer transition-all duration-200 select-none ${
+            activeCard === 'delivered_revenue'
+              ? 'ring-2 ring-teal-500 border-teal-500 bg-teal-50/50 dark:bg-teal-950/50 shadow-md'
+              : 'hover:border-teal-300'
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] sm:text-xs font-bold text-slate-600 dark:text-slate-300 truncate">Delivered Income</span>
+            <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-teal-100 text-teal-600 dark:bg-teal-950 dark:text-teal-400 shrink-0">
+              <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5" />
+            </div>
+          </div>
+          <div className="mt-2 sm:mt-3">
+            {isLoading ? (
+              <div className="h-6 sm:h-7 w-20 bg-slate-200 dark:bg-slate-700 animate-pulse rounded-lg mt-1" />
+            ) : (
+              <p className="text-base sm:text-2xl font-black text-teal-600 dark:text-teal-400 truncate">
+                {currencySymbol}{(stats?.deliveredRevenue ?? deliveredOrdersList.reduce((acc, o: any) => {
+                  const paid = o.paymentStatus === 'Paid' ? Number(o.totalAmount || 0) : Number(o.advancePaid || 0);
+                  return acc + paid;
+                }, 0)).toLocaleString('en-IN')}
+              </p>
+            )}
+            <p className="hidden sm:block text-[10px] font-semibold text-teal-600 mt-0.5">Delivered revenue</p>
+          </div>
+        </div>
+
+        {/* CARD 6: New Customers */}
         <div
           onClick={() => setActiveCard('customers')}
-          className={`col-span-3 lg:col-span-1 glass-card p-3 sm:p-4 flex flex-col justify-between cursor-pointer transition-all duration-200 select-none ${
+          className={`col-span-1 glass-card p-3 sm:p-4 flex flex-col justify-between cursor-pointer transition-all duration-200 select-none ${
             activeCard === 'customers'
               ? 'ring-2 ring-indigo-500 border-indigo-500 bg-indigo-50/50 dark:bg-indigo-950/50 shadow-md'
               : 'hover:border-indigo-300'
           }`}
         >
           <div className="flex items-center justify-between">
-            <span className="text-[11px] sm:text-xs font-bold text-slate-600 dark:text-slate-300 truncate">New Customers</span>
-            <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-indigo-100 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400">
+            <span className="text-[11px] sm:text-xs font-bold text-slate-600 dark:text-slate-300 truncate">Customers</span>
+            <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-indigo-100 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400 shrink-0">
               <Users className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
           </div>
@@ -509,22 +586,22 @@ export const DashboardPage: React.FC = () => {
                 {stats?.totalCustomers ?? newCustomersList.length}
               </p>
             )}
-            <p className="hidden sm:block text-[11px] font-semibold text-indigo-600 mt-0.5">Click to view customers</p>
+            <p className="hidden sm:block text-[10px] font-semibold text-indigo-600 mt-0.5">View customers</p>
           </div>
         </div>
 
-        {/* CARD 5: Overdue Orders */}
+        {/* CARD 7: Overdue Orders */}
         <div
           onClick={() => setActiveCard('overdue')}
-          className={`col-span-3 lg:col-span-1 glass-card p-3 sm:p-4 flex flex-col justify-between cursor-pointer transition-all duration-200 select-none ${
+          className={`col-span-1 glass-card p-3 sm:p-4 flex flex-col justify-between cursor-pointer transition-all duration-200 select-none ${
             activeCard === 'overdue'
               ? 'ring-2 ring-rose-500 border-rose-500 bg-rose-50/50 dark:bg-rose-950/50 shadow-md'
               : 'hover:border-rose-300'
           }`}
         >
           <div className="flex items-center justify-between">
-            <span className="text-[11px] sm:text-xs font-bold text-slate-600 dark:text-slate-300 truncate">Overdue Orders</span>
-            <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-rose-100 text-rose-600 dark:bg-rose-950 dark:text-rose-400">
+            <span className="text-[11px] sm:text-xs font-bold text-slate-600 dark:text-slate-300 truncate">Overdue</span>
+            <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-rose-100 text-rose-600 dark:bg-rose-950 dark:text-rose-400 shrink-0">
               <Clock className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
           </div>
@@ -536,7 +613,7 @@ export const DashboardPage: React.FC = () => {
                 {stats?.overdueOrders ?? overdueOrdersList.length}
               </p>
             )}
-            <p className="hidden sm:block text-[11px] font-semibold text-rose-600 mt-0.5">Click to view overdue</p>
+            <p className="hidden sm:block text-[10px] font-semibold text-rose-600 mt-0.5">View overdue</p>
           </div>
         </div>
       </div>
@@ -550,6 +627,8 @@ export const DashboardPage: React.FC = () => {
               {activeCard === 'orders' && <ShoppingBag className="w-4 h-4 text-blue-500" />}
               {activeCard === 'payments' && <DollarSign className="w-4 h-4 text-emerald-500" />}
               {activeCard === 'active' && <WashingMachine className="w-4 h-4 text-cyan-500" />}
+              {activeCard === 'delivered_orders' && <PackageCheck className="w-4 h-4 text-emerald-500" />}
+              {activeCard === 'delivered_revenue' && <TrendingUp className="w-4 h-4 text-teal-500" />}
               {activeCard === 'customers' && <Users className="w-4 h-4 text-indigo-500" />}
               {activeCard === 'overdue' && <AlertTriangle className="w-4 h-4 text-rose-500" />}
 
@@ -557,6 +636,8 @@ export const DashboardPage: React.FC = () => {
                 {activeCard === 'orders' && `All Filtered Orders (${totalDashRecords})`}
                 {activeCard === 'payments' && `Payments Collected (${totalDashRecords})`}
                 {activeCard === 'active' && `Active Orders (${totalDashRecords})`}
+                {activeCard === 'delivered_orders' && `Delivered Orders (${totalDashRecords})`}
+                {activeCard === 'delivered_revenue' && `Delivered Income Orders (${totalDashRecords})`}
                 {activeCard === 'customers' && `Customers (${totalDashRecords})`}
                 {activeCard === 'overdue' && `Overdue Orders (${totalDashRecords})`}
               </span>
@@ -565,6 +646,8 @@ export const DashboardPage: React.FC = () => {
               {activeCard === 'orders' && 'Showing all orders matching filter criteria.'}
               {activeCard === 'payments' && 'Showing payment collection receipts matching filter criteria.'}
               {activeCard === 'active' && 'Active orders currently in washing, drying, ironing, packing, or ready for delivery.'}
+              {activeCard === 'delivered_orders' && 'Showing completed orders that have been delivered.'}
+              {activeCard === 'delivered_revenue' && 'Showing delivered orders and total revenue income collected.'}
               {activeCard === 'customers' && 'Showing new customer profiles registered during selected period.'}
               {activeCard === 'overdue' && 'Showing active orders that have exceeded their expected delivery date.'}
             </p>
@@ -604,8 +687,8 @@ export const DashboardPage: React.FC = () => {
           </div>
         ) : (
           <>
-        {/* --- VIEW 1: ORDERS LIST (activeCard === 'orders') --- */}
-        {activeCard === 'orders' && (
+        {/* --- VIEW 1: ORDERS LIST (activeCard === 'orders' | 'delivered_orders' | 'delivered_revenue') --- */}
+        {(activeCard === 'orders' || activeCard === 'delivered_orders' || activeCard === 'delivered_revenue') && (
           <div>
             {paginatedList.length === 0 ? (
               <div className="text-center py-8 text-slate-500 text-xs">No orders found matching filters.</div>

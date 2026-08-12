@@ -132,6 +132,21 @@ export const getDashboardStats = async (req: Request, res: Response) => {
     const overdueOrdersCount = await Order.countDocuments(overdueQuery);
     const overdueOrdersList = await Order.find(overdueQuery).sort({ expectedDeliveryDate: 1 }).lean();
 
+    // 6. Delivered Orders List, Count & Delivered Income (Actual Money Collected on Delivered Orders)
+    const deliveredQuery: any = {
+      ...orderQuery,
+      status: { $regex: /^delivered$/i },
+    };
+
+    const deliveredOrdersCount = await Order.countDocuments(deliveredQuery);
+    const deliveredOrdersList = await Order.find(deliveredQuery).sort({ deliveredAt: -1, orderDate: -1 }).lean();
+    
+    // Sum only actual money collected on delivered orders (deducting unpaid balance)
+    const deliveredRevenue = deliveredOrdersList.reduce((sum, ord: any) => {
+      const paid = ord.paymentStatus === 'Paid' ? Number(ord.totalAmount || 0) : Number(ord.advancePaid || 0);
+      return sum + paid;
+    }, 0);
+
     // Calculate revenue from payments & order totals
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
     const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
@@ -214,7 +229,8 @@ export const getDashboardStats = async (req: Request, res: Response) => {
         pendingOrders: activeOrdersCount,
         inProgress: activeOrdersCount,
         readyForPickup: activeOrdersCount,
-        deliveredOrders: Math.max(0, totalOrdersCount - activeOrdersCount),
+        deliveredOrders: deliveredOrdersCount,
+        deliveredRevenue: deliveredRevenue,
         todayRevenue,
         monthlyRevenue,
         periodRevenue: periodRev,
@@ -223,6 +239,7 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       ordersList,
       paymentsList,
       activeOrdersList,
+      deliveredOrdersList,
       newCustomersList,
       overdueOrdersList,
       pendingReminders: overdueOrdersList,

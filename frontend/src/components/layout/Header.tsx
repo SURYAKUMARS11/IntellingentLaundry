@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
+import { PwaInstallButton } from '../common/PwaInstallButton';
 import {
   Sun,
   Moon,
@@ -89,6 +90,9 @@ export const Header: React.FC<HeaderProps> = ({ isSidebarCollapsed, onToggleSide
 
       {/* Right Actions */}
       <div className="flex items-center gap-2 sm:gap-3">
+        {/* PWA Desktop App Installation Button */}
+        <PwaInstallButton className="hidden md:flex" />
+
         {/* Quick New Order Button */}
         <button
           onClick={() => navigate('/orders/new')}
