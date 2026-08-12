@@ -252,21 +252,39 @@ export const getDashboardStats = async (req: Request, res: Response) => {
 
 export const getRevenueReport = async (req: Request, res: Response) => {
   try {
-    const { period = '30days' } = req.query;
+    const { period = '30days', preset } = req.query;
+    const now = new Date();
     let startDate = new Date();
+    let endDate = new Date();
 
-    if (period === '7days') {
-      startDate.setDate(startDate.getDate() - 7);
-    } else if (period === '12months') {
-      startDate.setMonth(startDate.getMonth() - 12);
+    const activePreset = (preset as string) || (period as string);
+
+    if (activePreset === '7days') {
+      startDate.setDate(now.getDate() - 7);
+    } else if (activePreset === '30days') {
+      startDate.setDate(now.getDate() - 30);
+    } else if (activePreset === '12months' || activePreset === 'current_year') {
+      startDate = new Date(now.getFullYear(), 0, 1, 0, 0, 0, 0);
+      endDate = new Date(now.getFullYear(), 11, 31, 23, 59, 59, 999);
+    } else if (activePreset === 'current_month') {
+      startDate = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+      endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+    } else if (activePreset === 'last_month') {
+      startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1, 0, 0, 0, 0);
+      endDate = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
+    } else if (activePreset === 'last_3_months') {
+      startDate = new Date(now.getFullYear(), now.getMonth() - 2, 1, 0, 0, 0, 0);
+      endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+    } else if (activePreset === 'all') {
+      startDate = new Date(2020, 0, 1);
     } else {
-      startDate.setDate(startDate.getDate() - 30);
+      startDate.setDate(now.getDate() - 30);
     }
     startDate.setHours(0, 0, 0, 0);
 
     // 1. Daily Chart Data: Group payments or orders by date
     let chartData = await Payment.aggregate([
-      { $match: { paidAt: { $gte: startDate } } },
+      { $match: { paidAt: { $gte: startDate, $lte: endDate } } },
       {
         $group: {
           _id: { $dateToString: { format: '%Y-%m-%d', date: '$paidAt' } },
@@ -279,7 +297,7 @@ export const getRevenueReport = async (req: Request, res: Response) => {
 
     if (chartData.length === 0) {
       chartData = await Order.aggregate([
-        { $match: { orderDate: { $gte: startDate } } },
+        { $match: { orderDate: { $gte: startDate, $lte: endDate } } },
         {
           $group: {
             _id: { $dateToString: { format: '%Y-%m-%d', date: '$orderDate' } },
@@ -293,6 +311,7 @@ export const getRevenueReport = async (req: Request, res: Response) => {
 
     // 2. Service Breakdown
     let serviceBreakdown = await Order.aggregate([
+      { $match: { orderDate: { $gte: startDate, $lte: endDate } } },
       { $unwind: '$items' },
       {
         $group: {
@@ -305,7 +324,7 @@ export const getRevenueReport = async (req: Request, res: Response) => {
     ]);
 
     // 3. Top Customers
-    const topCustomers = await Customer.find().sort({ totalSpent: -1 }).limit(5);
+    const topCustomers = await Customer.find().sort({ totalSpent: -1 }).limit(10);
 
     res.json({
       success: true,

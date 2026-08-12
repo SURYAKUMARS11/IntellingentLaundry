@@ -13,7 +13,7 @@ import {
 } from '../types';
 import { posGroupCatalog } from '../data/posCatalogData';
 
-const getApiBaseUrl = () => {
+export const getApiBaseUrl = () => {
   if ((import.meta as any).env?.VITE_API_URL) {
     return (import.meta as any).env.VITE_API_URL;
   }
@@ -962,7 +962,8 @@ export const fetchDashboardStats = async (params: {
 };
 
 export const fetchRevenueReport = async (params: any = {}) => {
-  const query = new URLSearchParams(params as any).toString();
+  const queryObj = typeof params === 'string' ? { period: params, preset: params } : params;
+  const query = new URLSearchParams(queryObj).toString();
   let apiRes: any = null;
   try {
     apiRes = await fetchApi(`/reports/revenue?${query}`);

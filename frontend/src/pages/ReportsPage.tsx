@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { fetchRevenueReport, fetchProfitLossReport, fetchSettings } from '../services/api';
+import { fetchRevenueReport, fetchProfitLossReport, fetchSettings, getApiBaseUrl, getAuthToken } from '../services/api';
 import { Customer, Setting } from '../types';
 import {
   ResponsiveContainer,
@@ -71,7 +71,7 @@ export const ReportsPage: React.FC = () => {
     if (chartData.length === 0 && !pnlData?.summary?.grossRevenue) setIsLoading(true);
     try {
       const [revRes, pnlRes] = await Promise.all([
-        fetchRevenueReport(period),
+        fetchRevenueReport({ period, preset: periodPreset }),
         fetchProfitLossReport({ preset: periodPreset }),
       ]);
 
@@ -98,7 +98,9 @@ export const ReportsPage: React.FC = () => {
   const currencySymbol = setting?.currencySymbol || '₹';
 
   const handleExportCSV = (type: 'orders' | 'customers' | 'pnl') => {
-    window.open(`/api/reports/export?type=${type}`, '_blank');
+    const token = getAuthToken();
+    const baseUrl = getApiBaseUrl();
+    window.open(`${baseUrl}/reports/export?type=${type}&token=${encodeURIComponent(token || '')}`, '_blank');
   };
 
   const handlePrintPnl = () => {
@@ -463,24 +465,37 @@ export const ReportsPage: React.FC = () => {
       {activeTab === 'revenue' && (
         <div className="space-y-6">
           {/* Period Selector Tabs */}
-          <div className="flex items-center gap-2 glass-card p-1.5 max-w-xs">
-            {[
-              { id: '7days', label: '7 Days' },
-              { id: '30days', label: '30 Days' },
-              { id: '12months', label: '12 Months' },
-            ].map((t) => (
-              <button
-                key={t.id}
-                onClick={() => setPeriod(t.id)}
-                className={`flex-1 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                  period === t.id
-                    ? 'bg-brand-600 text-white shadow-sm'
-                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-                }`}
-              >
-                {t.label}
-              </button>
-            ))}
+          <div className="flex flex-wrap items-center justify-between gap-3 glass-card p-3">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="w-4 h-4 text-brand-600" />
+              <span className="text-xs font-extrabold text-slate-900 dark:text-white">Revenue Period:</span>
+            </div>
+
+            <div className="flex flex-wrap gap-1.5">
+              {[
+                { id: 'current_month', label: 'This Month' },
+                { id: 'last_month', label: 'Last Month' },
+                { id: 'last_3_months', label: 'Last 3 Months' },
+                { id: '30days', label: '30 Days' },
+                { id: 'current_year', label: 'This Year' },
+                { id: 'all', label: 'All Time' },
+              ].map((t) => (
+                <button
+                  key={t.id}
+                  onClick={() => {
+                    setPeriod(t.id);
+                    setPeriodPreset(t.id);
+                  }}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                    periodPreset === t.id || period === t.id
+                      ? 'bg-brand-600 text-white shadow-sm'
+                      : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200'
+                  }`}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
