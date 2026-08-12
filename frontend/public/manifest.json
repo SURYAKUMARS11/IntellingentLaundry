@@ -4,16 +4,22 @@
   "description": "IntelligentLaundry POS & Management System",
   "icons": [
     {
-      "src": "/logo.png",
+      "src": "/pwa-192.png",
       "type": "image/png",
       "sizes": "192x192",
-      "purpose": "any"
+      "purpose": "any maskable"
     },
     {
-      "src": "/logo.jpg",
-      "type": "image/jpeg",
+      "src": "/pwa-512.png",
+      "type": "image/png",
       "sizes": "512x512",
       "purpose": "any maskable"
+    },
+    {
+      "src": "/logo.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any"
     }
   ],
   "start_url": "/login",
