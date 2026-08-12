@@ -38,6 +38,9 @@ export const updateSettings = async (req: Request, res: Response) => {
       currencyCode,
       invoicePrefix,
       termsAndConditions,
+      upiId,
+      gpayNumber,
+      paymentQrUrl,
     } = req.body;
 
     if (shopName) setting.shopName = shopName;
@@ -52,6 +55,9 @@ export const updateSettings = async (req: Request, res: Response) => {
     if (currencyCode) setting.currencyCode = currencyCode;
     if (invoicePrefix) setting.invoicePrefix = invoicePrefix;
     if (termsAndConditions !== undefined) setting.termsAndConditions = termsAndConditions;
+    if (upiId !== undefined) setting.upiId = upiId;
+    if (gpayNumber !== undefined) setting.gpayNumber = gpayNumber;
+    if (paymentQrUrl !== undefined) setting.paymentQrUrl = paymentQrUrl;
 
     await setting.save();
 

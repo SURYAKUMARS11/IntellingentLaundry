@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import {
   fetchSettings,
   updateSettingsApi,
-  updateProfile,
   clearAllDataApi,
   downloadMasterExcelBackupApi,
   restoreMasterExcelBackupApi,
@@ -10,15 +9,13 @@ import {
   disconnectWhatsAppApi,
   importOldAppOrdersJsonApi,
 } from '../services/api';
-import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { Setting } from '../types';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
-import { Settings, Store, Receipt, Lock, CheckCircle, Save, Trash2, Upload, X, FileSpreadsheet, Download, UploadCloud, CheckCircle2, Smartphone, RefreshCw, QrCode, FileJson } from 'lucide-react';
+import { Settings, Store, Receipt, CheckCircle, Save, Trash2, Upload, X, FileSpreadsheet, Download, UploadCloud, CheckCircle2, Smartphone, RefreshCw, QrCode, FileJson } from 'lucide-react';
 
 export const SettingsPage: React.FC = () => {
   const { showToast } = useToast();
-  const { admin, updateAdminState } = useAuth();
   const [setting, setSetting] = useState<Setting>({
     shopName: 'IntelligentLaundry',
     shopTagline: 'Smart & Premium Laundry Management',
@@ -34,7 +31,7 @@ export const SettingsPage: React.FC = () => {
     termsAndConditions: 'Items not collected within 30 days are subject to storage charges.',
   });
 
-  const [activeTab, setActiveTab] = useState<'shop' | 'invoice' | 'whatsapp' | 'account' | 'backup'>('shop');
+  const [activeTab, setActiveTab] = useState<'shop' | 'invoice' | 'whatsapp' | 'backup'>('shop');
   const [isSaved, setIsSaved] = useState(false);
 
   // WhatsApp Automation Gateway State
@@ -44,13 +41,6 @@ export const SettingsPage: React.FC = () => {
     phone: null,
   });
   const [waLoading, setWaLoading] = useState(false);
-
-  // Admin account state
-  const [adminName, setAdminName] = useState(admin?.name || '');
-  const [adminEmail, setAdminEmail] = useState(admin?.email || '');
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [accountMsg, setAccountMsg] = useState('');
 
   // Backup & Restore state
   const [isExporting, setIsExporting] = useState(false);
@@ -145,35 +135,15 @@ export const SettingsPage: React.FC = () => {
     try {
       const res = await updateSettingsApi(setting);
       if (res.success) {
+        if (res.setting) {
+          setSetting(res.setting);
+        }
         setIsSaved(true);
-        showToast('✅ Shop settings saved successfully!', 'success');
+        showToast('✅ Shop & Invoice settings saved successfully!', 'success');
         setTimeout(() => setIsSaved(false), 3000);
       }
     } catch (err: any) {
       showToast(err.message || 'Failed to update settings', 'error');
-    }
-  };
-
-  const handleSaveAccount = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setAccountMsg('');
-    try {
-      const res = await updateProfile({
-        name: adminName,
-        email: adminEmail,
-        currentPassword,
-        newPassword,
-      });
-      if (res.success) {
-        updateAdminState(res.admin);
-        setAccountMsg('Account updated successfully');
-        showToast('✅ Account details updated successfully!', 'success');
-        setCurrentPassword('');
-        setNewPassword('');
-      }
-    } catch (err: any) {
-      setAccountMsg(err.message || 'Failed to update profile');
-      showToast(err.message || 'Failed to update profile', 'error');
     }
   };
 
@@ -272,17 +242,6 @@ export const SettingsPage: React.FC = () => {
           {waStatus.connected && (
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse ml-0.5" />
           )}
-        </button>
-
-        <button
-          onClick={() => setActiveTab('account')}
-          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-            activeTab === 'account'
-              ? 'bg-brand-600 text-white shadow-md'
-              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-          }`}
-        >
-          <Lock className="w-4 h-4" /> Admin Account
         </button>
 
         <button
@@ -688,82 +647,6 @@ export const SettingsPage: React.FC = () => {
             </div>
           )}
         </div>
-      )}
-
-      {/* Admin Account Settings */}
-      {activeTab === 'account' && (
-        <form onSubmit={handleSaveAccount} className="glass-card p-6 space-y-4">
-          <h3 className="font-extrabold text-sm text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-800 pb-2">
-            Administrator Credentials
-          </h3>
-
-          {accountMsg && (
-            <div className="p-3 rounded-xl bg-brand-500/20 text-brand-700 dark:text-brand-300 text-xs font-semibold">
-              {accountMsg}
-            </div>
-          )}
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Admin Name
-              </label>
-              <input
-                type="text"
-                value={adminName}
-                onChange={(e) => setAdminName(e.target.value)}
-                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Admin Email
-              </label>
-              <input
-                type="email"
-                value={adminEmail}
-                onChange={(e) => setAdminEmail(e.target.value)}
-                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-slate-100 dark:border-slate-800">
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Current Password (required to change)
-              </label>
-              <input
-                type="password"
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                New Password
-              </label>
-              <input
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none"
-              />
-            </div>
-          </div>
-
-          <div className="pt-3">
-            <button
-              type="submit"
-              className="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold shadow-md flex items-center gap-2"
-            >
-              <Save className="w-4 h-4" /> Update Admin Profile
-            </button>
-          </div>
-        </form>
       )}
 
       {/* Excel Backup & Restore Tab */}
