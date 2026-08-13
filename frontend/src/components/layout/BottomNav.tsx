@@ -5,6 +5,7 @@ import {
   ShoppingBag,
   Plus,
   Users,
+  WashingMachine,
   BarChart3,
   Settings,
   MoreHorizontal,
@@ -23,12 +24,43 @@ export const BottomNav: React.FC = () => {
             className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs"
             onClick={() => setShowMoreMenu(false)}
           />
-          <div className="fixed bottom-16 inset-x-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 rounded-t-2xl p-4 shadow-xl space-y-2 animate-in slide-in-from-bottom duration-200 z-50">
+          <div className="fixed bottom-16 inset-x-0 max-h-[80vh] overflow-y-auto bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 rounded-t-2xl p-4 shadow-xl space-y-2 animate-in slide-in-from-bottom duration-200 z-50">
             <div className="w-12 h-1 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto mb-3" />
             <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider px-2">
               More Options
             </h3>
 
+            {/* Staff & Attendance */}
+            <NavLink
+              to="/staff"
+              onClick={() => setShowMoreMenu(false)}
+              className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 font-medium text-slate-700 dark:text-slate-200"
+            >
+              <div className="p-2 rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-950 dark:text-blue-400">
+                <Users className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold">Staff & Attendance</p>
+                <p className="text-xs text-slate-500">Attendance register, table logs & reports</p>
+              </div>
+            </NavLink>
+
+            {/* Machine & Utilities */}
+            <NavLink
+              to="/machines"
+              onClick={() => setShowMoreMenu(false)}
+              className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 font-medium text-slate-700 dark:text-slate-200"
+            >
+              <div className="p-2 rounded-lg bg-cyan-100 text-cyan-600 dark:bg-cyan-950 dark:text-cyan-400">
+                <WashingMachine className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold">Machine & Utilities</p>
+                <p className="text-xs text-slate-500">Washer runs, Dryer cycles & LPG Gas cost</p>
+              </div>
+            </NavLink>
+
+            {/* Accounts & Expenses */}
             <NavLink
               to="/accounts"
               onClick={() => setShowMoreMenu(false)}
@@ -43,12 +75,13 @@ export const BottomNav: React.FC = () => {
               </div>
             </NavLink>
 
+            {/* Services */}
             <NavLink
               to="/services"
               onClick={() => setShowMoreMenu(false)}
               className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 font-medium text-slate-700 dark:text-slate-200"
             >
-              <div className="p-2 rounded-lg bg-cyan-100 text-cyan-600 dark:bg-cyan-950 dark:text-cyan-400">
+              <div className="p-2 rounded-lg bg-indigo-100 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400">
                 <ShoppingBag className="w-5 h-5" />
               </div>
               <div>
@@ -57,6 +90,7 @@ export const BottomNav: React.FC = () => {
               </div>
             </NavLink>
 
+            {/* Clothing Items */}
             <NavLink
               to="/items"
               onClick={() => setShowMoreMenu(false)}
@@ -71,6 +105,7 @@ export const BottomNav: React.FC = () => {
               </div>
             </NavLink>
 
+            {/* Categories */}
             <NavLink
               to="/categories"
               onClick={() => setShowMoreMenu(false)}
@@ -85,6 +120,7 @@ export const BottomNav: React.FC = () => {
               </div>
             </NavLink>
 
+            {/* Reports */}
             <NavLink
               to="/reports"
               onClick={() => setShowMoreMenu(false)}
@@ -99,6 +135,7 @@ export const BottomNav: React.FC = () => {
               </div>
             </NavLink>
 
+            {/* Shop Settings */}
             <NavLink
               to="/settings"
               onClick={() => setShowMoreMenu(false)}
@@ -116,7 +153,7 @@ export const BottomNav: React.FC = () => {
         </div>
       )}
 
-      {/* Fixed Bottom Nav */}
+      {/* Fixed Bottom Nav Bar */}
       <nav className="lg:hidden fixed bottom-0 inset-x-0 h-16 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 flex items-center justify-around z-30 px-2 shadow-lg">
         <NavLink
           to="/dashboard"
@@ -148,9 +185,9 @@ export const BottomNav: React.FC = () => {
         <NavLink
           to="/orders/new"
           onClick={() => setShowMoreMenu(false)}
-          className="flex items-center justify-center w-12 h-12 -mt-5 rounded-full bg-gradient-to-r from-brand-600 to-brand-500 text-white shadow-lg shadow-brand-500/40 active:scale-95 transition-transform"
+          className="flex flex-col items-center justify-center w-12 h-12 rounded-full bg-brand-600 text-white shadow-lg shadow-brand-600/30 -mt-5 hover:bg-brand-700 transition-all"
         >
-          <Plus className="w-6 h-6 stroke-[2.5]" />
+          <Plus className="w-6 h-6" />
         </NavLink>
 
         <NavLink
@@ -167,7 +204,8 @@ export const BottomNav: React.FC = () => {
         </NavLink>
 
         <button
-          onClick={() => setShowMoreMenu((prev) => !prev)}
+          type="button"
+          onClick={() => setShowMoreMenu(!showMoreMenu)}
           className={`flex flex-col items-center justify-center w-16 h-12 rounded-xl transition-colors ${
             showMoreMenu ? 'text-brand-600 dark:text-brand-400 font-bold' : 'text-slate-500 dark:text-slate-400'
           }`}
