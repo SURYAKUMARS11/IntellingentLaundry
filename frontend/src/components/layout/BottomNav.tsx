@@ -10,6 +10,7 @@ import {
   Settings,
   MoreHorizontal,
   Wallet,
+  X,
 } from 'lucide-react';
 
 export const BottomNav: React.FC = () => {
@@ -17,135 +18,149 @@ export const BottomNav: React.FC = () => {
 
   return (
     <>
-      {/* Slide up More Menu */}
+      {/* Slide up More Menu Sheet */}
       {showMoreMenu && (
-        <div className="fixed inset-0 z-40 lg:hidden">
+        <div className="fixed inset-0 z-50 lg:hidden flex flex-col justify-end">
+          {/* Backdrop Overlay */}
           <div
-            className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs"
+            className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity"
             onClick={() => setShowMoreMenu(false)}
           />
-          <div className="fixed bottom-16 inset-x-0 max-h-[80vh] overflow-y-auto bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 rounded-t-2xl p-4 shadow-xl space-y-2 animate-in slide-in-from-bottom duration-200 z-50">
-            <div className="w-12 h-1 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto mb-3" />
-            <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider px-2">
-              More Options
-            </h3>
 
-            {/* Staff & Attendance */}
+          {/* Scrollable Drawer Sheet */}
+          <div className="relative z-50 w-full max-h-[82vh] overflow-y-auto bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 rounded-t-3xl p-4 pb-24 shadow-2xl space-y-2.5 touch-pan-y animate-in slide-in-from-bottom duration-200">
+            {/* Grab Handle */}
+            <div className="w-12 h-1.5 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto mb-2" />
+            
+            <div className="flex items-center justify-between px-2 mb-1">
+              <h3 className="text-xs font-black text-slate-400 uppercase tracking-wider">
+                More Features & Operations
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowMoreMenu(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* 1. Staff & Attendance */}
             <NavLink
               to="/staff"
               onClick={() => setShowMoreMenu(false)}
-              className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 font-medium text-slate-700 dark:text-slate-200"
+              className="flex items-center gap-3 p-3 rounded-2xl bg-blue-50/60 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-900/50 hover:bg-blue-100 font-medium text-slate-800 dark:text-slate-100"
             >
-              <div className="p-2 rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-950 dark:text-blue-400">
+              <div className="p-2.5 rounded-xl bg-blue-600 text-white shadow-xs">
                 <Users className="w-5 h-5" />
               </div>
               <div>
-                <p className="text-sm font-semibold">Staff & Attendance</p>
-                <p className="text-xs text-slate-500">Attendance register, table logs & reports</p>
+                <p className="text-sm font-extrabold text-blue-950 dark:text-blue-200">Staff & Attendance</p>
+                <p className="text-xs text-blue-600 dark:text-blue-400">Attendance register, table logs & reports</p>
               </div>
             </NavLink>
 
-            {/* Machine & Utilities */}
+            {/* 2. Machine & Utilities */}
             <NavLink
               to="/machines"
               onClick={() => setShowMoreMenu(false)}
-              className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 font-medium text-slate-700 dark:text-slate-200"
+              className="flex items-center gap-3 p-3 rounded-2xl bg-cyan-50/60 dark:bg-cyan-950/40 border border-cyan-100 dark:border-cyan-900/50 hover:bg-cyan-100 font-medium text-slate-800 dark:text-slate-100"
             >
-              <div className="p-2 rounded-lg bg-cyan-100 text-cyan-600 dark:bg-cyan-950 dark:text-cyan-400">
+              <div className="p-2.5 rounded-xl bg-cyan-600 text-white shadow-xs">
                 <WashingMachine className="w-5 h-5" />
               </div>
               <div>
-                <p className="text-sm font-semibold">Machine & Utilities</p>
-                <p className="text-xs text-slate-500">Washer runs, Dryer cycles & LPG Gas cost</p>
+                <p className="text-sm font-extrabold text-cyan-950 dark:text-cyan-200">Machine & Utilities</p>
+                <p className="text-xs text-cyan-600 dark:text-cyan-400">Washer runs, Dryer cycles & LPG Gas cost</p>
               </div>
             </NavLink>
 
-            {/* Accounts & Expenses */}
+            {/* 3. Accounts & Expenses */}
             <NavLink
               to="/accounts"
               onClick={() => setShowMoreMenu(false)}
-              className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 font-medium text-slate-700 dark:text-slate-200"
+              className="flex items-center gap-3 p-3 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-900/50 hover:bg-emerald-100 font-medium text-slate-800 dark:text-slate-100"
             >
-              <div className="p-2 rounded-lg bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400">
+              <div className="p-2.5 rounded-xl bg-emerald-600 text-white shadow-xs">
                 <Wallet className="w-5 h-5" />
               </div>
               <div>
-                <p className="text-sm font-semibold">Accounts & Expenses</p>
-                <p className="text-xs text-slate-500">Order incomes, EB bills & wages</p>
+                <p className="text-sm font-extrabold text-emerald-950 dark:text-emerald-200">Accounts & Expenses</p>
+                <p className="text-xs text-emerald-600 dark:text-emerald-400">Order incomes, EB bills & wages</p>
               </div>
             </NavLink>
 
-            {/* Services */}
+            {/* 4. Services */}
             <NavLink
               to="/services"
               onClick={() => setShowMoreMenu(false)}
-              className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 font-medium text-slate-700 dark:text-slate-200"
+              className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 hover:bg-slate-100 font-medium text-slate-800 dark:text-slate-100"
             >
-              <div className="p-2 rounded-lg bg-indigo-100 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400">
+              <div className="p-2.5 rounded-xl bg-slate-700 text-white shadow-xs">
                 <ShoppingBag className="w-5 h-5" />
               </div>
               <div>
-                <p className="text-sm font-semibold">Services Management</p>
+                <p className="text-sm font-extrabold">Services Management</p>
                 <p className="text-xs text-slate-500">Wash, Iron, Dry Clean pricing</p>
               </div>
             </NavLink>
 
-            {/* Clothing Items */}
+            {/* 5. Clothing Items */}
             <NavLink
               to="/items"
               onClick={() => setShowMoreMenu(false)}
-              className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 font-medium text-slate-700 dark:text-slate-200"
+              className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 hover:bg-slate-100 font-medium text-slate-800 dark:text-slate-100"
             >
-              <div className="p-2 rounded-lg bg-purple-100 text-purple-600 dark:bg-purple-950 dark:text-purple-400">
+              <div className="p-2.5 rounded-xl bg-purple-600 text-white shadow-xs">
                 <ShoppingBag className="w-5 h-5" />
               </div>
               <div>
-                <p className="text-sm font-semibold">Clothing Items</p>
+                <p className="text-sm font-extrabold">Clothing Items</p>
                 <p className="text-xs text-slate-500">Shirts, Pants, Suits, Blankets</p>
               </div>
             </NavLink>
 
-            {/* Categories */}
+            {/* 6. Categories */}
             <NavLink
               to="/categories"
               onClick={() => setShowMoreMenu(false)}
-              className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 font-medium text-slate-700 dark:text-slate-200"
+              className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 hover:bg-slate-100 font-medium text-slate-800 dark:text-slate-100"
             >
-              <div className="p-2 rounded-lg bg-amber-100 text-amber-600 dark:bg-amber-950 dark:text-amber-400">
+              <div className="p-2.5 rounded-xl bg-amber-600 text-white shadow-xs">
                 <ShoppingBag className="w-5 h-5" />
               </div>
               <div>
-                <p className="text-sm font-semibold">Garment Categories</p>
+                <p className="text-sm font-extrabold">Garment Categories</p>
                 <p className="text-xs text-slate-500">Regular, Men, Women, Kids, Household</p>
               </div>
             </NavLink>
 
-            {/* Reports */}
+            {/* 7. Reports */}
             <NavLink
               to="/reports"
               onClick={() => setShowMoreMenu(false)}
-              className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 font-medium text-slate-700 dark:text-slate-200"
+              className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 hover:bg-slate-100 font-medium text-slate-800 dark:text-slate-100"
             >
-              <div className="p-2 rounded-lg bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400">
+              <div className="p-2.5 rounded-xl bg-emerald-600 text-white shadow-xs">
                 <BarChart3 className="w-5 h-5" />
               </div>
               <div>
-                <p className="text-sm font-semibold">Reports & Analytics</p>
+                <p className="text-sm font-extrabold">Reports & Analytics</p>
                 <p className="text-xs text-slate-500">Revenue, Charts, CSV Export</p>
               </div>
             </NavLink>
 
-            {/* Shop Settings */}
+            {/* 8. Shop Settings */}
             <NavLink
               to="/settings"
               onClick={() => setShowMoreMenu(false)}
-              className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 font-medium text-slate-700 dark:text-slate-200"
+              className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 hover:bg-slate-100 font-medium text-slate-800 dark:text-slate-100"
             >
-              <div className="p-2 rounded-lg bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+              <div className="p-2.5 rounded-xl bg-slate-600 text-white shadow-xs">
                 <Settings className="w-5 h-5" />
               </div>
               <div>
-                <p className="text-sm font-semibold">Shop Settings</p>
+                <p className="text-sm font-extrabold">Shop Settings</p>
                 <p className="text-xs text-slate-500">Logo, Address, Tax, Receipt Prefix</p>
               </div>
             </NavLink>
@@ -165,7 +180,7 @@ export const BottomNav: React.FC = () => {
           }
         >
           <LayoutDashboard className="w-5 h-5" />
-          <span className="text-[10px] mt-0.5">Home</span>
+          <span className="text-[10px] mt-0.5 font-bold">Home</span>
         </NavLink>
 
         <NavLink
@@ -178,7 +193,7 @@ export const BottomNav: React.FC = () => {
           }
         >
           <ShoppingBag className="w-5 h-5" />
-          <span className="text-[10px] mt-0.5">Orders</span>
+          <span className="text-[10px] mt-0.5 font-bold">Orders</span>
         </NavLink>
 
         {/* Center Floating POS New Order Button */}
@@ -200,7 +215,7 @@ export const BottomNav: React.FC = () => {
           }
         >
           <Users className="w-5 h-5" />
-          <span className="text-[10px] mt-0.5">Customers</span>
+          <span className="text-[10px] mt-0.5 font-bold">Customers</span>
         </NavLink>
 
         <button
@@ -211,7 +226,7 @@ export const BottomNav: React.FC = () => {
           }`}
         >
           <MoreHorizontal className="w-5 h-5" />
-          <span className="text-[10px] mt-0.5">More</span>
+          <span className="text-[10px] mt-0.5 font-bold">More</span>
         </button>
       </nav>
     </>
