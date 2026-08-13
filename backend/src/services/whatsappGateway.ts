@@ -1,31 +1,27 @@
 import makeWASocket, {
-  useMultiFileAuthState,
   DisconnectReason,
   fetchLatestBaileysVersion,
 } from '@whiskeysockets/baileys';
 import QRCode from 'qrcode';
-import path from 'path';
-import fs from 'fs';
+import { useMongoAuthState } from './mongoAuthState';
 
 let waSocket: any = null;
 let currentQRCode: string | null = null;
 let isConnected = false;
 let connectedPhone: string | null = null;
-
-const authFolder = path.join(process.cwd(), 'whatsapp_auth');
-if (!fs.existsSync(authFolder)) {
-  fs.mkdirSync(authFolder, { recursive: true });
-}
+let mongoClearState: (() => Promise<void>) | null = null;
 
 export const initWhatsAppGateway = async () => {
   try {
-    const { state, saveCreds } = await useMultiFileAuthState(authFolder);
+    const { state, saveCreds, clearState } = await useMongoAuthState();
+    mongoClearState = clearState;
     const { version } = await fetchLatestBaileysVersion();
 
     waSocket = makeWASocket({
       version,
       auth: state,
       printQRInTerminal: false,
+      browser: ['Intelligent Laundry', 'Chrome', '1.0.0'],
     });
 
     waSocket.ev.on('creds.update', saveCreds);
@@ -44,16 +40,18 @@ export const initWhatsAppGateway = async () => {
         currentQRCode = null;
         const jid = waSocket.user?.id || '';
         connectedPhone = jid.split(':')[0] || jid.split('@')[0] || 'Shop Phone';
-        console.log(`[WhatsApp Gateway] Connected successfully to +${connectedPhone}`);
+        console.log(`[WhatsApp Gateway] Connected successfully to +${connectedPhone} (Saved in MongoDB Atlas)`);
       }
 
       if (connection === 'close') {
         isConnected = false;
-        const shouldReconnect =
-          (lastDisconnect?.error as any)?.output?.statusCode !== DisconnectReason.loggedOut;
+        const statusCode = (lastDisconnect?.error as any)?.output?.statusCode;
+        const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
 
         console.log(
-          `[WhatsApp Gateway] Connection closed. Reason: ${lastDisconnect?.error?.message || 'Unknown'}. Reconnecting: ${shouldReconnect}`
+          `[WhatsApp Gateway] Connection closed. StatusCode: ${statusCode}. Reason: ${
+            lastDisconnect?.error?.message || 'Unknown'
+          }. Reconnecting: ${shouldReconnect}`
         );
 
         if (shouldReconnect) {
@@ -61,11 +59,11 @@ export const initWhatsAppGateway = async () => {
             initWhatsAppGateway();
           }, 5000);
         } else {
-          // Logged out: Clear auth folder
+          // Logged out: Clear auth session from MongoDB Atlas
           currentQRCode = null;
           connectedPhone = null;
-          if (fs.existsSync(authFolder)) {
-            fs.rmSync(authFolder, { recursive: true, force: true });
+          if (mongoClearState) {
+            await mongoClearState();
           }
         }
       }
@@ -93,8 +91,8 @@ export const disconnectWhatsApp = async () => {
   isConnected = false;
   currentQRCode = null;
   connectedPhone = null;
-  if (fs.existsSync(authFolder)) {
-    fs.rmSync(authFolder, { recursive: true, force: true });
+  if (mongoClearState) {
+    await mongoClearState();
   }
   setTimeout(() => {
     initWhatsAppGateway();
