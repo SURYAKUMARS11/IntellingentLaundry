@@ -18,6 +18,8 @@ import expenseRoutes from './routes/expenseRoutes';
 import categoryRoutes from './routes/categoryRoutes';
 import backupRoutes from './routes/backupRoutes';
 import whatsappRoutes from './routes/whatsappRoutes';
+import staffRoutes from './routes/staffRoutes';
+import machineRoutes from './routes/machineRoutes';
 import { initWhatsAppGateway } from './services/whatsappGateway';
 
 dotenv.config();
@@ -57,6 +59,8 @@ app.use('/api/expenses', expenseRoutes);
 app.use('/api/garment-categories', categoryRoutes);
 app.use('/api/backup', backupRoutes);
 app.use('/api/whatsapp', whatsappRoutes);
+app.use('/api/staff', staffRoutes);
+app.use('/api/machines', machineRoutes);
 
 // Global Error Handler
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {

@@ -21,6 +21,8 @@ import { SettingsPage } from './pages/SettingsPage';
 import { PublicReceiptPage } from './pages/PublicReceiptPage';
 import { LandingWebsitePage } from './pages/LandingWebsitePage';
 import { AccountsPage } from './pages/AccountsPage';
+import { StaffPage } from './pages/StaffPage';
+import { MachinePage } from './pages/MachinePage';
 import { NotFoundPage } from './pages/NotFoundPage';
 
 const ProtectedLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -122,6 +124,24 @@ export const AppContent: React.FC = () => {
         element={
           <ProtectedLayout>
             <CustomersPage />
+          </ProtectedLayout>
+        }
+      />
+
+      <Route
+        path="/staff"
+        element={
+          <ProtectedLayout>
+            <StaffPage />
+          </ProtectedLayout>
+        }
+      />
+
+      <Route
+        path="/machines"
+        element={
+          <ProtectedLayout>
+            <MachinePage />
           </ProtectedLayout>
         }
       />

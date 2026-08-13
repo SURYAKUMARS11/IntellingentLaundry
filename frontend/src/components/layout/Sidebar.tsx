@@ -40,6 +40,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed = false, onToggleC
     { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
     { label: 'New Order', path: '/orders/new', icon: PlusCircle },
     { label: 'Orders', path: '/orders', icon: ShoppingBag, end: true },
+    { label: 'Staff & Attendance', path: '/staff', icon: Users },
+    { label: 'Machine & Utilities', path: '/machines', icon: WashingMachine },
     { label: 'Accounts & Expenses', path: '/accounts', icon: Wallet },
     { label: 'Customers', path: '/customers', icon: Users },
   ];

@@ -1506,6 +1506,80 @@ export const importOldAppOrdersJsonApi = async (jsonPayload: any) => {
 };
 
 // ==========================================
+// STAFF & ATTENDANCE & IRONING API
+// ==========================================
+export const fetchStaffApi = async () => fetchApi('/staff');
+export const createStaffApi = async (data: any) => fetchApi('/staff', { method: 'POST', body: JSON.stringify(data) });
+export const updateStaffApi = async (id: string, data: any) => fetchApi(`/staff/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+export const deleteStaffApi = async (id: string) => fetchApi(`/staff/${id}`, { method: 'DELETE' });
+
+export const fetchAttendanceApi = async (params: any = {}) => {
+  const cleanParams: any = {};
+  Object.keys(params).forEach((key) => {
+    if (params[key] !== undefined && params[key] !== null && params[key] !== '' && params[key] !== 'undefined') {
+      cleanParams[key] = params[key];
+    }
+  });
+  const query = new URLSearchParams(cleanParams).toString();
+  return fetchApi(`/staff/attendance?${query}`);
+};
+export const markAttendanceApi = async (data: any) => fetchApi('/staff/attendance', { method: 'POST', body: JSON.stringify(data) });
+
+export const fetchIroningWorkLogsApi = async (params: any = {}) => {
+  const query = new URLSearchParams(params).toString();
+  return fetchApi(`/staff/ironing?${query}`);
+};
+export const logIroningWorkApi = async (data: any) => fetchApi('/staff/ironing', { method: 'POST', body: JSON.stringify(data) });
+export const fetchStaffPerformanceReportApi = async (params: any = {}) => {
+  const cleanParams: any = {};
+  Object.keys(params).forEach((key) => {
+    if (params[key] !== undefined && params[key] !== null && params[key] !== '' && params[key] !== 'undefined') {
+      cleanParams[key] = params[key];
+    }
+  });
+  const query = new URLSearchParams(cleanParams).toString();
+  return fetchApi(`/staff/reports?${query}`);
+};
+
+// ==========================================
+// MACHINE & UTILITIES API
+// ==========================================
+export const fetchMachineLogsApi = async (params: any = {}) => {
+  const cleanParams: any = {};
+  Object.keys(params).forEach((key) => {
+    if (params[key] !== undefined && params[key] !== null && params[key] !== '' && params[key] !== 'undefined') {
+      cleanParams[key] = params[key];
+    }
+  });
+  const query = new URLSearchParams(cleanParams).toString();
+  return fetchApi(`/machines/logs?${query}`);
+};
+export const logMachineCycleApi = async (data: any) => fetchApi('/machines/logs', { method: 'POST', body: JSON.stringify(data) });
+
+export const fetchGasCylinderLogsApi = async (params: any = {}) => {
+  const cleanParams: any = {};
+  Object.keys(params).forEach((key) => {
+    if (params[key] !== undefined && params[key] !== null && params[key] !== '' && params[key] !== 'undefined') {
+      cleanParams[key] = params[key];
+    }
+  });
+  const query = new URLSearchParams(cleanParams).toString();
+  return fetchApi(`/machines/cylinders?${query}`);
+};
+export const logGasCylinderApi = async (data: any) => fetchApi('/machines/cylinders', { method: 'POST', body: JSON.stringify(data) });
+
+export const fetchMachineUtilityAnalyticsApi = async (params: any = {}) => {
+  const cleanParams: any = {};
+  Object.keys(params).forEach((key) => {
+    if (params[key] !== undefined && params[key] !== null && params[key] !== '' && params[key] !== 'undefined') {
+      cleanParams[key] = params[key];
+    }
+  });
+  const query = new URLSearchParams(cleanParams).toString();
+  return fetchApi(`/machines/analytics?${query}`);
+};
+
+// ==========================================
 // BACKGROUND DATA PRE-WARMING ENGINE
 // ==========================================
 let isPrewarmingDone = false;

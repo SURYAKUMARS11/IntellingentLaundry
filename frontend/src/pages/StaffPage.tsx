@@ -1,0 +1,960 @@
+import React, { useState, useEffect } from 'react';
+import {
+  fetchStaffApi,
+  createStaffApi,
+  updateStaffApi,
+  deleteStaffApi,
+  fetchAttendanceApi,
+  markAttendanceApi,
+  fetchIroningWorkLogsApi,
+  logIroningWorkApi,
+  fetchStaffPerformanceReportApi,
+} from '../services/api';
+import { useToast } from '../context/ToastContext';
+import {
+  Users,
+  UserPlus,
+  CheckCircle2,
+  XCircle,
+  Clock,
+  Shirt,
+  Calendar,
+  Award,
+  Edit2,
+  Trash2,
+  Plus,
+  RefreshCw,
+  TrendingUp,
+  Filter,
+  AlertTriangle,
+  ChevronDown,
+} from 'lucide-react';
+
+export const StaffPage: React.FC = () => {
+  const { showToast } = useToast();
+  const [activeTab, setActiveTab] = useState<'attendance' | 'ironing' | 'performance'>('attendance');
+
+  // Core Data State
+  const [staffList, setStaffList] = useState<any[]>([]);
+  const [attendanceList, setAttendanceList] = useState<any[]>([]);
+  const [attendanceSummary, setAttendanceSummary] = useState<any[]>([]);
+  const [ironingLogs, setIroningLogs] = useState<any[]>([]);
+  const [reportData, setReportData] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Performance Report Date Filter (today, month, year, custom)
+  const [reportFilter, setReportFilter] = useState<'today' | 'month' | 'year' | 'custom'>('month');
+  const [repStartDate, setRepStartDate] = useState<string>('');
+  const [repEndDate, setRepEndDate] = useState<string>('');
+  const [isCustomReportFilterOpen, setIsCustomReportFilterOpen] = useState(false);
+
+  // Attendance Date Filter (today, month, year, custom)
+  const [attendanceFilter, setAttendanceFilter] = useState<'today' | 'month' | 'year' | 'custom'>('month');
+  const [attStartDate, setAttStartDate] = useState<string>('');
+  const [attEndDate, setAttEndDate] = useState<string>('');
+
+  // Attendance Table Pagination State
+  const [attPage, setAttPage] = useState<number>(1);
+  const [attPageSize, setAttPageSize] = useState<number>(10);
+
+  // Delete Staff Modal State
+  const [deletingStaff, setDeletingStaff] = useState<{ id: string; name: string } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Add Staff Modal State
+  const [isAddStaffOpen, setIsAddStaffOpen] = useState(false);
+  const [newStaff, setNewStaff] = useState({
+    name: '',
+    mobile: '',
+    role: 'Ironing Master',
+    assignedTable: 'Table 1',
+  });
+
+  // Edit Staff Modal State
+  const [editingStaff, setEditingStaff] = useState<any | null>(null);
+
+  // Log Ironing Work Form State
+  const [ironingForm, setIroningForm] = useState({
+    tableName: 'Table 1',
+    staffId: '',
+    staffName: '',
+    itemName: '',
+    quantity: 10,
+    notes: '',
+  });
+
+  const loadData = async () => {
+    setIsLoading(true);
+    try {
+      const [staffRes, attRes, ironRes, repRes] = await Promise.all([
+        fetchStaffApi(),
+        fetchAttendanceApi({
+          period: attendanceFilter,
+          startDate: attendanceFilter === 'custom' ? attStartDate : undefined,
+          endDate: attendanceFilter === 'custom' ? attEndDate : undefined,
+        }),
+        fetchIroningWorkLogsApi(),
+        fetchStaffPerformanceReportApi({
+          filter: reportFilter,
+          startDate: reportFilter === 'custom' ? repStartDate : undefined,
+          endDate: reportFilter === 'custom' ? repEndDate : undefined,
+        }),
+      ]);
+
+      if (staffRes.success) {
+        setStaffList(staffRes.staff || []);
+        if (staffRes.staff && staffRes.staff.length > 0 && !ironingForm.staffName) {
+          setIroningForm((prev) => ({
+            ...prev,
+            staffId: staffRes.staff[0]._id,
+            staffName: staffRes.staff[0].name,
+            tableName: staffRes.staff[0].assignedTable || 'Table 1',
+          }));
+        }
+      }
+
+      if (attRes.success) {
+        setAttendanceList(attRes.attendance || []);
+        setAttendanceSummary(attRes.monthlySummary || []);
+      }
+
+      if (ironRes.success) setIroningLogs(ironRes.logs || []);
+      if (repRes.success) setReportData(repRes);
+    } catch (err) {
+      console.error('Failed to load staff data:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+  }, [reportFilter, attendanceFilter, attStartDate, attEndDate, repStartDate, repEndDate]);
+
+  // Handle Add Staff Submit
+  const handleSaveStaff = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newStaff.name.trim()) {
+      showToast('Please enter staff name', 'error');
+      return;
+    }
+    try {
+      const res = await createStaffApi(newStaff);
+      if (res.success) {
+        showToast('Staff member added successfully!', 'success');
+        setIsAddStaffOpen(false);
+        setNewStaff({ name: '', mobile: '', role: 'Ironing Master', assignedTable: '' });
+        loadData();
+      } else {
+        showToast(res.message || 'Failed to add staff', 'error');
+      }
+    } catch (err: any) {
+      showToast(err.message || 'Error adding staff', 'error');
+    }
+  };
+
+  // Handle Staff Update
+  const handleUpdateStaff = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingStaff) return;
+    try {
+      const res = await updateStaffApi(editingStaff._id, editingStaff);
+      if (res.success) {
+        showToast('Staff details updated!', 'success');
+        setEditingStaff(null);
+        loadData();
+      }
+    } catch (err: any) {
+      showToast(err.message || 'Error updating staff', 'error');
+    }
+  };
+
+  // Open Delete Confirmation Modal
+  const handleDeleteStaff = (id: string, name: string) => {
+    setDeletingStaff({ id, name });
+  };
+
+  // Confirm Delete Staff Execution
+  const handleConfirmDelete = async () => {
+    if (!deletingStaff) return;
+    setIsDeleting(true);
+    try {
+      const res = await deleteStaffApi(deletingStaff.id);
+      if (res.success) {
+        showToast(`Staff member "${deletingStaff.name}" removed successfully`, 'info');
+        setDeletingStaff(null);
+        loadData();
+      } else {
+        showToast(res.message || 'Failed to remove staff member', 'error');
+      }
+    } catch (err: any) {
+      showToast(err.message || 'Error deleting staff member', 'error');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  // Handle Attendance Status Change via Explicit Dropdown
+  const handleAttendanceChange = async (staffId: string, newStatus: string) => {
+    try {
+      const res = await markAttendanceApi({
+        staffId,
+        status: newStatus,
+      });
+      if (res.success) {
+        showToast(`Attendance marked as ${newStatus}`, 'success');
+        loadData();
+      }
+    } catch (err: any) {
+      showToast(err.message || 'Error updating attendance', 'error');
+    }
+  };
+
+  // Handle Log Ironing Work Submit
+  const handleLogIroning = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!ironingForm.itemName.trim()) {
+      showToast('Please enter item description (e.g. Shirts, Sarees)', 'error');
+      return;
+    }
+    if (!ironingForm.quantity || Number(ironingForm.quantity) <= 0) {
+      showToast('Please enter a valid quantity', 'error');
+      return;
+    }
+
+    try {
+      const res = await logIroningWorkApi(ironingForm);
+      if (res.success) {
+        showToast(`Logged ${ironingForm.quantity} ${ironingForm.itemName} for ${ironingForm.tableName}!`, 'success');
+        setIroningForm({ ...ironingForm, itemName: '', quantity: 10, notes: '' });
+        loadData();
+      }
+    } catch (err: any) {
+      showToast(err.message || 'Error logging work', 'error');
+    }
+  };
+
+  // Attendance Table Pagination Calculations
+  const totalAttRecords = attendanceList.length;
+  const totalAttPages = Math.ceil(totalAttRecords / attPageSize) || 1;
+  const attStartIndex = (attPage - 1) * attPageSize;
+  const paginatedAttendance = attendanceList.slice(attStartIndex, attStartIndex + attPageSize);
+
+  return (
+    <div className="space-y-6 max-w-7xl mx-auto pb-20">
+      {/* Top Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 glass-card p-5">
+        <div className="flex items-center gap-3">
+          <div className="p-3 rounded-2xl bg-brand-600 text-white shadow-md">
+            <Users className="w-6 h-6" />
+          </div>
+          <div>
+            <h1 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">
+              Staff & Attendance Management
+            </h1>
+            <p className="text-xs font-semibold text-slate-500">
+              Track staff attendance, table assignments, and daily ironing productivity
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            onClick={loadData}
+            className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 text-xs font-bold flex items-center gap-1.5"
+          >
+            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} /> Refresh
+          </button>
+          <button
+            onClick={() => setIsAddStaffOpen(true)}
+            className="px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-black text-xs flex items-center gap-2 shadow-xs"
+          >
+            <UserPlus className="w-4 h-4" /> + Add Staff Member
+          </button>
+        </div>
+      </div>
+
+      {/* Tabs Bar */}
+      <div className="flex flex-wrap items-center gap-2 glass-card p-1.5">
+        {[
+          { id: 'attendance', label: '1. Daily Attendance & Staff List', icon: Calendar },
+          { id: 'ironing', label: '2. Ironing & Daily Work Logger', icon: Shirt },
+          { id: 'performance', label: '3. Performance Reports', icon: Award },
+        ].map((tab) => {
+          const Icon = tab.icon;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as any)}
+              className={`flex-1 min-w-[160px] py-3 px-4 rounded-xl text-xs font-extrabold flex items-center justify-center gap-2 transition-all ${
+                activeTab === tab.id
+                  ? 'bg-brand-600 text-white shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+              }`}
+            >
+              <Icon className="w-4 h-4" /> {tab.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Loading Indicator */}
+      {isLoading && (
+        <div className="glass-card p-6 flex items-center justify-center gap-3 text-brand-600 dark:text-brand-400 animate-pulse">
+          <RefreshCw className="w-5 h-5 animate-spin" />
+          <span className="text-xs font-black tracking-wide uppercase">Fetching Staff & Attendance Records...</span>
+        </div>
+      )}
+
+      {/* TAB 1: DAILY ATTENDANCE & REGISTER */}
+      {activeTab === 'attendance' && (
+        <div className="space-y-6">
+          <div className="glass-card p-6 space-y-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
+              <div>
+                <h3 className="font-extrabold text-sm text-slate-900 dark:text-white flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-brand-600" /> Daily Staff Attendance Register
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Select attendance status for each staff member for today ({new Date().toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })})
+                </p>
+              </div>
+
+              <button
+                onClick={() => setIsAddStaffOpen(true)}
+                className="px-3.5 py-2 rounded-xl bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300 font-bold text-xs flex items-center gap-1.5"
+              >
+                <UserPlus className="w-3.5 h-3.5" /> Add Staff Member
+              </button>
+            </div>
+
+            {/* Staff Attendance Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {staffList.map((staff) => {
+                const att = attendanceList.find((a) => (a.staff?._id || a.staff) === staff._id);
+                const currentStatus = att?.status || 'Present';
+                const summary = attendanceSummary.find((s) => s._id === staff._id || s.staffName === staff.name);
+
+                return (
+                  <div
+                    key={staff._id}
+                    className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 space-y-3"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-extrabold text-sm text-slate-900 dark:text-white">{staff.name}</p>
+                        <p className="text-xs font-semibold text-brand-600 dark:text-brand-400">
+                          {staff.role || 'Staff'} {staff.assignedTable ? `• ${staff.assignedTable}` : ''}
+                        </p>
+                        {staff.mobile && <p className="text-[10px] text-slate-400">Mob: {staff.mobile}</p>}
+                      </div>
+
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => setEditingStaff(staff)}
+                          className="p-1.5 rounded-lg bg-white dark:bg-slate-700 text-slate-600 hover:bg-slate-100"
+                          title="Edit Staff"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteStaff(staff._id, staff.name)}
+                          className="p-1.5 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100"
+                          title="Remove Staff"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Clear Status Dropdown Selector */}
+                    <div className="pt-2 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between gap-2">
+                      <span className="text-xs font-bold text-slate-600 dark:text-slate-400">Status:</span>
+                      <select
+                        value={currentStatus}
+                        onChange={(e) => handleAttendanceChange(staff._id, e.target.value)}
+                        className={`px-3 py-1.5 rounded-xl font-extrabold text-xs cursor-pointer border transition-all ${
+                          currentStatus === 'Present'
+                            ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                            : currentStatus === 'Half Day'
+                            ? 'bg-amber-100 text-amber-800 border-amber-300'
+                            : currentStatus === 'Absent'
+                            ? 'bg-rose-100 text-rose-800 border-rose-300'
+                            : 'bg-sky-100 text-sky-800 border-sky-300'
+                        }`}
+                      >
+                        <option value="Present">🟢 Present</option>
+                        <option value="Half Day">🟡 Half Day</option>
+                        <option value="Absent">🔴 Absent</option>
+                        <option value="Leave">🔵 On Leave</option>
+                      </select>
+                    </div>
+
+                    {/* Attendance Counter Badges */}
+                    <div className="flex items-center justify-between text-[10px] font-bold pt-1 text-slate-500">
+                      <span className="text-emerald-700">Present: {summary?.presentDays || 0}d</span>
+                      <span className="text-amber-700">Half: {summary?.halfDays || 0}d</span>
+                      <span className="text-rose-700">Absent: {summary?.absentDays || 0}d</span>
+                      <span className="text-sky-700">Leave: {summary?.leaveDays || 0}d</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Dynamic Attendance History Table */}
+          <div className="glass-card p-6 space-y-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
+              <div>
+                <h3 className="font-extrabold text-sm text-slate-900 dark:text-white flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-brand-600" /> Attendance Records Log Table
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Dynamically filter attendance history by Day, Month, or Year
+                </p>
+              </div>
+
+              {/* Attendance Date Filter Pills */}
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+                  {[
+                    { id: 'today', label: 'Today' },
+                    { id: 'month', label: 'Current Month' },
+                    { id: 'year', label: 'Current Year' },
+                    { id: 'custom', label: 'Custom Range' },
+                  ].map((f) => (
+                    <button
+                      key={f.id}
+                      onClick={() => setAttendanceFilter(f.id as any)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all ${
+                        attendanceFilter === f.id
+                          ? 'bg-brand-600 text-white shadow-xs'
+                          : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+                      }`}
+                    >
+                      {f.label}
+                    </button>
+                  ))}
+                </div>
+
+                {attendanceFilter === 'custom' && (
+                  <div className="flex items-center gap-1.5">
+                    <input
+                      type="date"
+                      value={attStartDate}
+                      onChange={(e) => setAttStartDate(e.target.value)}
+                      className="p-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-bold"
+                    />
+                    <span className="text-xs text-slate-400">to</span>
+                    <input
+                      type="date"
+                      value={attEndDate}
+                      onChange={(e) => setAttEndDate(e.target.value)}
+                      className="p-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-bold"
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Attendance History Table */}
+            <div className="overflow-x-auto max-h-[380px] overflow-y-auto">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-400 font-bold uppercase tracking-wider sticky top-0 bg-white dark:bg-slate-900">
+                    <th className="py-3 px-3">Staff Name</th>
+                    <th className="py-3 px-3">Role / Table</th>
+                    <th className="py-3 px-3">Date</th>
+                    <th className="py-3 px-3">Attendance Status</th>
+                    <th className="py-3 px-3 text-center">Total Present</th>
+                    <th className="py-3 px-3 text-center">Total Leave / Absent</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-medium">
+                  {paginatedAttendance.map((att) => {
+                    const staffId = att.staff?._id || att.staff;
+                    const summary = attendanceSummary.find((s) => s._id === staffId || s.staffName === (att.staffName || att.staff?.name));
+                    const presentCount = summary?.presentDays || 0;
+                    const leaveCount = (summary?.leaveDays || 0) + (summary?.absentDays || 0) + (summary?.halfDays || 0);
+
+                    return (
+                      <tr key={att._id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-all">
+                        <td className="py-3 px-3 font-extrabold text-slate-900 dark:text-white">
+                          {att.staffName || att.staff?.name}
+                        </td>
+                        <td className="py-3 px-3 font-semibold text-brand-600">
+                          {att.staff?.role || 'Staff'} {att.staff?.assignedTable ? `• ${att.staff.assignedTable}` : ''}
+                        </td>
+                        <td className="py-3 px-3 text-slate-500 font-semibold">
+                          {new Date(att.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                        </td>
+                        <td className="py-3 px-3">
+                          <span
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
+                              att.status === 'Present'
+                                ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300'
+                                : att.status === 'Half Day'
+                                ? 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300'
+                                : att.status === 'Absent'
+                                ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300'
+                                : 'bg-sky-50 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300'
+                            }`}
+                          >
+                            <span className={`w-1.5 h-1.5 rounded-full ${
+                              att.status === 'Present' ? 'bg-emerald-500' :
+                              att.status === 'Half Day' ? 'bg-amber-500' :
+                              att.status === 'Absent' ? 'bg-rose-500' :
+                              'bg-sky-500'
+                            }`} />
+                            {att.status}
+                          </span>
+                        </td>
+                        <td className="py-3 px-3 text-center">
+                          <span className="px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-black text-xs">
+                            {presentCount} Days
+                          </span>
+                        </td>
+                        <td className="py-3 px-3 text-center">
+                          <span className="px-2.5 py-1 rounded-lg bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 font-black text-xs">
+                            {leaveCount} Days
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination Controls Footer */}
+            {totalAttRecords > 0 && (
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-3 border-t border-slate-200 dark:border-slate-800 text-xs">
+                <div className="flex items-center gap-2 text-slate-500 font-semibold">
+                  <span>
+                    Showing <strong className="text-slate-900 dark:text-white">{attStartIndex + 1}</strong> to{' '}
+                    <strong className="text-slate-900 dark:text-white">{Math.min(attStartIndex + attPageSize, totalAttRecords)}</strong> of{' '}
+                    <strong className="text-slate-900 dark:text-white">{totalAttRecords}</strong> records
+                  </span>
+                  <select
+                    value={attPageSize}
+                    onChange={(e) => {
+                      setAttPageSize(Number(e.target.value));
+                      setAttPage(1);
+                    }}
+                    className="ml-2 px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold text-xs cursor-pointer"
+                  >
+                    <option value={10}>10 / page</option>
+                    <option value={20}>20 / page</option>
+                    <option value={50}>50 / page</option>
+                  </select>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setAttPage((prev) => Math.max(prev - 1, 1))}
+                    disabled={attPage === 1}
+                    className="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-200 dark:hover:bg-slate-700 transition-all text-xs"
+                  >
+                    Previous
+                  </button>
+
+                  <span className="px-3 py-1.5 font-black text-brand-600 dark:text-brand-400 text-xs">
+                    Page {attPage} of {totalAttPages}
+                  </span>
+
+                  <button
+                    type="button"
+                    onClick={() => setAttPage((prev) => Math.min(prev + 1, totalAttPages))}
+                    disabled={attPage === totalAttPages}
+                    className="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-200 dark:hover:bg-slate-700 transition-all text-xs"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* TAB 2: IRONING & DAILY WORK LOGGER */}
+      {activeTab === 'ironing' && (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Left Form */}
+          <div className="lg:col-span-5 glass-card p-6 space-y-4">
+            <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-3">
+              <Shirt className="w-5 h-5 text-brand-600" />
+              <h3 className="font-extrabold text-sm text-slate-900 dark:text-white">Log Ironed Clothes</h3>
+            </div>
+
+            <form onSubmit={handleLogIroning} className="space-y-4 text-xs">
+              <div>
+                <label className="font-bold text-slate-700 dark:text-slate-300">Select Ironing Table:</label>
+                <select
+                  value={ironingForm.tableName}
+                  onChange={(e) => setIroningForm({ ...ironingForm, tableName: e.target.value })}
+                  className="w-full mt-1 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold"
+                >
+                  <option value="Table 1">Table 1</option>
+                  <option value="Table 2">Table 2</option>
+                  <option value="Table 3">Table 3</option>
+                  <option value="Custom Table">Custom Table</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-700 dark:text-slate-300">Staff Member at Table:</label>
+                <select
+                  value={ironingForm.staffId}
+                  onChange={(e) => {
+                    const selected = staffList.find((s) => s._id === e.target.value);
+                    setIroningForm({
+                      ...ironingForm,
+                      staffId: e.target.value,
+                      staffName: selected ? selected.name : '',
+                    });
+                  }}
+                  className="w-full mt-1 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold"
+                >
+                  {staffList.map((s) => (
+                    <option key={s._id} value={s._id}>
+                      {s.name} ({s.role || 'Staff'})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-700 dark:text-slate-300">Item Description (Type Clothes Name):</label>
+                <input
+                  type="text"
+                  required
+                  value={ironingForm.itemName}
+                  onChange={(e) => setIroningForm({ ...ironingForm, itemName: e.target.value })}
+                  className="w-full mt-1 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold text-sm"
+                  placeholder="e.g. Shirts, Sarees, Jeans, Pants, Cottons"
+                />
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-700 dark:text-slate-300">Quantity Ironed (Pieces):</label>
+                <input
+                  type="number"
+                  min="1"
+                  required
+                  value={ironingForm.quantity}
+                  onChange={(e) => setIroningForm({ ...ironingForm, quantity: Number(e.target.value) })}
+                  className="w-full mt-1 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-black text-sm"
+                  placeholder="25"
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="w-full py-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-black text-xs flex items-center justify-center gap-2 shadow-xs"
+              >
+                <Plus className="w-4 h-4" /> Save Ironing Work Log
+              </button>
+            </form>
+          </div>
+
+          {/* Right History Table */}
+          <div className="lg:col-span-7 glass-card p-6 space-y-4">
+            <h3 className="font-extrabold text-sm text-slate-900 dark:text-white">Recent Ironing Work Entries</h3>
+
+            <div className="divide-y divide-slate-100 dark:divide-slate-800 max-h-[420px] overflow-y-auto">
+              {ironingLogs.map((log) => (
+                <div key={log._id} className="py-3 flex items-center justify-between text-xs hover:bg-slate-50 dark:hover:bg-slate-800/40 px-2 rounded-xl">
+                  <div>
+                    <p className="font-bold text-slate-900 dark:text-white">
+                      {log.itemName} <span className="text-brand-600">({log.quantity} pcs)</span>
+                    </p>
+                    <p className="text-[10px] text-slate-500">
+                      {log.tableName} • Staff: <strong className="text-slate-700 dark:text-slate-300">{log.staffName}</strong> • {new Date(log.date).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <span className="font-black text-xs text-brand-600 bg-brand-50 dark:bg-brand-950 px-2.5 py-1 rounded-lg">
+                    +{log.quantity} items
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 3: PERFORMANCE REPORTS */}
+      {activeTab === 'performance' && (
+        <div className="space-y-6">
+          {/* Performance Report Filter Bar & Cards */}
+          <div className="glass-card p-6 space-y-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
+              <div>
+                <h3 className="font-extrabold text-sm text-slate-900 dark:text-white flex items-center gap-2">
+                  <Award className="w-4 h-4 text-amber-500" /> Performance Reports
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Filter work productivity by Day, Month, Year, or Custom Date Range
+                </p>
+              </div>
+
+              {/* Performance Date Filter Pills */}
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+                  {[
+                    { id: 'today', label: 'Today' },
+                    { id: 'month', label: 'Current Month' },
+                    { id: 'year', label: 'Current Year' },
+                    { id: 'custom', label: 'Custom Range' },
+                  ].map((f) => (
+                    <button
+                      key={f.id}
+                      onClick={() => setReportFilter(f.id as any)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all ${
+                        reportFilter === f.id
+                          ? 'bg-brand-600 text-white shadow-xs'
+                          : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+                      }`}
+                    >
+                      {f.label}
+                    </button>
+                  ))}
+                </div>
+
+                {reportFilter === 'custom' && (
+                  <div className="flex items-center gap-1.5">
+                    <input
+                      type="date"
+                      value={repStartDate}
+                      onChange={(e) => setRepStartDate(e.target.value)}
+                      className="p-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-bold"
+                    />
+                    <span className="text-xs text-slate-400">to</span>
+                    <input
+                      type="date"
+                      value={repEndDate}
+                      onChange={(e) => setRepEndDate(e.target.value)}
+                      className="p-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-bold"
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {reportData && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Left: Top Staff Contribution */}
+                <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 space-y-4 border-t-4 border-t-amber-500">
+                  <h4 className="font-black text-sm text-slate-900 dark:text-white flex items-center gap-2">
+                    <Award className="w-4 h-4 text-amber-500" /> Top Staff Contribution
+                  </h4>
+                  <div className="divide-y divide-slate-200 dark:divide-slate-700">
+                    {(reportData.staffTotals || []).map((s: any) => (
+                      <div key={s._id} className="py-3 flex items-center justify-between text-xs">
+                        <span className="font-extrabold text-slate-800 dark:text-slate-200">{s._id}</span>
+                        <span className="font-black text-amber-600 text-sm">{s.totalQuantity} items</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Right: Output by Ironing Table */}
+                <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 space-y-4 border-t-4 border-t-brand-600">
+                  <h4 className="font-black text-sm text-slate-900 dark:text-white flex items-center gap-2">
+                    <Shirt className="w-4 h-4 text-brand-600" /> Output by Ironing Table
+                  </h4>
+                  <div className="divide-y divide-slate-200 dark:divide-slate-700">
+                    {(reportData.tableTotals || []).map((t: any) => (
+                      <div key={t._id} className="py-3 flex items-center justify-between text-xs">
+                        <span className="font-extrabold text-slate-800 dark:text-slate-200">{t._id}</span>
+                        <span className="font-black text-brand-600 text-sm">{t.totalQuantity} items</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: ADD STAFF MEMBER */}
+      {isAddStaffOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="max-w-md w-full glass-card p-6 space-y-4">
+            <h2 className="text-base font-black text-slate-900 dark:text-white">+ Add New Staff Member</h2>
+            <form onSubmit={handleSaveStaff} className="space-y-3 text-xs">
+              <div>
+                <label className="font-bold text-slate-700 dark:text-slate-300">Staff Full Name:</label>
+                <input
+                  type="text"
+                  required
+                  value={newStaff.name}
+                  onChange={(e) => setNewStaff({ ...newStaff, name: e.target.value })}
+                  className="w-full mt-1 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold"
+                  placeholder="e.g. Ramesh"
+                />
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-700 dark:text-slate-300">Role / Position (Type Role):</label>
+                <input
+                  type="text"
+                  required
+                  value={newStaff.role}
+                  onChange={(e) => setNewStaff({ ...newStaff, role: e.target.value })}
+                  className="w-full mt-1 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold"
+                  placeholder="e.g. Ironing Master, Washer Operator, Helper"
+                />
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-700 dark:text-slate-300">Assigned Table / Machine (Optional):</label>
+                <input
+                  type="text"
+                  value={newStaff.assignedTable}
+                  onChange={(e) => setNewStaff({ ...newStaff, assignedTable: e.target.value })}
+                  className="w-full mt-1 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold"
+                  placeholder="e.g. Table 1, Table 2, Washer Area"
+                />
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-700 dark:text-slate-300">Mobile Number (Optional):</label>
+                <input
+                  type="text"
+                  value={newStaff.mobile}
+                  onChange={(e) => setNewStaff({ ...newStaff, mobile: e.target.value })}
+                  className="w-full mt-1 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold"
+                  placeholder="e.g. 9876543210"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsAddStaffOpen(false)}
+                  className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 rounded-xl bg-brand-600 text-white font-black"
+                >
+                  Save Staff Member
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: EDIT STAFF MEMBER */}
+      {editingStaff && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="max-w-md w-full glass-card p-6 space-y-4">
+            <h2 className="text-base font-black text-slate-900 dark:text-white">Edit Staff Details</h2>
+            <form onSubmit={handleUpdateStaff} className="space-y-3 text-xs">
+              <div>
+                <label className="font-bold text-slate-700 dark:text-slate-300">Staff Full Name:</label>
+                <input
+                  type="text"
+                  required
+                  value={editingStaff.name}
+                  onChange={(e) => setEditingStaff({ ...editingStaff, name: e.target.value })}
+                  className="w-full mt-1 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold"
+                />
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-700 dark:text-slate-300">Role / Position:</label>
+                <input
+                  type="text"
+                  value={editingStaff.role}
+                  onChange={(e) => setEditingStaff({ ...editingStaff, role: e.target.value })}
+                  className="w-full mt-1 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold"
+                />
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-700 dark:text-slate-300">Assigned Table / Machine:</label>
+                <input
+                  type="text"
+                  value={editingStaff.assignedTable}
+                  onChange={(e) => setEditingStaff({ ...editingStaff, assignedTable: e.target.value })}
+                  className="w-full mt-1 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold"
+                />
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-700 dark:text-slate-300">Mobile Number:</label>
+                <input
+                  type="text"
+                  value={editingStaff.mobile}
+                  onChange={(e) => setEditingStaff({ ...editingStaff, mobile: e.target.value })}
+                  className="w-full mt-1 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setEditingStaff(null)}
+                  className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 rounded-xl bg-brand-600 text-white font-black"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: DELETE STAFF CONFIRMATION */}
+      {deletingStaff && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="max-w-md w-full glass-card p-6 space-y-4 text-center border-t-4 border-t-rose-500 shadow-2xl">
+            <div className="w-12 h-12 rounded-2xl bg-rose-100 dark:bg-rose-950/80 text-rose-600 flex items-center justify-center mx-auto">
+              <AlertTriangle className="w-6 h-6" />
+            </div>
+
+            <div className="space-y-1">
+              <h2 className="text-base font-black text-slate-900 dark:text-white">Delete Staff Member?</h2>
+              <p className="text-xs text-slate-500">
+                Are you sure you want to remove <strong className="text-slate-900 dark:text-white">{deletingStaff.name}</strong> from your shop roster? This action cannot be undone.
+              </p>
+            </div>
+
+            <div className="flex items-center justify-center gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setDeletingStaff(null)}
+                className="px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDelete}
+                disabled={isDeleting}
+                className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-black text-xs flex items-center gap-2 shadow-xs"
+              >
+                {isDeleting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                {isDeleting ? 'Deleting...' : 'Yes, Delete Staff'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
