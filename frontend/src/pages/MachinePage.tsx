@@ -37,6 +37,16 @@ export const MachinePage: React.FC = () => {
   const [analytics, setAnalytics] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Pagination States for the 3 Machine History Tables
+  const [washerPage, setWasherPage] = useState(1);
+  const [washerPageSize, setWasherPageSize] = useState(5);
+
+  const [dryerPage, setDryerPage] = useState(1);
+  const [dryerPageSize, setDryerPageSize] = useState(5);
+
+  const [cylinderPage, setCylinderPage] = useState(1);
+  const [cylinderPageSize, setCylinderPageSize] = useState(5);
+
   // Washer Form State (Program 1 to Program 5, Running Duration in minutes, Optional Operator)
   const [washerForm, setWasherForm] = useState({
     programName: 'Program 1',
@@ -89,6 +99,9 @@ export const MachinePage: React.FC = () => {
   };
 
   useEffect(() => {
+    setWasherPage(1);
+    setDryerPage(1);
+    setCylinderPage(1);
     loadMachineData();
   }, [dateFilter, startDate, endDate]);
 
@@ -173,6 +186,24 @@ export const MachinePage: React.FC = () => {
       showToast(err.message || 'Error deleting cylinder log', 'error');
     }
   };
+
+  // Washer Logs Pagination Calculations
+  const totalWasherRecords = washerLogs.length;
+  const totalWasherPages = Math.ceil(totalWasherRecords / washerPageSize) || 1;
+  const washerStartIndex = (washerPage - 1) * washerPageSize;
+  const paginatedWasherLogs = washerLogs.slice(washerStartIndex, washerStartIndex + washerPageSize);
+
+  // Dryer Logs Pagination Calculations
+  const totalDryerRecords = dryerLogs.length;
+  const totalDryerPages = Math.ceil(totalDryerRecords / dryerPageSize) || 1;
+  const dryerStartIndex = (dryerPage - 1) * dryerPageSize;
+  const paginatedDryerLogs = dryerLogs.slice(dryerStartIndex, dryerStartIndex + dryerPageSize);
+
+  // Cylinder Logs Pagination Calculations
+  const totalCylinderRecords = cylinderLogs.length;
+  const totalCylinderPages = Math.ceil(totalCylinderRecords / cylinderPageSize) || 1;
+  const cylinderStartIndex = (cylinderPage - 1) * cylinderPageSize;
+  const paginatedCylinderLogs = cylinderLogs.slice(cylinderStartIndex, cylinderStartIndex + cylinderPageSize);
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-20">
@@ -351,27 +382,79 @@ export const MachinePage: React.FC = () => {
             </form>
           </div>
 
-          {/* Right Log History */}
-          <div className="lg:col-span-7 glass-card p-6 space-y-4">
-            <h3 className="font-extrabold text-sm text-slate-900 dark:text-white">Washer Extractor History Log</h3>
+          {/* Right Log History with Pagination */}
+          <div className="lg:col-span-7 glass-card p-6 space-y-4 flex flex-col justify-between">
+            <div>
+              <h3 className="font-extrabold text-sm text-slate-900 dark:text-white pb-2 border-b border-slate-200 dark:border-slate-800">
+                Washer Extractor History Log
+              </h3>
 
-            <div className="divide-y divide-slate-100 dark:divide-slate-800 max-h-[420px] overflow-y-auto">
-              {washerLogs.map((log) => (
-                <div key={log._id} className="py-3 flex items-center justify-between text-xs hover:bg-slate-50 dark:hover:bg-slate-800/40 px-2 rounded-xl">
-                  <div>
-                    <p className="font-extrabold text-slate-900 dark:text-white">
-                      {log.programName} <span className="text-cyan-600">({log.durationMinutes || 45} mins run)</span>
-                    </p>
-                    <p className="text-[10px] text-slate-500">
-                      Operator: <strong className="text-slate-700 dark:text-slate-300">{log.operatorName || 'N/A'}</strong> • {new Date(log.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
-                    </p>
+              <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                {paginatedWasherLogs.map((log) => (
+                  <div key={log._id} className="py-3 flex items-center justify-between text-xs hover:bg-slate-50 dark:hover:bg-slate-800/40 px-2 rounded-xl">
+                    <div>
+                      <p className="font-extrabold text-slate-900 dark:text-white">
+                        {log.programName} <span className="text-cyan-600">({log.durationMinutes || 45} mins run)</span>
+                      </p>
+                      <p className="text-[10px] text-slate-500">
+                        Operator: <strong className="text-slate-700 dark:text-slate-300">{log.operatorName || 'N/A'}</strong> • {new Date(log.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                      </p>
+                    </div>
+                    <span className="font-bold text-xs text-cyan-700 bg-cyan-50 dark:bg-cyan-950 px-2.5 py-1 rounded-lg">
+                      {log.durationMinutes || 45} mins
+                    </span>
                   </div>
-                  <span className="font-bold text-xs text-cyan-700 bg-cyan-50 dark:bg-cyan-950 px-2.5 py-1 rounded-lg">
-                    {log.durationMinutes || 45} mins
+                ))}
+
+                {washerLogs.length === 0 && (
+                  <p className="text-xs text-slate-400 py-6 text-center italic">No washer run entries found for this period.</p>
+                )}
+              </div>
+            </div>
+
+            {/* Washer Pagination Bar */}
+            {totalWasherRecords > 0 && (
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-slate-200 dark:border-slate-800 text-xs">
+                <div className="flex items-center gap-2">
+                  <span className="text-slate-500 font-semibold">Rows:</span>
+                  <select
+                    value={washerPageSize}
+                    onChange={(e) => {
+                      setWasherPageSize(Number(e.target.value));
+                      setWasherPage(1);
+                    }}
+                    className="p-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-extrabold text-xs"
+                  >
+                    <option value={5}>5 / page</option>
+                    <option value={10}>10 / page</option>
+                    <option value={20}>20 / page</option>
+                  </select>
+                  <span className="text-slate-400 font-medium">
+                    Showing {washerStartIndex + 1} to {Math.min(washerStartIndex + washerPageSize, totalWasherRecords)} of {totalWasherRecords}
                   </span>
                 </div>
-              ))}
-            </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    disabled={washerPage === 1}
+                    onClick={() => setWasherPage((p) => Math.max(1, p - 1))}
+                    className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 disabled:opacity-40 font-bold hover:bg-slate-200"
+                  >
+                    Prev
+                  </button>
+                  <span className="font-extrabold text-slate-700 dark:text-slate-300">
+                    {washerPage} / {totalWasherPages}
+                  </span>
+                  <button
+                    disabled={washerPage >= totalWasherPages}
+                    onClick={() => setWasherPage((p) => Math.min(totalWasherPages, p + 1))}
+                    className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 disabled:opacity-40 font-bold hover:bg-slate-200"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -473,62 +556,167 @@ export const MachinePage: React.FC = () => {
             </div>
           </div>
 
-          {/* Right Dryer History & Cylinder Days Log */}
+          {/* Right Dryer History & Cylinder Days Log with Pagination */}
           <div className="lg:col-span-7 space-y-6">
-            <div className="glass-card p-6 space-y-4">
-              <h3 className="font-extrabold text-sm text-slate-900 dark:text-white">Dryer Run History Log</h3>
-              <div className="divide-y divide-slate-100 dark:divide-slate-800 max-h-[200px] overflow-y-auto">
-                {dryerLogs.map((log) => (
-                  <div key={log._id} className="py-3 flex items-center justify-between text-xs">
-                    <div>
-                      <p className="font-bold text-slate-900 dark:text-white">{log.programName}</p>
-                      <p className="text-[10px] text-slate-500">
-                        Operator: <strong className="text-slate-700 dark:text-slate-300">{log.operatorName || 'N/A'}</strong> • {new Date(log.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
-                      </p>
+            {/* Dryer Log Card with Pagination */}
+            <div className="glass-card p-6 space-y-4 flex flex-col justify-between">
+              <div>
+                <h3 className="font-extrabold text-sm text-slate-900 dark:text-white pb-2 border-b border-slate-200 dark:border-slate-800">
+                  Dryer Run History Log
+                </h3>
+                <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {paginatedDryerLogs.map((log) => (
+                    <div key={log._id} className="py-3 flex items-center justify-between text-xs">
+                      <div>
+                        <p className="font-bold text-slate-900 dark:text-white">{log.programName}</p>
+                        <p className="text-[10px] text-slate-500">
+                          Operator: <strong className="text-slate-700 dark:text-slate-300">{log.operatorName || 'N/A'}</strong> • {new Date(log.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                        </p>
+                      </div>
+                      <span className="font-black text-xs text-amber-600 bg-amber-50 dark:bg-amber-950 px-2.5 py-1 rounded-lg">
+                        {log.cyclesCount} run{log.cyclesCount > 1 ? 's' : ''}
+                      </span>
                     </div>
-                    <span className="font-black text-xs text-amber-600 bg-amber-50 dark:bg-amber-950 px-2.5 py-1 rounded-lg">
-                      {log.cyclesCount} run{log.cyclesCount > 1 ? 's' : ''}
+                  ))}
+
+                  {dryerLogs.length === 0 && (
+                    <p className="text-xs text-slate-400 py-4 text-center italic">No dryer run entries found for this period.</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Dryer Pagination Bar */}
+              {totalDryerRecords > 0 && (
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-slate-200 dark:border-slate-800 text-xs">
+                  <div className="flex items-center gap-2">
+                    <span className="text-slate-500 font-semibold">Rows:</span>
+                    <select
+                      value={dryerPageSize}
+                      onChange={(e) => {
+                        setDryerPageSize(Number(e.target.value));
+                        setDryerPage(1);
+                      }}
+                      className="p-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-extrabold text-xs"
+                    >
+                      <option value={5}>5 / page</option>
+                      <option value={10}>10 / page</option>
+                      <option value={20}>20 / page</option>
+                    </select>
+                    <span className="text-slate-400 font-medium">
+                      Showing {dryerStartIndex + 1} to {Math.min(dryerStartIndex + dryerPageSize, totalDryerRecords)} of {totalDryerRecords}
                     </span>
                   </div>
-                ))}
-              </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      disabled={dryerPage === 1}
+                      onClick={() => setDryerPage((p) => Math.max(1, p - 1))}
+                      className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 disabled:opacity-40 font-bold hover:bg-slate-200"
+                    >
+                      Prev
+                    </button>
+                    <span className="font-extrabold text-slate-700 dark:text-slate-300">
+                      {dryerPage} / {totalDryerPages}
+                    </span>
+                    <button
+                      disabled={dryerPage >= totalDryerPages}
+                      onClick={() => setDryerPage((p) => Math.min(totalDryerPages, p + 1))}
+                      className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 disabled:opacity-40 font-bold hover:bg-slate-200"
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* LPG Cylinder Log with Days Lasted */}
-            <div className="glass-card p-6 space-y-4">
-              <h3 className="font-extrabold text-sm text-slate-900 dark:text-white">LPG Cylinder History & Days Lasted</h3>
-              <div className="divide-y divide-slate-100 dark:divide-slate-800 max-h-[240px] overflow-y-auto">
-                {cylinderLogs.map((c, index) => (
-                  <div key={c._id} className="py-3 flex items-center justify-between text-xs hover:bg-slate-50 dark:hover:bg-slate-800/40 px-2 rounded-xl">
-                    <div>
-                      <p className="font-extrabold text-slate-900 dark:text-white">
-                        {c.quantity || 1} LPG Cylinder{c.quantity > 1 ? 's' : ''} Added
-                      </p>
-                      <p className="text-[10px] text-slate-500">
-                        Replaced on: <strong className="text-slate-700 dark:text-slate-300">{new Date(c.changeDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</strong> • {c.vendorName || 'LPG Supplier'}
-                      </p>
-                    </div>
+            {/* LPG Cylinder Log Card with Pagination */}
+            <div className="glass-card p-6 space-y-4 flex flex-col justify-between">
+              <div>
+                <h3 className="font-extrabold text-sm text-slate-900 dark:text-white pb-2 border-b border-slate-200 dark:border-slate-800">
+                  LPG Cylinder History & Days Lasted
+                </h3>
+                <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {paginatedCylinderLogs.map((c) => (
+                    <div key={c._id} className="py-3 flex items-center justify-between text-xs hover:bg-slate-50 dark:hover:bg-slate-800/40 px-2 rounded-xl">
+                      <div>
+                        <p className="font-extrabold text-slate-900 dark:text-white">
+                          {c.quantity || 1} LPG Cylinder{c.quantity > 1 ? 's' : ''} Added
+                        </p>
+                        <p className="text-[10px] text-slate-500">
+                          Replaced on: <strong className="text-slate-700 dark:text-slate-300">{new Date(c.changeDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</strong> • {c.vendorName || 'LPG Supplier'}
+                        </p>
+                      </div>
 
-                    <div className="flex items-center gap-3">
-                      <span className={`font-black text-xs px-2.5 py-1 rounded-lg ${
-                        c.daysLasted > 0
-                          ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
-                          : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
-                      }`}>
-                        {c.daysLasted > 0 ? `Lasted ${c.daysLasted} Days` : 'Currently Active'}
-                      </span>
+                      <div className="flex items-center gap-3">
+                        <span className={`font-black text-xs px-2.5 py-1 rounded-lg ${
+                          c.daysLasted > 0
+                            ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
+                            : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+                        }`}>
+                          {c.daysLasted > 0 ? `Lasted ${c.daysLasted} Days` : 'Currently Active'}
+                        </span>
 
-                      <button
-                        onClick={() => handleDeleteCylinderLog(c._id, c.changeDate)}
-                        className="p-1 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 transition-all"
-                        title="Delete Cylinder Entry"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                        <button
+                          onClick={() => handleDeleteCylinderLog(c._id, c.changeDate)}
+                          className="p-1 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 transition-all"
+                          title="Delete Cylinder Entry"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+
+                  {cylinderLogs.length === 0 && (
+                    <p className="text-xs text-slate-400 py-4 text-center italic">No LPG cylinder replacement entries found.</p>
+                  )}
+                </div>
               </div>
+
+              {/* Cylinder Pagination Bar */}
+              {totalCylinderRecords > 0 && (
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-slate-200 dark:border-slate-800 text-xs">
+                  <div className="flex items-center gap-2">
+                    <span className="text-slate-500 font-semibold">Rows:</span>
+                    <select
+                      value={cylinderPageSize}
+                      onChange={(e) => {
+                        setCylinderPageSize(Number(e.target.value));
+                        setCylinderPage(1);
+                      }}
+                      className="p-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-extrabold text-xs"
+                    >
+                      <option value={5}>5 / page</option>
+                      <option value={10}>10 / page</option>
+                      <option value={20}>20 / page</option>
+                    </select>
+                    <span className="text-slate-400 font-medium">
+                      Showing {cylinderStartIndex + 1} to {Math.min(cylinderStartIndex + cylinderPageSize, totalCylinderRecords)} of {totalCylinderRecords}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      disabled={cylinderPage === 1}
+                      onClick={() => setCylinderPage((p) => Math.max(1, p - 1))}
+                      className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 disabled:opacity-40 font-bold hover:bg-slate-200"
+                    >
+                      Prev
+                    </button>
+                    <span className="font-extrabold text-slate-700 dark:text-slate-300">
+                      {cylinderPage} / {totalCylinderPages}
+                    </span>
+                    <button
+                      disabled={cylinderPage >= totalCylinderPages}
+                      onClick={() => setCylinderPage((p) => Math.min(totalCylinderPages, p + 1))}
+                      className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 disabled:opacity-40 font-bold hover:bg-slate-200"
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
