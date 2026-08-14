@@ -1524,6 +1524,7 @@ export const fetchAttendanceApi = async (params: any = {}) => {
   return fetchApi(`/staff/attendance?${query}`);
 };
 export const markAttendanceApi = async (data: any) => fetchApi('/staff/attendance', { method: 'POST', body: JSON.stringify(data) });
+export const deleteAttendanceApi = async (id: string) => fetchApi(`/staff/attendance/${id}`, { method: 'DELETE' });
 
 export const fetchIroningWorkLogsApi = async (params: any = {}) => {
   const query = new URLSearchParams(params).toString();

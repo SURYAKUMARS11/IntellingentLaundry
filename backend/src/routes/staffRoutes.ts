@@ -7,6 +7,7 @@ import {
   deleteStaff,
   getAttendance,
   markAttendance,
+  deleteAttendance,
   getIroningWorkLogs,
   logIroningWork,
   getStaffPerformanceReport,
@@ -25,6 +26,7 @@ router.delete('/:id', deleteStaff);
 // Attendance Register
 router.get('/attendance', getAttendance);
 router.post('/attendance', markAttendance);
+router.delete('/attendance/:id', deleteAttendance);
 
 // Ironing Productivity
 router.get('/ironing', getIroningWorkLogs);

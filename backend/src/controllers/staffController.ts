@@ -190,6 +190,19 @@ export const markAttendance = async (req: Request, res: Response) => {
   }
 };
 
+export const deleteAttendance = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const deleted = await Attendance.findByIdAndDelete(id);
+    if (!deleted) {
+      return res.status(404).json({ success: false, message: 'Attendance record not found.' });
+    }
+    return res.json({ success: true, message: 'Attendance record deleted successfully.' });
+  } catch (error: any) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 // -------------------------------------------------------------
 // 3. Ironing Work Logger
 // -------------------------------------------------------------

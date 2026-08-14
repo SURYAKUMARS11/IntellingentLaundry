@@ -6,6 +6,7 @@ import {
   deleteStaffApi,
   fetchAttendanceApi,
   markAttendanceApi,
+  deleteAttendanceApi,
   fetchIroningWorkLogsApi,
   logIroningWorkApi,
   fetchStaffPerformanceReportApi,
@@ -72,6 +73,14 @@ export const StaffPage: React.FC = () => {
 
   // Edit Staff Modal State
   const [editingStaff, setEditingStaff] = useState<any | null>(null);
+
+  // Manual Attendance Log Modal State
+  const [showAddLogModal, setShowAddLogModal] = useState(false);
+  const [manualLogForm, setManualLogForm] = useState({
+    staffId: '',
+    date: new Date().toISOString().split('T')[0],
+    status: 'Present',
+  });
 
   // Log Ironing Work Form State
   const [ironingForm, setIroningForm] = useState({
@@ -231,6 +240,52 @@ export const StaffPage: React.FC = () => {
       }
     } catch (err: any) {
       showToast(err.message || 'Error logging work', 'error');
+    }
+  };
+
+  // Handle Delete Attendance Record
+  const handleDeleteAttendanceLog = async (id: string, staffName: string, date: string) => {
+    const formattedDate = new Date(date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+    if (!window.confirm(`Delete attendance record for ${staffName} on ${formattedDate}?`)) return;
+
+    try {
+      const res = await deleteAttendanceApi(id);
+      if (res.success) {
+        showToast(`Deleted attendance log for ${staffName}`, 'success');
+        loadData();
+      }
+    } catch (err: any) {
+      showToast(err.message || 'Error deleting attendance log', 'error');
+    }
+  };
+
+  // Handle Create Manual Attendance Log
+  const handleCreateManualLog = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!manualLogForm.staffId) {
+      showToast('Please select a staff member', 'error');
+      return;
+    }
+
+    try {
+      const res = await markAttendanceApi({
+        staffId: manualLogForm.staffId,
+        date: manualLogForm.date,
+        status: manualLogForm.status,
+      });
+
+      if (res.success) {
+        showToast('Attendance log added successfully!', 'success');
+        setShowAddLogModal(false);
+        setManualLogForm({
+          staffId: '',
+          date: new Date().toISOString().split('T')[0],
+          status: 'Present',
+        });
+        loadData();
+      }
+    } catch (err: any) {
+      showToast(err.message || 'Error adding attendance log', 'error');
     }
   };
 
@@ -424,8 +479,15 @@ export const StaffPage: React.FC = () => {
                 </p>
               </div>
 
-              {/* Attendance Date Filter Pills */}
+              {/* Attendance Date Filter Pills & Add Manual Log Button */}
               <div className="flex flex-wrap items-center gap-2">
+                <button
+                  onClick={() => setShowAddLogModal(true)}
+                  className="px-3 py-1.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs flex items-center gap-1.5 shadow-xs transition-all"
+                >
+                  <Plus className="w-4 h-4" /> Add Attendance Log
+                </button>
+
                 <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
                   {[
                     { id: 'today', label: 'Today' },
@@ -478,6 +540,7 @@ export const StaffPage: React.FC = () => {
                     <th className="py-3 px-3">Attendance Status</th>
                     <th className="py-3 px-3 text-center">Total Present</th>
                     <th className="py-3 px-3 text-center">Total Leave / Absent</th>
+                    <th className="py-3 px-3 text-right">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-medium">
@@ -528,6 +591,15 @@ export const StaffPage: React.FC = () => {
                           <span className="px-2.5 py-1 rounded-lg bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 font-black text-xs">
                             {leaveCount} Days
                           </span>
+                        </td>
+                        <td className="py-3 px-3 text-right">
+                          <button
+                            onClick={() => handleDeleteAttendanceLog(att._id, att.staffName || att.staff?.name, att.date)}
+                            className="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 transition-all"
+                            title="Delete Attendance Record"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
                         </td>
                       </tr>
                     );
@@ -961,6 +1033,86 @@ export const StaffPage: React.FC = () => {
                 {isDeleting ? 'Deleting...' : 'Yes, Delete Staff'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: ADD MANUAL ATTENDANCE LOG */}
+      {showAddLogModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="max-w-md w-full glass-card p-6 space-y-4 shadow-2xl border-t-4 border-t-brand-600 animate-in fade-in zoom-in duration-150">
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+              <h3 className="font-extrabold text-sm text-slate-900 dark:text-white flex items-center gap-2">
+                <Plus className="w-5 h-5 text-brand-600" /> Add Attendance Record Manually
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowAddLogModal(false)}
+                className="text-slate-400 hover:text-slate-600 font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateManualLog} className="space-y-4 text-xs">
+              <div>
+                <label className="font-bold text-slate-700 dark:text-slate-300">Select Staff Member:</label>
+                <select
+                  required
+                  value={manualLogForm.staffId}
+                  onChange={(e) => setManualLogForm({ ...manualLogForm, staffId: e.target.value })}
+                  className="w-full mt-1 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold text-xs"
+                >
+                  <option value="">-- Select Staff Member --</option>
+                  {staffList.map((s) => (
+                    <option key={s._id} value={s._id}>
+                      {s.name} ({s.role || 'Staff'})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-700 dark:text-slate-300">Date:</label>
+                <input
+                  type="date"
+                  required
+                  value={manualLogForm.date}
+                  onChange={(e) => setManualLogForm({ ...manualLogForm, date: e.target.value })}
+                  className="w-full mt-1 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold text-xs"
+                />
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-700 dark:text-slate-300">Attendance Status:</label>
+                <select
+                  value={manualLogForm.status}
+                  onChange={(e) => setManualLogForm({ ...manualLogForm, status: e.target.value })}
+                  className="w-full mt-1 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold text-xs"
+                >
+                  <option value="Present">🟢 Present</option>
+                  <option value="Half Day">🟡 Half Day</option>
+                  <option value="Absent">🔴 Absent</option>
+                  <option value="Leave">🔵 On Leave</option>
+                </select>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowAddLogModal(false)}
+                  className="px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-bold text-slate-600 dark:text-slate-300 text-xs"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs shadow-xs"
+                >
+                  Save Log Record
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
