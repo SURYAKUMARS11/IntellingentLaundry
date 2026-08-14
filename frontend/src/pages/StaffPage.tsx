@@ -58,6 +58,10 @@ export const StaffPage: React.FC = () => {
   const [attPage, setAttPage] = useState<number>(1);
   const [attPageSize, setAttPageSize] = useState<number>(10);
 
+  // Ironing Logs Pagination State
+  const [ironingPage, setIroningPage] = useState<number>(1);
+  const [ironingPageSize, setIroningPageSize] = useState<number>(5);
+
   // Delete Staff Modal State
   const [deletingStaff, setDeletingStaff] = useState<{ id: string; name: string } | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -294,6 +298,12 @@ export const StaffPage: React.FC = () => {
   const totalAttPages = Math.ceil(totalAttRecords / attPageSize) || 1;
   const attStartIndex = (attPage - 1) * attPageSize;
   const paginatedAttendance = attendanceList.slice(attStartIndex, attStartIndex + attPageSize);
+
+  // Ironing Table Pagination Calculations
+  const totalIroningRecords = ironingLogs.length;
+  const totalIroningPages = Math.ceil(totalIroningRecords / ironingPageSize) || 1;
+  const ironingStartIndex = (ironingPage - 1) * ironingPageSize;
+  const paginatedIroningLogs = ironingLogs.slice(ironingStartIndex, ironingStartIndex + ironingPageSize);
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-20">
@@ -741,27 +751,79 @@ export const StaffPage: React.FC = () => {
             </form>
           </div>
 
-          {/* Right History Table */}
-          <div className="lg:col-span-7 glass-card p-6 space-y-4">
-            <h3 className="font-extrabold text-sm text-slate-900 dark:text-white">Recent Ironing Work Entries</h3>
+          {/* Right History Table with Pagination */}
+          <div className="lg:col-span-7 glass-card p-6 space-y-4 flex flex-col justify-between">
+            <div>
+              <h3 className="font-extrabold text-sm text-slate-900 dark:text-white pb-2 border-b border-slate-200 dark:border-slate-800">
+                Recent Ironing Work Entries
+              </h3>
 
-            <div className="divide-y divide-slate-100 dark:divide-slate-800 max-h-[420px] overflow-y-auto">
-              {ironingLogs.map((log) => (
-                <div key={log._id} className="py-3 flex items-center justify-between text-xs hover:bg-slate-50 dark:hover:bg-slate-800/40 px-2 rounded-xl">
-                  <div>
-                    <p className="font-bold text-slate-900 dark:text-white">
-                      {log.itemName} <span className="text-brand-600">({log.quantity} pcs)</span>
-                    </p>
-                    <p className="text-[10px] text-slate-500">
-                      {log.tableName} • Staff: <strong className="text-slate-700 dark:text-slate-300">{log.staffName}</strong> • {new Date(log.date).toLocaleDateString()}
-                    </p>
+              <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                {paginatedIroningLogs.map((log) => (
+                  <div key={log._id} className="py-3 flex items-center justify-between text-xs hover:bg-slate-50 dark:hover:bg-slate-800/40 px-2 rounded-xl">
+                    <div>
+                      <p className="font-bold text-slate-900 dark:text-white">
+                        {log.itemName} <span className="text-brand-600">({log.quantity} pcs)</span>
+                      </p>
+                      <p className="text-[10px] text-slate-500">
+                        {log.tableName} • Staff: <strong className="text-slate-700 dark:text-slate-300">{log.staffName}</strong> • {new Date(log.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                      </p>
+                    </div>
+                    <span className="font-black text-xs text-brand-600 bg-brand-50 dark:bg-brand-950 px-2.5 py-1 rounded-lg">
+                      +{log.quantity} items
+                    </span>
                   </div>
-                  <span className="font-black text-xs text-brand-600 bg-brand-50 dark:bg-brand-950 px-2.5 py-1 rounded-lg">
-                    +{log.quantity} items
+                ))}
+
+                {ironingLogs.length === 0 && (
+                  <p className="text-xs text-slate-400 py-6 text-center italic">No ironing work entries logged yet.</p>
+                )}
+              </div>
+            </div>
+
+            {/* Ironing Pagination Bar */}
+            {totalIroningRecords > 0 && (
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-slate-200 dark:border-slate-800 text-xs">
+                <div className="flex items-center gap-2">
+                  <span className="text-slate-500 font-semibold">Rows:</span>
+                  <select
+                    value={ironingPageSize}
+                    onChange={(e) => {
+                      setIroningPageSize(Number(e.target.value));
+                      setIroningPage(1);
+                    }}
+                    className="p-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-extrabold text-xs cursor-pointer"
+                  >
+                    <option value={5}>5 / page</option>
+                    <option value={10}>10 / page</option>
+                    <option value={20}>20 / page</option>
+                  </select>
+                  <span className="text-slate-400 font-medium">
+                    Showing {ironingStartIndex + 1} to {Math.min(ironingStartIndex + ironingPageSize, totalIroningRecords)} of {totalIroningRecords}
                   </span>
                 </div>
-              ))}
-            </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    disabled={ironingPage === 1}
+                    onClick={() => setIroningPage((p) => Math.max(1, p - 1))}
+                    className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 disabled:opacity-40 font-bold hover:bg-slate-200"
+                  >
+                    Prev
+                  </button>
+                  <span className="font-extrabold text-slate-700 dark:text-slate-300">
+                    {ironingPage} / {totalIroningPages}
+                  </span>
+                  <button
+                    disabled={ironingPage >= totalIroningPages}
+                    onClick={() => setIroningPage((p) => Math.min(totalIroningPages, p + 1))}
+                    className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 disabled:opacity-40 font-bold hover:bg-slate-200"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
