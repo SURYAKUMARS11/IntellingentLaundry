@@ -63,9 +63,19 @@ export const logMachineCycle = async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, message: 'Machine type and program name are required.' });
     }
 
+    let targetDate = new Date();
+    if (date) {
+      const parts = String(date).split('-');
+      if (parts.length === 3) {
+        targetDate = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]), 12, 0, 0);
+      } else {
+        targetDate = new Date(date);
+      }
+    }
+
     const newLog = new MachineLog({
       machineType,
-      date: date ? new Date(date) : new Date(),
+      date: targetDate,
       programName: programName.trim(),
       durationMinutes: Number(durationMinutes) || (machineType === 'Dryer' ? 30 : 45),
       cyclesCount: Number(cyclesCount) || 1,
@@ -85,9 +95,6 @@ export const logMachineCycle = async (req: Request, res: Response) => {
 // -------------------------------------------------------------
 export const getGasCylinderLogs = async (req: Request, res: Response) => {
   try {
-    const { period = 'month', startDate, endDate } = req.query;
-    const range = calculateDateRange(period as string, startDate as string, endDate as string);
-
     // Fetch all logs sorted ascending by changeDate to compute exact longevity interval for each cylinder
     const allLogs = await GasCylinderLog.find().sort({ changeDate: 1 });
 
@@ -105,15 +112,10 @@ export const getGasCylinderLogs = async (req: Request, res: Response) => {
       }
     }
 
-    // Filter logs for requested period and return descending by date
-    const filteredLogs = allLogs
-      .filter((log) => {
-        const d = new Date(log.changeDate);
-        return d >= range.start && d <= range.end;
-      })
-      .reverse();
+    // Return all cylinder history logs sorted descending by date
+    const logs = allLogs.reverse();
 
-    return res.json({ success: true, logs: filteredLogs });
+    return res.json({ success: true, logs });
   } catch (error: any) {
     return res.status(500).json({ success: false, message: error.message });
   }
@@ -122,7 +124,16 @@ export const getGasCylinderLogs = async (req: Request, res: Response) => {
 export const logGasCylinder = async (req: Request, res: Response) => {
   try {
     const { changeDate, quantity, vendorName, cylinderSize, notes } = req.body;
-    const targetDate = changeDate ? new Date(changeDate) : new Date();
+    
+    let targetDate = new Date();
+    if (changeDate) {
+      const parts = String(changeDate).split('-');
+      if (parts.length === 3) {
+        targetDate = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]), 12, 0, 0);
+      } else {
+        targetDate = new Date(changeDate);
+      }
+    }
 
     const newLog = new GasCylinderLog({
       changeDate: targetDate,
@@ -134,19 +145,6 @@ export const logGasCylinder = async (req: Request, res: Response) => {
     });
 
     await newLog.save();
-
-    // Recalculate previous cylinder's daysLasted
-    const previousLog = await GasCylinderLog.findOne({
-      _id: { $ne: newLog._id },
-      changeDate: { $lt: targetDate },
-    }).sort({ changeDate: -1 });
-
-    if (previousLog) {
-      const diffMs = targetDate.getTime() - new Date(previousLog.changeDate).getTime();
-      const days = Math.max(1, Math.round(diffMs / (1000 * 60 * 60 * 24)));
-      previousLog.daysLasted = days;
-      await previousLog.save();
-    }
 
     return res.status(201).json({
       success: true,
