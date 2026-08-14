@@ -95,6 +95,9 @@ export const logMachineCycle = async (req: Request, res: Response) => {
 // -------------------------------------------------------------
 export const getGasCylinderLogs = async (req: Request, res: Response) => {
   try {
+    const { period = 'month', startDate, endDate } = req.query;
+    const range = calculateDateRange(period as string, startDate as string, endDate as string);
+
     // Fetch all logs sorted ascending by changeDate to compute exact longevity interval for each cylinder
     const allLogs = await GasCylinderLog.find().sort({ changeDate: 1 });
 
@@ -112,10 +115,15 @@ export const getGasCylinderLogs = async (req: Request, res: Response) => {
       }
     }
 
-    // Return all cylinder history logs sorted descending by date
-    const logs = allLogs.reverse();
+    // Filter logs strictly by the requested date range (Today, Current Month, Current Year, Custom Range)
+    const filteredLogs = allLogs
+      .filter((log) => {
+        const d = new Date(log.changeDate);
+        return d >= range.start && d <= range.end;
+      })
+      .reverse();
 
-    return res.json({ success: true, logs });
+    return res.json({ success: true, logs: filteredLogs });
   } catch (error: any) {
     return res.status(500).json({ success: false, message: error.message });
   }
