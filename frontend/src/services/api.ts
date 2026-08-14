@@ -1568,6 +1568,7 @@ export const fetchGasCylinderLogsApi = async (params: any = {}) => {
   return fetchApi(`/machines/cylinders?${query}`);
 };
 export const logGasCylinderApi = async (data: any) => fetchApi('/machines/cylinders', { method: 'POST', body: JSON.stringify(data) });
+export const deleteGasCylinderLogApi = async (id: string) => fetchApi(`/machines/cylinders/${id}`, { method: 'DELETE' });
 
 export const fetchMachineUtilityAnalyticsApi = async (params: any = {}) => {
   const cleanParams: any = {};

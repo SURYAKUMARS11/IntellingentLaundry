@@ -81,7 +81,7 @@ export const logMachineCycle = async (req: Request, res: Response) => {
 };
 
 // -------------------------------------------------------------
-// 2. LPG Gas Cylinder Replacements (Dryer)
+// 2. LPG Gas Cylinder Tracking (Dryer)
 // -------------------------------------------------------------
 export const getGasCylinderLogs = async (req: Request, res: Response) => {
   try {
@@ -100,30 +100,55 @@ export const getGasCylinderLogs = async (req: Request, res: Response) => {
 
 export const logGasCylinder = async (req: Request, res: Response) => {
   try {
-    const { changeDate, cost, vendorName, cylinderSize, totalCyclesCompleted, notes } = req.body;
+    const { changeDate, quantity, vendorName, cylinderSize, notes } = req.body;
+    const targetDate = changeDate ? new Date(changeDate) : new Date();
 
-    if (!cost) {
-      return res.status(400).json({ success: false, message: 'Cylinder cost is required.' });
+    // Calculate days lasted from previous cylinder entry
+    const previousLog = await GasCylinderLog.findOne({
+      changeDate: { $lt: targetDate },
+    }).sort({ changeDate: -1 });
+
+    let daysLasted = 0;
+    if (previousLog) {
+      const diffMs = targetDate.getTime() - new Date(previousLog.changeDate).getTime();
+      daysLasted = Math.max(1, Math.round(diffMs / (1000 * 60 * 60 * 24)));
     }
 
     const newLog = new GasCylinderLog({
-      changeDate: changeDate ? new Date(changeDate) : new Date(),
-      cost: Number(cost),
+      changeDate: targetDate,
+      quantity: Number(quantity) || 1,
+      daysLasted,
       vendorName: vendorName || 'LPG Supplier',
       cylinderSize: cylinderSize || '19kg Commercial',
-      totalCyclesCompleted: Number(totalCyclesCompleted) || 0,
       notes: notes || '',
     });
 
     await newLog.save();
-    return res.status(201).json({ success: true, log: newLog, message: 'Gas cylinder change recorded.' });
+    return res.status(201).json({
+      success: true,
+      log: newLog,
+      message: `Gas cylinder change recorded (${newLog.quantity} cylinder(s)${daysLasted > 0 ? `, previous lasted ${daysLasted} days` : ''}).`,
+    });
+  } catch (error: any) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const deleteGasCylinder = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const deleted = await GasCylinderLog.findByIdAndDelete(id);
+    if (!deleted) {
+      return res.status(404).json({ success: false, message: 'Cylinder log not found.' });
+    }
+    return res.json({ success: true, message: 'Cylinder log deleted successfully.' });
   } catch (error: any) {
     return res.status(500).json({ success: false, message: error.message });
   }
 };
 
 // -------------------------------------------------------------
-// 3. Utility Performance & EB Bill / Cylinder Cost Analytics
+// 3. Utility Performance Analytics (Washer Extractor & Dryer LPG)
 // -------------------------------------------------------------
 export const getMachineUtilityAnalytics = async (req: Request, res: Response) => {
   try {
@@ -148,9 +173,6 @@ export const getMachineUtilityAnalytics = async (req: Request, res: Response) =>
     });
 
     const washerTotalHours = (totalWasherMinutes / 60).toFixed(1);
-    // Estimated Electricity Units (3.5 kWh rating)
-    const estimatedEbUnits = (Number(washerTotalHours) * 3.5).toFixed(1);
-    const estimatedEbCost = (Number(estimatedEbUnits) * 8.5).toFixed(0);
 
     // 2. Dryer Logs
     const dryerLogs = await MachineLog.find({
@@ -168,12 +190,28 @@ export const getMachineUtilityAnalytics = async (req: Request, res: Response) =>
 
     const dryerTotalHours = (totalDryerMinutes / 60).toFixed(1);
 
-    // 3. Gas Cylinder Replacements
+    // 3. Gas Cylinder Replacements in period
     const cylinders = await GasCylinderLog.find({
       changeDate: { $gte: range.start, $lte: range.end },
     }).sort({ changeDate: -1 });
 
-    const totalCylinderCost = cylinders.reduce((sum, c) => sum + (c.cost || 0), 0);
+    const totalCylindersUsed = cylinders.reduce((sum, c) => sum + (c.quantity || 1), 0);
+
+    // Calculate Average Longevity in Days across all cylinder logs
+    const allCylinders = await GasCylinderLog.find().sort({ changeDate: 1 });
+    let totalDays = 0;
+    let countedCylinders = 0;
+
+    for (let i = 1; i < allCylinders.length; i++) {
+      const prev = new Date(allCylinders[i - 1].changeDate);
+      const curr = new Date(allCylinders[i].changeDate);
+      const diffMs = curr.getTime() - prev.getTime();
+      const days = Math.max(1, Math.round(diffMs / (1000 * 60 * 60 * 24)));
+      totalDays += days;
+      countedCylinders++;
+    }
+
+    const avgDaysPerCylinder = countedCylinders > 0 ? (totalDays / countedCylinders).toFixed(1) : 'N/A';
 
     return res.json({
       success: true,
@@ -181,17 +219,15 @@ export const getMachineUtilityAnalytics = async (req: Request, res: Response) =>
       washerExtractor: {
         totalHours: washerTotalHours,
         totalCycles: totalWasherCycles,
-        estimatedEbUnits,
-        estimatedEbCost,
         programsBreakdown: Object.keys(washerProgramsMap).map((k) => ({ program: k, count: washerProgramsMap[k] })),
       },
       dryer: {
         totalHours: dryerTotalHours,
         totalCycles: totalDryerCycles,
-        cylindersChangedThisMonth: cylinders.length,
-        totalGasCostThisMonth: totalCylinderCost,
+        totalCylindersUsed,
+        avgDaysPerCylinder,
       },
-      recentCylinders: cylinders.slice(0, 5),
+      recentCylinders: cylinders.slice(0, 10),
     });
   } catch (error: any) {
     return res.status(500).json({ success: false, message: error.message });

@@ -4,6 +4,7 @@ import {
   logMachineCycleApi,
   fetchGasCylinderLogsApi,
   logGasCylinderApi,
+  deleteGasCylinderLogApi,
   fetchMachineUtilityAnalyticsApi,
 } from '../services/api';
 import { useToast } from '../context/ToastContext';
@@ -15,10 +16,9 @@ import {
   Plus,
   RefreshCw,
   Clock,
-  CheckCircle,
   Calendar,
   Layers,
-  Sparkles,
+  Trash2,
 } from 'lucide-react';
 
 export const MachinePage: React.FC = () => {
@@ -53,11 +53,11 @@ export const MachinePage: React.FC = () => {
     notes: '',
   });
 
-  // LPG Cylinder Form State
+  // LPG Cylinder Form State (Date & Quantity, No Price)
   const [cylinderForm, setCylinderForm] = useState({
-    cost: 1850,
-    vendorName: 'LPG Gas Agency',
-    cylinderSize: '19kg Commercial',
+    changeDate: new Date().toISOString().split('T')[0],
+    quantity: 1,
+    vendorName: 'LPG Gas Supplier',
     notes: '',
   });
 
@@ -141,19 +141,36 @@ export const MachinePage: React.FC = () => {
   // Handle Cylinder Log Submit
   const handleLogCylinder = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!cylinderForm.cost) {
-      showToast('Please enter cylinder cost', 'error');
-      return;
-    }
     try {
       const res = await logGasCylinderApi(cylinderForm);
       if (res.success) {
-        showToast('LPG Gas Cylinder replacement recorded!', 'success');
-        setCylinderForm({ cost: 1850, vendorName: 'LPG Gas Agency', cylinderSize: '19kg Commercial', notes: '' });
+        showToast(res.message || 'LPG Gas Cylinder recorded!', 'success');
+        setCylinderForm({
+          changeDate: new Date().toISOString().split('T')[0],
+          quantity: 1,
+          vendorName: 'LPG Gas Supplier',
+          notes: '',
+        });
         loadMachineData();
       }
     } catch (err: any) {
       showToast(err.message || 'Error logging cylinder change', 'error');
+    }
+  };
+
+  // Handle Delete Cylinder Log
+  const handleDeleteCylinderLog = async (id: string, date: string) => {
+    const formattedDate = new Date(date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+    if (!window.confirm(`Delete LPG cylinder entry on ${formattedDate}?`)) return;
+
+    try {
+      const res = await deleteGasCylinderLogApi(id);
+      if (res.success) {
+        showToast('Deleted LPG cylinder record', 'success');
+        loadMachineData();
+      }
+    } catch (err: any) {
+      showToast(err.message || 'Error deleting cylinder log', 'error');
     }
   };
 
@@ -170,7 +187,7 @@ export const MachinePage: React.FC = () => {
               Machine Performance & Utility Tracking
             </h1>
             <p className="text-xs font-semibold text-slate-500">
-              Track Washer Extractor (EB Power) & Dryer (LPG Gas Cylinder) performance & utility expenses
+              Track Washer Extractor (Running Hours) & Dryer (LPG Gas Cylinder Longevity) performance
             </p>
           </div>
         </div>
@@ -235,9 +252,9 @@ export const MachinePage: React.FC = () => {
       {/* Tabs */}
       <div className="flex flex-wrap items-center gap-2 glass-card p-1.5">
         {[
-          { id: 'washer', label: '1. Washer Extractor (EB Power)', icon: WashingMachine },
+          { id: 'washer', label: '1. Washer Extractor', icon: WashingMachine },
           { id: 'dryer', label: '2. Dryer Machine (LPG Gas)', icon: Flame },
-          { id: 'analytics', label: '3. Utility Cost & Performance Analytics', icon: BarChart2 },
+          { id: 'analytics', label: '3. Performance & Cylinder Analytics', icon: BarChart2 },
         ].map((tab) => {
           const Icon = tab.icon;
           return (
@@ -260,7 +277,7 @@ export const MachinePage: React.FC = () => {
       {isLoading && (
         <div className="glass-card p-6 flex items-center justify-center gap-3 text-cyan-600 dark:text-cyan-400 animate-pulse">
           <RefreshCw className="w-5 h-5 animate-spin" />
-          <span className="text-xs font-black tracking-wide uppercase">Fetching Machine Logs & Utility Analytics...</span>
+          <span className="text-xs font-black tracking-wide uppercase">Fetching Machine Logs & Cylinder Longevity...</span>
         </div>
       )}
 
@@ -359,7 +376,7 @@ export const MachinePage: React.FC = () => {
         </div>
       )}
 
-      {/* TAB 2: DRYER MACHINE */}
+      {/* TAB 2: DRYER MACHINE & LPG CYLINDER TRACKING */}
       {activeTab === 'dryer' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Left Form: Dryer Run & Gas Replacement */}
@@ -404,52 +421,69 @@ export const MachinePage: React.FC = () => {
               </form>
             </div>
 
-            {/* Log LPG Cylinder Change Form */}
+            {/* Log LPG Cylinder Change Form (Date & Quantity, No Price) */}
             <div className="glass-card p-6 space-y-4 border-t-4 border-t-rose-500">
-              <h3 className="font-extrabold text-sm text-slate-900 dark:text-white">Log LPG Gas Cylinder Replacement</h3>
+              <div className="flex items-center gap-2">
+                <Flame className="w-5 h-5 text-rose-500" />
+                <h3 className="font-extrabold text-sm text-slate-900 dark:text-white">Add New LPG Gas Cylinder</h3>
+              </div>
+
               <form onSubmit={handleLogCylinder} className="space-y-3 text-xs">
                 <div>
-                  <label className="font-bold text-slate-700 dark:text-slate-300">Cylinder Cost (₹):</label>
+                  <label className="font-bold text-slate-700 dark:text-slate-300">Replacement Date:</label>
                   <input
-                    type="number"
+                    type="date"
                     required
-                    value={cylinderForm.cost}
-                    onChange={(e) => setCylinderForm({ ...cylinderForm, cost: Number(e.target.value) })}
-                    className="w-full mt-1 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-black"
+                    value={cylinderForm.changeDate}
+                    onChange={(e) => setCylinderForm({ ...cylinderForm, changeDate: e.target.value })}
+                    className="w-full mt-1 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-extrabold text-xs"
                   />
                 </div>
 
                 <div>
-                  <label className="font-bold text-slate-700 dark:text-slate-300">Vendor / Supplier Name:</label>
+                  <label className="font-bold text-slate-700 dark:text-slate-300">Number of Cylinders Added:</label>
+                  <input
+                    type="number"
+                    min="1"
+                    required
+                    value={cylinderForm.quantity}
+                    onChange={(e) => setCylinderForm({ ...cylinderForm, quantity: Number(e.target.value) })}
+                    className="w-full mt-1 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-black text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-bold text-slate-700 dark:text-slate-300">Supplier Name (Optional):</label>
                   <input
                     type="text"
                     value={cylinderForm.vendorName}
                     onChange={(e) => setCylinderForm({ ...cylinderForm, vendorName: e.target.value })}
                     className="w-full mt-1 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold"
+                    placeholder="e.g. LPG Supplier"
                   />
                 </div>
 
                 <button
                   type="submit"
-                  className="w-full py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-black text-xs"
+                  className="w-full py-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs flex items-center justify-center gap-2 shadow-xs"
                 >
-                  Record Cylinder Replacement (₹{cylinderForm.cost})
+                  <Plus className="w-4 h-4" /> Add LPG Cylinder Entry
                 </button>
               </form>
             </div>
           </div>
 
-          {/* Right Dryer History */}
+          {/* Right Dryer History & Cylinder Days Log */}
           <div className="lg:col-span-7 space-y-6">
             <div className="glass-card p-6 space-y-4">
               <h3 className="font-extrabold text-sm text-slate-900 dark:text-white">Dryer Run History Log</h3>
-              <div className="divide-y divide-slate-100 dark:divide-slate-800 max-h-[220px] overflow-y-auto">
+              <div className="divide-y divide-slate-100 dark:divide-slate-800 max-h-[200px] overflow-y-auto">
                 {dryerLogs.map((log) => (
                   <div key={log._id} className="py-3 flex items-center justify-between text-xs">
                     <div>
                       <p className="font-bold text-slate-900 dark:text-white">{log.programName}</p>
                       <p className="text-[10px] text-slate-500">
-                        Operator: <strong className="text-slate-700 dark:text-slate-300">{log.operatorName || 'N/A'}</strong> • {new Date(log.date).toLocaleDateString()}
+                        Operator: <strong className="text-slate-700 dark:text-slate-300">{log.operatorName || 'N/A'}</strong> • {new Date(log.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
                       </p>
                     </div>
                     <span className="font-black text-xs text-amber-600 bg-amber-50 dark:bg-amber-950 px-2.5 py-1 rounded-lg">
@@ -460,20 +494,38 @@ export const MachinePage: React.FC = () => {
               </div>
             </div>
 
+            {/* LPG Cylinder Log with Days Lasted */}
             <div className="glass-card p-6 space-y-4">
-              <h3 className="font-extrabold text-sm text-slate-900 dark:text-white">LPG Gas Cylinder Replacement History</h3>
-              <div className="divide-y divide-slate-100 dark:divide-slate-800 max-h-[200px] overflow-y-auto">
-                {cylinderLogs.map((c) => (
-                  <div key={c._id} className="py-3 flex items-center justify-between text-xs">
+              <h3 className="font-extrabold text-sm text-slate-900 dark:text-white">LPG Cylinder History & Days Lasted</h3>
+              <div className="divide-y divide-slate-100 dark:divide-slate-800 max-h-[240px] overflow-y-auto">
+                {cylinderLogs.map((c, index) => (
+                  <div key={c._id} className="py-3 flex items-center justify-between text-xs hover:bg-slate-50 dark:hover:bg-slate-800/40 px-2 rounded-xl">
                     <div>
-                      <p className="font-extrabold text-slate-900 dark:text-white">{c.vendorName || 'LPG Supplier'}</p>
+                      <p className="font-extrabold text-slate-900 dark:text-white">
+                        {c.quantity || 1} LPG Cylinder{c.quantity > 1 ? 's' : ''} Added
+                      </p>
                       <p className="text-[10px] text-slate-500">
-                        Replaced on: {new Date(c.changeDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                        Replaced on: <strong className="text-slate-700 dark:text-slate-300">{new Date(c.changeDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</strong> • {c.vendorName || 'LPG Supplier'}
                       </p>
                     </div>
-                    <span className="font-black text-sm text-rose-600 bg-rose-50 dark:bg-rose-950 px-2.5 py-1 rounded-lg">
-                      ₹{c.cost}
-                    </span>
+
+                    <div className="flex items-center gap-3">
+                      <span className={`font-black text-xs px-2.5 py-1 rounded-lg ${
+                        c.daysLasted > 0
+                          ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
+                          : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+                      }`}>
+                        {c.daysLasted > 0 ? `Lasted ${c.daysLasted} Days` : index === cylinderLogs.length - 1 ? 'First Cylinder Entry' : 'Current Active'}
+                      </span>
+
+                      <button
+                        onClick={() => handleDeleteCylinderLog(c._id, c.changeDate)}
+                        className="p-1 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 transition-all"
+                        title="Delete Cylinder Entry"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -482,33 +534,35 @@ export const MachinePage: React.FC = () => {
         </div>
       )}
 
-      {/* TAB 3: UTILITY COST & PERFORMANCE ANALYTICS */}
+      {/* TAB 3: PERFORMANCE & CYLINDER LONGEVITY ANALYTICS */}
       {activeTab === 'analytics' && analytics && (
         <div className="space-y-6">
-          {/* Summary Cards */}
+          {/* Summary Cards (Zero Cost or Prices) */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="glass-card p-5 border-t-4 border-t-cyan-500 space-y-1">
-              <p className="text-xs font-bold text-slate-500">Washer Total Runs</p>
-              <p className="text-2xl font-black text-slate-900 dark:text-white">{analytics.washerExtractor?.totalCycles || 0} Runs</p>
-              <p className="text-[10px] text-cyan-600 font-bold">{analytics.washerExtractor?.totalHours || 0} Total Hours</p>
+              <p className="text-xs font-bold text-slate-500">Washer Total Running Hours</p>
+              <p className="text-2xl font-black text-slate-900 dark:text-white">{analytics.washerExtractor?.totalHours || 0} Hours</p>
+              <p className="text-[10px] text-cyan-600 font-bold">Washer Extractor Output</p>
             </div>
 
             <div className="glass-card p-5 border-t-4 border-t-emerald-500 space-y-1">
-              <p className="text-xs font-bold text-slate-500">Est. EB Electricity Cost</p>
-              <p className="text-2xl font-black text-emerald-600">₹{analytics.washerExtractor?.estimatedEbCost || 0}</p>
-              <p className="text-[10px] text-slate-400 font-semibold">{analytics.washerExtractor?.estimatedEbUnits || 0} kWh Units</p>
+              <p className="text-xs font-bold text-slate-500">Washer Total Runs</p>
+              <p className="text-2xl font-black text-emerald-600">{analytics.washerExtractor?.totalCycles || 0} Runs</p>
+              <p className="text-[10px] text-slate-400 font-semibold">Total Wash Programs Executed</p>
             </div>
 
             <div className="glass-card p-5 border-t-4 border-t-amber-500 space-y-1">
               <p className="text-xs font-bold text-slate-500">Dryer Total Runs</p>
-              <p className="text-2xl font-black text-slate-900 dark:text-white">{analytics.dryer?.totalCycles || 0} Runs</p>
-              <p className="text-[10px] text-amber-600 font-bold">{analytics.dryer?.totalHours || 0} Total Hours</p>
+              <p className="text-2xl font-black text-amber-600">{analytics.dryer?.totalCycles || 0} Runs</p>
+              <p className="text-[10px] text-amber-600 font-bold">{analytics.dryer?.totalHours || 0} Dryer Running Hours</p>
             </div>
 
             <div className="glass-card p-5 border-t-4 border-t-rose-500 space-y-1">
-              <p className="text-xs font-bold text-slate-500">LPG Gas Cylinder Expense</p>
-              <p className="text-2xl font-black text-rose-600">₹{analytics.dryer?.totalGasCostThisMonth || 0}</p>
-              <p className="text-[10px] text-slate-400 font-semibold">{analytics.dryer?.cylindersChangedThisMonth || 0} Cylinders Changed</p>
+              <p className="text-xs font-bold text-slate-500">LPG Cylinders Used</p>
+              <p className="text-2xl font-black text-rose-600">{analytics.dryer?.totalCylindersUsed || 0} Cylinders</p>
+              <p className="text-[10px] text-slate-500 font-extrabold">
+                Avg Longevity: <strong className="text-rose-600">{analytics.dryer?.avgDaysPerCylinder || 'N/A'} Days / Cylinder</strong>
+              </p>
             </div>
           </div>
 

@@ -5,6 +5,7 @@ import {
   logMachineCycle,
   getGasCylinderLogs,
   logGasCylinder,
+  deleteGasCylinder,
   getMachineUtilityAnalytics,
 } from '../controllers/machineController';
 
@@ -19,6 +20,7 @@ router.post('/logs', logMachineCycle);
 // Gas Cylinders
 router.get('/cylinders', getGasCylinderLogs);
 router.post('/cylinders', logGasCylinder);
+router.delete('/cylinders/:id', deleteGasCylinder);
 
 // Utility Analytics
 router.get('/analytics', getMachineUtilityAnalytics);
