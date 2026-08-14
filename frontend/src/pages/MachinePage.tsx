@@ -515,7 +515,7 @@ export const MachinePage: React.FC = () => {
                           ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
                           : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
                       }`}>
-                        {c.daysLasted > 0 ? `Lasted ${c.daysLasted} Days` : index === cylinderLogs.length - 1 ? 'First Cylinder Entry' : 'Current Active'}
+                        {c.daysLasted > 0 ? `Lasted ${c.daysLasted} Days` : 'Currently Active'}
                       </span>
 
                       <button

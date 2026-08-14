@@ -88,11 +88,32 @@ export const getGasCylinderLogs = async (req: Request, res: Response) => {
     const { period = 'month', startDate, endDate } = req.query;
     const range = calculateDateRange(period as string, startDate as string, endDate as string);
 
-    const logs = await GasCylinderLog.find({
-      changeDate: { $gte: range.start, $lte: range.end },
-    }).sort({ changeDate: -1 });
+    // Fetch all logs sorted ascending by changeDate to compute exact longevity interval for each cylinder
+    const allLogs = await GasCylinderLog.find().sort({ changeDate: 1 });
 
-    return res.json({ success: true, logs });
+    // Compute longevity days for each cylinder (the duration it ran until replaced by the next cylinder)
+    for (let i = 0; i < allLogs.length; i++) {
+      if (i < allLogs.length - 1) {
+        const currDate = new Date(allLogs[i].changeDate);
+        const nextDate = new Date(allLogs[i + 1].changeDate);
+        const diffMs = nextDate.getTime() - currDate.getTime();
+        const days = Math.max(1, Math.round(diffMs / (1000 * 60 * 60 * 24)));
+        allLogs[i].daysLasted = days;
+      } else {
+        // Most recent cylinder is currently active
+        allLogs[i].daysLasted = 0;
+      }
+    }
+
+    // Filter logs for requested period and return descending by date
+    const filteredLogs = allLogs
+      .filter((log) => {
+        const d = new Date(log.changeDate);
+        return d >= range.start && d <= range.end;
+      })
+      .reverse();
+
+    return res.json({ success: true, logs: filteredLogs });
   } catch (error: any) {
     return res.status(500).json({ success: false, message: error.message });
   }
@@ -103,31 +124,34 @@ export const logGasCylinder = async (req: Request, res: Response) => {
     const { changeDate, quantity, vendorName, cylinderSize, notes } = req.body;
     const targetDate = changeDate ? new Date(changeDate) : new Date();
 
-    // Calculate days lasted from previous cylinder entry
-    const previousLog = await GasCylinderLog.findOne({
-      changeDate: { $lt: targetDate },
-    }).sort({ changeDate: -1 });
-
-    let daysLasted = 0;
-    if (previousLog) {
-      const diffMs = targetDate.getTime() - new Date(previousLog.changeDate).getTime();
-      daysLasted = Math.max(1, Math.round(diffMs / (1000 * 60 * 60 * 24)));
-    }
-
     const newLog = new GasCylinderLog({
       changeDate: targetDate,
       quantity: Number(quantity) || 1,
-      daysLasted,
+      daysLasted: 0,
       vendorName: vendorName || 'LPG Supplier',
       cylinderSize: cylinderSize || '19kg Commercial',
       notes: notes || '',
     });
 
     await newLog.save();
+
+    // Recalculate previous cylinder's daysLasted
+    const previousLog = await GasCylinderLog.findOne({
+      _id: { $ne: newLog._id },
+      changeDate: { $lt: targetDate },
+    }).sort({ changeDate: -1 });
+
+    if (previousLog) {
+      const diffMs = targetDate.getTime() - new Date(previousLog.changeDate).getTime();
+      const days = Math.max(1, Math.round(diffMs / (1000 * 60 * 60 * 24)));
+      previousLog.daysLasted = days;
+      await previousLog.save();
+    }
+
     return res.status(201).json({
       success: true,
       log: newLog,
-      message: `Gas cylinder change recorded (${newLog.quantity} cylinder(s)${daysLasted > 0 ? `, previous lasted ${daysLasted} days` : ''}).`,
+      message: `Gas cylinder replacement recorded (${newLog.quantity} cylinder(s)).`,
     });
   } catch (error: any) {
     return res.status(500).json({ success: false, message: error.message });
@@ -197,14 +221,14 @@ export const getMachineUtilityAnalytics = async (req: Request, res: Response) =>
 
     const totalCylindersUsed = cylinders.reduce((sum, c) => sum + (c.quantity || 1), 0);
 
-    // Calculate Average Longevity in Days across all cylinder logs
+    // Calculate Average Longevity in Days across all completed cylinders
     const allCylinders = await GasCylinderLog.find().sort({ changeDate: 1 });
     let totalDays = 0;
     let countedCylinders = 0;
 
-    for (let i = 1; i < allCylinders.length; i++) {
-      const prev = new Date(allCylinders[i - 1].changeDate);
-      const curr = new Date(allCylinders[i].changeDate);
+    for (let i = 0; i < allCylinders.length - 1; i++) {
+      const prev = new Date(allCylinders[i].changeDate);
+      const curr = new Date(allCylinders[i + 1].changeDate);
       const diffMs = curr.getTime() - prev.getTime();
       const days = Math.max(1, Math.round(diffMs / (1000 * 60 * 60 * 24)));
       totalDays += days;
