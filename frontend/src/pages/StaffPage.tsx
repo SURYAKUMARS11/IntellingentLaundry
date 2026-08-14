@@ -332,7 +332,7 @@ export const StaffPage: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {staffList.map((staff) => {
                 const att = attendanceList.find((a) => (a.staff?._id || a.staff) === staff._id);
-                const currentStatus = att?.status || 'Present';
+                const currentStatus = att?.status || '';
                 const summary = attendanceSummary.find((s) => s._id === staff._id || s.staffName === staff.name);
 
                 return (
@@ -372,9 +372,15 @@ export const StaffPage: React.FC = () => {
                       <span className="text-xs font-bold text-slate-600 dark:text-slate-400">Status:</span>
                       <select
                         value={currentStatus}
-                        onChange={(e) => handleAttendanceChange(staff._id, e.target.value)}
+                        onChange={(e) => {
+                          if (e.target.value) {
+                            handleAttendanceChange(staff._id, e.target.value);
+                          }
+                        }}
                         className={`px-3 py-1.5 rounded-xl font-extrabold text-xs cursor-pointer border transition-all ${
-                          currentStatus === 'Present'
+                          !currentStatus
+                            ? 'bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-700 dark:text-slate-200'
+                            : currentStatus === 'Present'
                             ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
                             : currentStatus === 'Half Day'
                             ? 'bg-amber-100 text-amber-800 border-amber-300'
@@ -383,6 +389,9 @@ export const StaffPage: React.FC = () => {
                             : 'bg-sky-100 text-sky-800 border-sky-300'
                         }`}
                       >
+                        <option value="" disabled hidden>
+                          📋 Mark Attendance
+                        </option>
                         <option value="Present">🟢 Present</option>
                         <option value="Half Day">🟡 Half Day</option>
                         <option value="Absent">🔴 Absent</option>
