@@ -235,6 +235,7 @@ export interface IPayslipData {
   baseSalary: number;
   overtimeBonus: number;
   advanceDeduction: number;
+  weeklyAdvances?: Array<{ date: string; amount: number }>;
   otherDeduction: number;
   grossEarnings: number;
   totalDeductions: number;
@@ -290,8 +291,8 @@ export const generatePayslipPDFBuffer = async (data: IPayslipData, setting?: any
       doc.fontSize(8).fillColor('#94a3b8').font('Helvetica-Bold').text('MOBILE NUMBER', 310, y + 8);
       doc.fontSize(9.5).fillColor('#334155').font('Helvetica-Bold').text(data.mobile || '-', 310, y + 20);
 
-      doc.fontSize(8).fillColor('#94a3b8').font('Helvetica-Bold').text('ATTENDANCE DAYS', 430, y + 8);
-      doc.fontSize(9.5).fillColor('#15803d').font('Helvetica-Bold').text(`Pres: ${data.presentDays}d | Abs: ${data.absentDays}d`, 430, y + 20);
+      doc.fontSize(8).fillColor('#94a3b8').font('Helvetica-Bold').text('WORKING DAYS', 430, y + 8);
+      doc.fontSize(9.5).fillColor('#15803d').font('Helvetica-Bold').text(`Working Days: ${data.presentDays}d`, 430, y + 20);
 
       // Financial Details Table
       y += 65;
@@ -314,7 +315,16 @@ export const generatePayslipPDFBuffer = async (data: IPayslipData, setting?: any
       doc.fontSize(8.5).fillColor('#334155').font('Helvetica').text('Basic / Monthly Salary', 50, y + 6);
       doc.font('Helvetica-Bold').text(`Rs. ${data.baseSalary.toLocaleString('en-IN')}`, 190, y + 6, { width: 90, align: 'right' });
 
-      doc.font('Helvetica').text('Salary Advance Taken', 315, y + 6);
+      // Weekly Advances or Total Advance Label
+      let advanceLabel = 'Salary Advance Taken';
+      if (data.weeklyAdvances && data.weeklyAdvances.length > 0) {
+        const activeAdv = data.weeklyAdvances.filter((a) => Number(a.amount || 0) > 0);
+        if (activeAdv.length > 0) {
+          const advStr = activeAdv.map((a) => `${a.date ? a.date + ': ' : ''}Rs. ${Number(a.amount).toLocaleString('en-IN')}`).join(', ');
+          advanceLabel = `Salary Advance (${advStr})`;
+        }
+      }
+      doc.font('Helvetica').text(advanceLabel, 315, y + 6, { width: 140 });
       doc.font('Helvetica-Bold').fillColor(data.advanceDeduction > 0 ? '#dc2626' : '#64748b');
       doc.text(`Rs. ${data.advanceDeduction.toLocaleString('en-IN')}`, 455, y + 6, { width: 90, align: 'right' });
 

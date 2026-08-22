@@ -14,8 +14,16 @@ import {
   Eye,
   Edit3,
   Loader2,
+  Trash2,
+  Plus,
 } from 'lucide-react';
 import { sendStaffPayslipWhatsAppApi, downloadStaffPayslipPdfApi } from '../../services/api';
+
+export interface IWeeklyAdvance {
+  id: string;
+  date: string;
+  amount: number;
+}
 
 interface PayslipModalProps {
   isOpen: boolean;
@@ -112,6 +120,9 @@ export const PayslipModal: React.FC<PayslipModalProps> = ({
   );
   const [overtimeBonus, setOvertimeBonus] = useState<number>(0);
   const [advanceDeduction, setAdvanceDeduction] = useState<number>(0);
+  const [weeklyAdvances, setWeeklyAdvances] = useState<IWeeklyAdvance[]>([
+    { id: '1', date: new Date().toISOString().split('T')[0], amount: 0 },
+  ]);
   const [otherDeduction, setOtherDeduction] = useState<number>(0);
 
   // Payment Details
@@ -172,6 +183,7 @@ export const PayslipModal: React.FC<PayslipModalProps> = ({
       baseSalary,
       overtimeBonus,
       advanceDeduction,
+      weeklyAdvances,
       otherDeduction,
       grossEarnings,
       totalDeductions,
@@ -356,7 +368,7 @@ export const PayslipModal: React.FC<PayslipModalProps> = ({
                   </h3>
 
                   <div>
-                    <label className="font-bold text-slate-700 dark:text-slate-300">Total Present Days:</label>
+                    <label className="font-bold text-slate-700 dark:text-slate-300">Total Working Days:</label>
                     <input
                       type="number"
                       min="0"
@@ -407,7 +419,7 @@ export const PayslipModal: React.FC<PayslipModalProps> = ({
                   </h3>
 
                   <div>
-                    <label className="font-bold text-slate-700 dark:text-slate-300">Total Absent / Leave Days:</label>
+                    <label className="font-bold text-slate-700 dark:text-slate-300">Total Leave / Absent Days:</label>
                     <input
                       type="number"
                       min="0"
@@ -417,15 +429,77 @@ export const PayslipModal: React.FC<PayslipModalProps> = ({
                     />
                   </div>
 
+                  {/* Itemized Weekly / Date-wise Salary Advances */}
                   <div>
-                    <label className="font-bold text-slate-700 dark:text-slate-300">Salary Advance / Loan Taken (₹):</label>
-                    <input
-                      type="number"
-                      min="0"
-                      value={advanceDeduction}
-                      onChange={(e) => setAdvanceDeduction(Number(e.target.value))}
-                      className="w-full mt-1 p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold"
-                    />
+                    <div className="flex items-center justify-between">
+                      <label className="font-bold text-slate-700 dark:text-slate-300">
+                        Weekly / Date-wise Salary Advances (₹):
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newEntry = {
+                            id: Date.now().toString(),
+                            date: new Date().toISOString().split('T')[0],
+                            amount: 0,
+                          };
+                          const updated = [...weeklyAdvances, newEntry];
+                          setWeeklyAdvances(updated);
+                        }}
+                        className="text-[11px] font-extrabold text-brand-600 dark:text-brand-400 hover:underline flex items-center gap-1 cursor-pointer"
+                      >
+                        <Plus className="w-3.5 h-3.5" /> Add Weekly Advance
+                      </button>
+                    </div>
+
+                    <div className="space-y-2 mt-2">
+                      {weeklyAdvances.map((adv: IWeeklyAdvance) => (
+                        <div key={adv.id} className="flex items-center gap-2">
+                          <input
+                            type="date"
+                            value={adv.date}
+                            onChange={(e) => {
+                              const updated = weeklyAdvances.map((item: IWeeklyAdvance) =>
+                                item.id === adv.id ? { ...item, date: e.target.value } : item
+                              );
+                              setWeeklyAdvances(updated);
+                            }}
+                            className="w-1/2 p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold text-xs"
+                          />
+                          <input
+                            type="number"
+                            min="0"
+                            placeholder="Amount (₹)"
+                            value={adv.amount || ''}
+                            onChange={(e) => {
+                              const val = Number(e.target.value);
+                              const updated = weeklyAdvances.map((item: IWeeklyAdvance) =>
+                                item.id === adv.id ? { ...item, amount: val } : item
+                              );
+                              setWeeklyAdvances(updated);
+                              const tot = updated.reduce((sum: number, item: IWeeklyAdvance) => sum + Number(item.amount || 0), 0);
+                              setAdvanceDeduction(tot);
+                            }}
+                            className="w-1/2 p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold text-xs"
+                          />
+                          {weeklyAdvances.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const updated = weeklyAdvances.filter((item: IWeeklyAdvance) => item.id !== adv.id);
+                                setWeeklyAdvances(updated);
+                                const tot = updated.reduce((sum: number, item: IWeeklyAdvance) => sum + Number(item.amount || 0), 0);
+                                setAdvanceDeduction(tot);
+                              }}
+                              className="p-2 text-rose-500 hover:bg-rose-100 dark:hover:bg-rose-950/40 rounded-lg cursor-pointer shrink-0"
+                              title="Remove advance entry"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   </div>
 
                   <div>
@@ -552,8 +626,8 @@ export const PayslipModal: React.FC<PayslipModalProps> = ({
                     <p className="font-extrabold text-slate-800 truncate">{staffMobile || '-'}</p>
                   </div>
                   <div>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase">Attendance Days</span>
-                    <p className="font-extrabold text-emerald-700">Present: {presentDays}d | Abs: {absentDays}d</p>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase">Working Days</span>
+                    <p className="font-extrabold text-emerald-700">Working Days: {presentDays}d</p>
                   </div>
                 </div>
 
@@ -585,12 +659,28 @@ export const PayslipModal: React.FC<PayslipModalProps> = ({
                     <div className="text-right">Amount (₹)</div>
                   </div>
                   <div className="divide-y divide-slate-200">
-                    {advanceDeduction > 0 && (
-                      <div className="grid grid-cols-2 py-2 px-3 sm:px-4">
-                        <span>Salary Advance Taken</span>
-                        <span className="text-right font-bold text-rose-600">- ₹{advanceDeduction.toLocaleString('en-IN')}</span>
-                      </div>
+                    {weeklyAdvances.some((a: IWeeklyAdvance) => Number(a.amount || 0) > 0) ? (
+                      weeklyAdvances
+                        .filter((a: IWeeklyAdvance) => Number(a.amount || 0) > 0)
+                        .map((adv: IWeeklyAdvance) => (
+                          <div key={adv.id} className="grid grid-cols-2 py-2 px-3 sm:px-4">
+                            <span>
+                              Salary Advance ({adv.date ? new Date(adv.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) : 'Weekly'})
+                            </span>
+                            <span className="text-right font-bold text-rose-600">
+                              - ₹{Number(adv.amount).toLocaleString('en-IN')}
+                            </span>
+                          </div>
+                        ))
+                    ) : (
+                      advanceDeduction > 0 && (
+                        <div className="grid grid-cols-2 py-2 px-3 sm:px-4">
+                          <span>Salary Advance Taken</span>
+                          <span className="text-right font-bold text-rose-600">- ₹{advanceDeduction.toLocaleString('en-IN')}</span>
+                        </div>
+                      )
                     )}
+
                     {otherDeduction > 0 && (
                       <div className="grid grid-cols-2 py-2 px-3 sm:px-4">
                         <span>Other Deductions / LOP</span>
