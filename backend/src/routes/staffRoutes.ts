@@ -11,6 +11,8 @@ import {
   getIroningWorkLogs,
   logIroningWork,
   getStaffPerformanceReport,
+  sendStaffPayslipWhatsApp,
+  downloadStaffPayslipPDF,
 } from '../controllers/staffController';
 
 const router = Router();
@@ -34,5 +36,9 @@ router.post('/ironing', logIroningWork);
 
 // Performance Reports
 router.get('/reports', getStaffPerformanceReport);
+
+// Direct WhatsApp Payslip PDF Route & Download PDF Route
+router.post('/send-payslip-whatsapp', sendStaffPayslipWhatsApp);
+router.post('/download-payslip-pdf', downloadStaffPayslipPDF);
 
 export default router;

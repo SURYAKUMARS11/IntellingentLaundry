@@ -7,6 +7,7 @@ export interface IStaff extends Document {
   assignedTable: string;
   dailyWage: number;
   status: 'Active' | 'Inactive';
+  removeDate?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -19,6 +20,7 @@ const StaffSchema: Schema = new Schema(
     assignedTable: { type: String, default: '' },
     dailyWage: { type: Number, default: 0 },
     status: { type: String, enum: ['Active', 'Inactive'], default: 'Active' },
+    removeDate: { type: Date },
   },
   { timestamps: true }
 );

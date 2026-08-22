@@ -1541,6 +1541,24 @@ export const fetchStaffPerformanceReportApi = async (params: any = {}) => {
   const query = new URLSearchParams(cleanParams).toString();
   return fetchApi(`/staff/reports?${query}`);
 };
+export const sendStaffPayslipWhatsAppApi = async (data: any) =>
+  fetchApi('/staff/send-payslip-whatsapp', { method: 'POST', body: JSON.stringify(data) });
+export const downloadStaffPayslipPdfApi = async (data: any) => {
+  const token = getAuthToken();
+  const response = await fetch(`${API_BASE}/staff/download-payslip-pdf`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token || ''}`,
+    },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    const errText = await response.text().catch(() => '');
+    throw new Error(errText || 'Failed to generate PDF');
+  }
+  return await response.blob();
+};
 
 // ==========================================
 // MACHINE & UTILITIES API
