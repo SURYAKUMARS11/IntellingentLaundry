@@ -224,3 +224,147 @@ export const generateInvoicePDFBuffer = async (order: any, setting?: any): Promi
     }
   });
 };
+
+export interface IPayslipData {
+  staffName: string;
+  role?: string;
+  mobile?: string;
+  payPeriod: string;
+  presentDays: number;
+  absentDays: number;
+  baseSalary: number;
+  overtimeBonus: number;
+  advanceDeduction: number;
+  otherDeduction: number;
+  grossEarnings: number;
+  totalDeductions: number;
+  netPayable: number;
+  paymentStatus: string;
+  paymentMode: string;
+  paymentDate: string;
+}
+
+export const generatePayslipPDFBuffer = async (data: IPayslipData, setting?: any): Promise<Buffer> => {
+  return new Promise((resolve, reject) => {
+    try {
+      const doc = new PDFDocument({ margin: 40, size: 'A4' });
+      const buffers: Buffer[] = [];
+
+      doc.on('data', (chunk) => buffers.push(chunk));
+      doc.on('end', () => resolve(Buffer.concat(buffers)));
+      doc.on('error', (err) => reject(err));
+
+      const shopName = setting?.storeName || setting?.shopName || setting?.companyName || 'INTELLIGENT LAUNDRY & DRY CLEANERS';
+      const address = setting?.address || '123 Commercial Main Road, City Plaza, Sector 4';
+      const phone = setting?.mobile || setting?.phone || '+91 98765 43210';
+      const email = setting?.email || 'contact@intelligentlaundry.com';
+
+      // Header
+      let y = 45;
+      doc.fontSize(18).fillColor('#0f172a').font('Helvetica-Bold').text(shopName, 40, y);
+      doc.fontSize(8.5).fillColor('#64748b').font('Helvetica').text(address, 40, y + 22);
+      doc.text(`Phone: ${phone} | Email: ${email}`, 40, y + 34);
+
+      // Document Title Box (Right)
+      doc.rect(380, 42, 175, 24).fill('#0f172a');
+      doc.fontSize(10).fillColor('#ffffff').font('Helvetica-Bold').text('SALARY PAYSLIP', 380, 49, { width: 175, align: 'center' });
+
+      doc.fontSize(8.5).fillColor('#475569').font('Helvetica');
+      doc.text(`Period: ${data.payPeriod}`, 380, 72, { width: 175, align: 'right' });
+      doc.text(`Date: ${data.paymentDate}`, 380, 84, { width: 175, align: 'right' });
+
+      // Line divider
+      y = 105;
+      doc.moveTo(40, y).lineTo(555, y).strokeColor('#cbd5e1').lineWidth(1).stroke();
+
+      // Employee Info Grid Box
+      y += 12;
+      doc.rect(40, y, 515, 50).fill('#f8fafc').stroke('#e2e8f0');
+
+      doc.fontSize(8).fillColor('#94a3b8').font('Helvetica-Bold').text('EMPLOYEE NAME', 50, y + 8);
+      doc.fontSize(9.5).fillColor('#0f172a').font('Helvetica-Bold').text(data.staffName || 'Staff', 50, y + 20);
+
+      doc.fontSize(8).fillColor('#94a3b8').font('Helvetica-Bold').text('ROLE / DESIGNATION', 180, y + 8);
+      doc.fontSize(9.5).fillColor('#334155').font('Helvetica-Bold').text(data.role || 'Staff', 180, y + 20);
+
+      doc.fontSize(8).fillColor('#94a3b8').font('Helvetica-Bold').text('MOBILE NUMBER', 310, y + 8);
+      doc.fontSize(9.5).fillColor('#334155').font('Helvetica-Bold').text(data.mobile || '-', 310, y + 20);
+
+      doc.fontSize(8).fillColor('#94a3b8').font('Helvetica-Bold').text('ATTENDANCE DAYS', 430, y + 8);
+      doc.fontSize(9.5).fillColor('#15803d').font('Helvetica-Bold').text(`Pres: ${data.presentDays}d | Abs: ${data.absentDays}d`, 430, y + 20);
+
+      // Financial Details Table
+      y += 65;
+
+      // Table Header: Earnings (+) | Amount
+      doc.rect(40, y, 250, 22).fill('#1e293b');
+      doc.fontSize(9).fillColor('#ffffff').font('Helvetica-Bold').text('EARNINGS (+)', 50, y + 6);
+      doc.text('AMOUNT (RS.)', 190, y + 6, { width: 90, align: 'right' });
+
+      // Table Header: Deductions (-) | Amount
+      doc.rect(305, y, 250, 22).fill('#1e293b');
+      doc.fontSize(9).fillColor('#ffffff').font('Helvetica-Bold').text('DEDUCTIONS (-)', 315, y + 6);
+      doc.text('AMOUNT (RS.)', 455, y + 6, { width: 90, align: 'right' });
+
+      // Row 1: Basic Salary vs Advance Taken
+      y += 22;
+      doc.rect(40, y, 250, 22).fill('#ffffff').stroke('#e2e8f0');
+      doc.rect(305, y, 250, 22).fill('#ffffff').stroke('#e2e8f0');
+
+      doc.fontSize(8.5).fillColor('#334155').font('Helvetica').text('Basic / Monthly Salary', 50, y + 6);
+      doc.font('Helvetica-Bold').text(`Rs. ${data.baseSalary.toLocaleString('en-IN')}`, 190, y + 6, { width: 90, align: 'right' });
+
+      doc.font('Helvetica').text('Salary Advance Taken', 315, y + 6);
+      doc.font('Helvetica-Bold').fillColor(data.advanceDeduction > 0 ? '#dc2626' : '#64748b');
+      doc.text(`Rs. ${data.advanceDeduction.toLocaleString('en-IN')}`, 455, y + 6, { width: 90, align: 'right' });
+
+      // Row 2: Overtime vs Other Deductions
+      y += 22;
+      doc.rect(40, y, 250, 22).fill('#ffffff').stroke('#e2e8f0');
+      doc.rect(305, y, 250, 22).fill('#ffffff').stroke('#e2e8f0');
+
+      doc.fontSize(8.5).fillColor('#334155').font('Helvetica').text('Overtime / Performance Bonus', 50, y + 6);
+      doc.font('Helvetica-Bold').fillColor(data.overtimeBonus > 0 ? '#15803d' : '#64748b');
+      doc.text(`Rs. ${data.overtimeBonus.toLocaleString('en-IN')}`, 190, y + 6, { width: 90, align: 'right' });
+
+      doc.fontSize(8.5).fillColor('#334155').font('Helvetica').text('Other Deductions / LOP', 315, y + 6);
+      doc.font('Helvetica-Bold').fillColor(data.otherDeduction > 0 ? '#dc2626' : '#64748b');
+      doc.text(`Rs. ${data.otherDeduction.toLocaleString('en-IN')}`, 455, y + 6, { width: 90, align: 'right' });
+
+      // Summary Totals Row
+      y += 22;
+      doc.rect(40, y, 250, 22).fill('#f1f5f9').stroke('#cbd5e1');
+      doc.rect(305, y, 250, 22).fill('#f1f5f9').stroke('#cbd5e1');
+
+      doc.fontSize(9).fillColor('#0f172a').font('Helvetica-Bold').text('GROSS EARNINGS', 50, y + 6);
+      doc.fillColor('#15803d').text(`Rs. ${data.grossEarnings.toLocaleString('en-IN')}`, 190, y + 6, { width: 90, align: 'right' });
+
+      doc.fillColor('#0f172a').text('TOTAL DEDUCTIONS', 315, y + 6);
+      doc.fillColor('#b91c1c').text(`Rs. ${data.totalDeductions.toLocaleString('en-IN')}`, 455, y + 6, { width: 90, align: 'right' });
+
+      // Net Salary Highlight Box
+      y += 35;
+      doc.rect(40, y, 515, 45).fill('#0f172a');
+      doc.fontSize(8.5).fillColor('#94a3b8').font('Helvetica-Bold').text('NET PAYABLE SALARY', 55, y + 8);
+      doc.fontSize(16).fillColor('#4ade80').font('Helvetica-Bold').text(`Rs. ${data.netPayable.toLocaleString('en-IN')}`, 55, y + 20);
+
+      doc.fontSize(8.5).fillColor('#ffffff').font('Helvetica-Bold').text(`STATUS: ${data.paymentStatus.toUpperCase()}`, 380, y + 10, { width: 160, align: 'right' });
+      doc.fontSize(8).fillColor('#cbd5e1').font('Helvetica').text(`Mode: ${data.paymentMode}`, 380, y + 24, { width: 160, align: 'right' });
+
+      // Appreciation & Thank You Message Footer
+      y += 65;
+      doc.rect(40, y, 515, 36).fill('#f8fafc').stroke('#cbd5e1');
+      doc.fontSize(9.5).fillColor('#0369a1').font('Helvetica-Bold').text('Thank you for your valuable contribution & dedication to our team!', 40, y + 8, { width: 515, align: 'center' });
+      doc.fontSize(8.5).fillColor('#64748b').font('Helvetica-Oblique').text('We truly appreciate your hard work, efficiency, and commitment.', 40, y + 22, { width: 515, align: 'center' });
+
+      // Footer
+      y += 50;
+      doc.moveTo(40, y).lineTo(555, y).strokeColor('#cbd5e1').lineWidth(1).stroke();
+      doc.fontSize(8).fillColor('#94a3b8').font('Helvetica-Oblique').text(`This is a computer generated salary payslip issued by ${shopName}.`, 40, y + 6, { align: 'center' });
+
+      doc.end();
+    } catch (err) {
+      reject(err);
+    }
+  });
+};

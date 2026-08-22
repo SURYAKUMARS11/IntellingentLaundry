@@ -10,6 +10,7 @@ import {
   fetchIroningWorkLogsApi,
   logIroningWorkApi,
   fetchStaffPerformanceReportApi,
+  fetchSettings,
 } from '../services/api';
 import { useToast } from '../context/ToastContext';
 import {
@@ -29,7 +30,10 @@ import {
   Filter,
   AlertTriangle,
   ChevronDown,
+  FileText,
+  DollarSign,
 } from 'lucide-react';
+import { PayslipModal } from '../components/staff/PayslipModal';
 
 export const StaffPage: React.FC = () => {
   const { showToast } = useToast();
@@ -41,7 +45,12 @@ export const StaffPage: React.FC = () => {
   const [attendanceSummary, setAttendanceSummary] = useState<any[]>([]);
   const [ironingLogs, setIroningLogs] = useState<any[]>([]);
   const [reportData, setReportData] = useState<any>(null);
+  const [shopSettings, setShopSettings] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Payslip Modal State
+  const [isPayslipOpen, setIsPayslipOpen] = useState(false);
+  const [selectedPayslipStaff, setSelectedPayslipStaff] = useState<any | null>(null);
 
   // Performance Report Date Filter (today, month, year, custom)
   const [reportFilter, setReportFilter] = useState<'today' | 'month' | 'year' | 'custom'>('month');
@@ -49,8 +58,8 @@ export const StaffPage: React.FC = () => {
   const [repEndDate, setRepEndDate] = useState<string>('');
   const [isCustomReportFilterOpen, setIsCustomReportFilterOpen] = useState(false);
 
-  // Attendance Date Filter (today, month, year, custom)
-  const [attendanceFilter, setAttendanceFilter] = useState<'today' | 'month' | 'year' | 'custom'>('month');
+  // Attendance Date Filter (month, last6months, year, custom)
+  const [attendanceFilter, setAttendanceFilter] = useState<'month' | 'last6months' | 'year' | 'custom'>('month');
   const [attStartDate, setAttStartDate] = useState<string>('');
   const [attEndDate, setAttEndDate] = useState<string>('');
 
@@ -73,6 +82,7 @@ export const StaffPage: React.FC = () => {
     mobile: '',
     role: 'Ironing Master',
     assignedTable: 'Table 1',
+    removeDate: '',
   });
 
   // Edit Staff Modal State
@@ -99,7 +109,7 @@ export const StaffPage: React.FC = () => {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const [staffRes, attRes, ironRes, repRes] = await Promise.all([
+      const [staffRes, attRes, ironRes, repRes, setRes] = await Promise.all([
         fetchStaffApi(),
         fetchAttendanceApi({
           period: attendanceFilter,
@@ -112,6 +122,7 @@ export const StaffPage: React.FC = () => {
           startDate: reportFilter === 'custom' ? repStartDate : undefined,
           endDate: reportFilter === 'custom' ? repEndDate : undefined,
         }),
+        fetchSettings().catch(() => null),
       ]);
 
       if (staffRes.success) {
@@ -133,6 +144,7 @@ export const StaffPage: React.FC = () => {
 
       if (ironRes.success) setIroningLogs(ironRes.logs || []);
       if (repRes.success) setReportData(repRes);
+      if (setRes && setRes.setting) setShopSettings(setRes.setting);
     } catch (err) {
       console.error('Failed to load staff data:', err);
     } finally {
@@ -156,7 +168,7 @@ export const StaffPage: React.FC = () => {
       if (res.success) {
         showToast('Staff member added successfully!', 'success');
         setIsAddStaffOpen(false);
-        setNewStaff({ name: '', mobile: '', role: 'Ironing Master', assignedTable: '' });
+        setNewStaff({ name: '', mobile: '', role: 'Ironing Master', assignedTable: '', removeDate: '' });
         loadData();
       } else {
         showToast(res.message || 'Failed to add staff', 'error');
@@ -293,11 +305,11 @@ export const StaffPage: React.FC = () => {
     }
   };
 
-  // Attendance Table Pagination Calculations
-  const totalAttRecords = attendanceList.length;
-  const totalAttPages = Math.ceil(totalAttRecords / attPageSize) || 1;
+  // Staff Attendance Table Pagination Calculations (One row per staff)
+  const totalStaffRecords = staffList.length;
+  const totalAttPages = Math.ceil(totalStaffRecords / attPageSize) || 1;
   const attStartIndex = (attPage - 1) * attPageSize;
-  const paginatedAttendance = attendanceList.slice(attStartIndex, attStartIndex + attPageSize);
+  const paginatedStaffList = staffList.slice(attStartIndex, attStartIndex + attPageSize);
 
   // Ironing Table Pagination Calculations
   const totalIroningRecords = ironingLogs.length;
@@ -308,31 +320,40 @@ export const StaffPage: React.FC = () => {
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-20">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 glass-card p-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 glass-card p-4 sm:p-5">
         <div className="flex items-center gap-3">
-          <div className="p-3 rounded-2xl bg-brand-600 text-white shadow-md">
-            <Users className="w-6 h-6" />
+          <div className="p-2.5 sm:p-3 rounded-2xl bg-brand-600 text-white shadow-md shrink-0">
+            <Users className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
           <div>
-            <h1 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">
+            <h1 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white tracking-tight">
               Staff & Attendance Management
             </h1>
-            <p className="text-xs font-semibold text-slate-500">
+            <p className="text-[11px] sm:text-xs font-semibold text-slate-500">
               Track staff attendance, table assignments, and daily ironing productivity
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
           <button
             onClick={loadData}
-            className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 text-xs font-bold flex items-center gap-1.5"
+            className="flex-1 sm:flex-none p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 text-xs font-bold flex items-center justify-center gap-1.5"
           >
             <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} /> Refresh
           </button>
           <button
+            onClick={() => {
+              setSelectedPayslipStaff(staffList[0] || null);
+              setIsPayslipOpen(true);
+            }}
+            className="flex-1 sm:flex-none px-3.5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs flex items-center justify-center gap-1.5 shadow-xs transition-all"
+          >
+            <FileText className="w-4 h-4" /> Payslip Generator
+          </button>
+          <button
             onClick={() => setIsAddStaffOpen(true)}
-            className="px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-black text-xs flex items-center gap-2 shadow-xs"
+            className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-black text-xs flex items-center justify-center gap-2 shadow-xs"
           >
             <UserPlus className="w-4 h-4" /> + Add Staff Member
           </button>
@@ -374,141 +395,38 @@ export const StaffPage: React.FC = () => {
       {/* TAB 1: DAILY ATTENDANCE & REGISTER */}
       {activeTab === 'attendance' && (
         <div className="space-y-6">
-          <div className="glass-card p-6 space-y-6">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
-              <div>
-                <h3 className="font-extrabold text-sm text-slate-900 dark:text-white flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-brand-600" /> Daily Staff Attendance Register
-                </h3>
-                <p className="text-xs text-slate-500">
-                  Select attendance status for each staff member for today ({new Date().toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })})
-                </p>
-              </div>
-
-              <button
-                onClick={() => setIsAddStaffOpen(true)}
-                className="px-3.5 py-2 rounded-xl bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300 font-bold text-xs flex items-center gap-1.5"
-              >
-                <UserPlus className="w-3.5 h-3.5" /> Add Staff Member
-              </button>
-            </div>
-
-            {/* Staff Attendance Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {staffList.map((staff) => {
-                const att = attendanceList.find((a) => (a.staff?._id || a.staff) === staff._id);
-                const currentStatus = att?.status || '';
-                const summary = attendanceSummary.find((s) => s._id === staff._id || s.staffName === staff.name);
-
-                return (
-                  <div
-                    key={staff._id}
-                    className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 space-y-3"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-extrabold text-sm text-slate-900 dark:text-white">{staff.name}</p>
-                        <p className="text-xs font-semibold text-brand-600 dark:text-brand-400">
-                          {staff.role || 'Staff'} {staff.assignedTable ? `• ${staff.assignedTable}` : ''}
-                        </p>
-                        {staff.mobile && <p className="text-[10px] text-slate-400">Mob: {staff.mobile}</p>}
-                      </div>
-
-                      <div className="flex items-center gap-1">
-                        <button
-                          onClick={() => setEditingStaff(staff)}
-                          className="p-1.5 rounded-lg bg-white dark:bg-slate-700 text-slate-600 hover:bg-slate-100"
-                          title="Edit Staff"
-                        >
-                          <Edit2 className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteStaff(staff._id, staff.name)}
-                          className="p-1.5 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100"
-                          title="Remove Staff"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Clear Status Dropdown Selector */}
-                    <div className="pt-2 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between gap-2">
-                      <span className="text-xs font-bold text-slate-600 dark:text-slate-400">Status:</span>
-                      <select
-                        value={currentStatus}
-                        onChange={(e) => {
-                          if (e.target.value) {
-                            handleAttendanceChange(staff._id, e.target.value);
-                          }
-                        }}
-                        className={`px-3 py-1.5 rounded-xl font-extrabold text-xs cursor-pointer border transition-all ${
-                          !currentStatus
-                            ? 'bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-700 dark:text-slate-200'
-                            : currentStatus === 'Present'
-                            ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
-                            : currentStatus === 'Half Day'
-                            ? 'bg-amber-100 text-amber-800 border-amber-300'
-                            : currentStatus === 'Absent'
-                            ? 'bg-rose-100 text-rose-800 border-rose-300'
-                            : 'bg-sky-100 text-sky-800 border-sky-300'
-                        }`}
-                      >
-                        <option value="" disabled hidden>
-                          📋 Mark Attendance
-                        </option>
-                        <option value="Present">🟢 Present</option>
-                        <option value="Half Day">🟡 Half Day</option>
-                        <option value="Absent">🔴 Absent</option>
-                        <option value="Leave">🔵 On Leave</option>
-                      </select>
-                    </div>
-
-                    {/* Attendance Counter Badges */}
-                    <div className="flex items-center justify-between text-[10px] font-bold pt-1 text-slate-500">
-                      <span className="text-emerald-700">Present: {summary?.presentDays || 0}d</span>
-                      <span className="text-amber-700">Half: {summary?.halfDays || 0}d</span>
-                      <span className="text-rose-700">Absent: {summary?.absentDays || 0}d</span>
-                      <span className="text-sky-700">Leave: {summary?.leaveDays || 0}d</span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Dynamic Attendance History Table */}
-          <div className="glass-card p-6 space-y-4">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
+          {/* Dynamic Attendance Records Log Table (One row per staff member) */}
+          <div className="glass-card p-4 sm:p-6 space-y-4">
+            <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
               <div>
                 <h3 className="font-extrabold text-sm text-slate-900 dark:text-white flex items-center gap-2">
                   <Clock className="w-4 h-4 text-brand-600" /> Attendance Records Log Table
                 </h3>
                 <p className="text-xs text-slate-500">
-                  Dynamically filter attendance history by Day, Month, or Year
+                  Staff list summary with total present & absent counts for selected filter range
                 </p>
               </div>
 
-              {/* Attendance Date Filter Pills & Add Manual Log Button */}
-              <div className="flex flex-wrap items-center gap-2">
+              {/* Filter Pills & Add Manual Log Button */}
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full lg:w-auto">
                 <button
                   onClick={() => setShowAddLogModal(true)}
-                  className="px-3 py-1.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs flex items-center gap-1.5 shadow-xs transition-all"
+                  className="w-full sm:w-auto px-3 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs flex items-center justify-center gap-1.5 shadow-xs transition-all shrink-0"
                 >
                   <Plus className="w-4 h-4" /> Add Attendance Log
                 </button>
 
-                <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+                <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl overflow-x-auto max-w-full">
                   {[
-                    { id: 'today', label: 'Today' },
                     { id: 'month', label: 'Current Month' },
-                    { id: 'year', label: 'Current Year' },
+                    { id: 'last6months', label: 'Last 6 Months' },
+                    { id: 'year', label: 'Year' },
                     { id: 'custom', label: 'Custom Range' },
                   ].map((f) => (
                     <button
                       key={f.id}
                       onClick={() => setAttendanceFilter(f.id as any)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all ${
+                      className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-extrabold whitespace-nowrap shrink-0 transition-all ${
                         attendanceFilter === f.id
                           ? 'bg-brand-600 text-white shadow-xs'
                           : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
@@ -520,77 +438,83 @@ export const StaffPage: React.FC = () => {
                 </div>
 
                 {attendanceFilter === 'custom' && (
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-1.5 w-full sm:w-auto">
                     <input
                       type="date"
                       value={attStartDate}
                       onChange={(e) => setAttStartDate(e.target.value)}
-                      className="p-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-bold"
+                      className="flex-1 p-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-bold"
                     />
                     <span className="text-xs text-slate-400">to</span>
                     <input
                       type="date"
                       value={attEndDate}
                       onChange={(e) => setAttEndDate(e.target.value)}
-                      className="p-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-bold"
+                      className="flex-1 p-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-bold"
                     />
                   </div>
                 )}
               </div>
             </div>
 
-            {/* Attendance History Table */}
+            {/* Attendance Summary Table (Single row per staff member) */}
             <div className="overflow-x-auto max-h-[380px] overflow-y-auto">
               <table className="w-full text-left text-xs">
                 <thead>
                   <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-400 font-bold uppercase tracking-wider sticky top-0 bg-white dark:bg-slate-900">
                     <th className="py-3 px-3">Staff Name</th>
-                    <th className="py-3 px-3">Role / Table</th>
-                    <th className="py-3 px-3">Date</th>
+                    <th className="py-3 px-3">Role</th>
                     <th className="py-3 px-3">Attendance Status</th>
                     <th className="py-3 px-3 text-center">Total Present</th>
-                    <th className="py-3 px-3 text-center">Total Leave / Absent</th>
+                    <th className="py-3 px-3 text-center">Total Absent</th>
                     <th className="py-3 px-3 text-right">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-medium">
-                  {paginatedAttendance.map((att) => {
-                    const staffId = att.staff?._id || att.staff;
-                    const summary = attendanceSummary.find((s) => s._id === staffId || s.staffName === (att.staffName || att.staff?.name));
+                  {paginatedStaffList.map((staff) => {
+                    const att = attendanceList.find((a) => (a.staff?._id || a.staff) === staff._id);
+                    const currentStatus = att?.status || '';
+                    const summary = attendanceSummary.find((s) => s._id === staff._id || s.staffName === staff.name);
                     const presentCount = summary?.presentDays || 0;
-                    const leaveCount = (summary?.leaveDays || 0) + (summary?.absentDays || 0) + (summary?.halfDays || 0);
+                    const absentCount = summary?.absentDays || 0;
 
                     return (
-                      <tr key={att._id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-all">
-                        <td className="py-3 px-3 font-extrabold text-slate-900 dark:text-white">
-                          {att.staffName || att.staff?.name}
+                      <tr key={staff._id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-all">
+                        <td className="py-3 px-3">
+                          <p className="font-extrabold text-slate-900 dark:text-white">{staff.name}</p>
+                          {staff.mobile && <p className="text-[10px] text-slate-400">Mob: {staff.mobile}</p>}
                         </td>
-                        <td className="py-3 px-3 font-semibold text-brand-600">
-                          {att.staff?.role || 'Staff'} {att.staff?.assignedTable ? `• ${att.staff.assignedTable}` : ''}
-                        </td>
-                        <td className="py-3 px-3 text-slate-500 font-semibold">
-                          {new Date(att.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                        <td className="py-3 px-3 font-semibold text-brand-600 dark:text-brand-400">
+                          {staff.role || 'Staff'} {staff.assignedTable ? `• ${staff.assignedTable}` : ''}
                         </td>
                         <td className="py-3 px-3">
-                          <span
-                            className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
-                              att.status === 'Present'
-                                ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300'
-                                : att.status === 'Half Day'
-                                ? 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300'
-                                : att.status === 'Absent'
-                                ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300'
-                                : 'bg-sky-50 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300'
+                          <select
+                            value={currentStatus}
+                            onChange={(e) => {
+                              if (e.target.value) {
+                                handleAttendanceChange(staff._id, e.target.value);
+                              }
+                            }}
+                            className={`px-2.5 py-1 rounded-xl font-bold text-xs cursor-pointer border transition-all ${
+                              !currentStatus
+                                ? 'bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-700 dark:text-slate-200'
+                                : currentStatus === 'Present'
+                                ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                                : currentStatus === 'Half Day'
+                                ? 'bg-amber-100 text-amber-800 border-amber-300'
+                                : currentStatus === 'Absent'
+                                ? 'bg-rose-100 text-rose-800 border-rose-300'
+                                : 'bg-sky-100 text-sky-800 border-sky-300'
                             }`}
                           >
-                            <span className={`w-1.5 h-1.5 rounded-full ${
-                              att.status === 'Present' ? 'bg-emerald-500' :
-                              att.status === 'Half Day' ? 'bg-amber-500' :
-                              att.status === 'Absent' ? 'bg-rose-500' :
-                              'bg-sky-500'
-                            }`} />
-                            {att.status}
-                          </span>
+                            <option value="" disabled hidden>
+                              📋 Not Marked
+                            </option>
+                            <option value="Present">🟢 Present</option>
+                            <option value="Half Day">🟡 Half Day</option>
+                            <option value="Absent">🔴 Absent</option>
+                            <option value="Leave">🔵 On Leave</option>
+                          </select>
                         </td>
                         <td className="py-3 px-3 text-center">
                           <span className="px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-black text-xs">
@@ -598,34 +522,61 @@ export const StaffPage: React.FC = () => {
                           </span>
                         </td>
                         <td className="py-3 px-3 text-center">
-                          <span className="px-2.5 py-1 rounded-lg bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 font-black text-xs">
-                            {leaveCount} Days
+                          <span className="px-2.5 py-1 rounded-lg bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 font-black text-xs">
+                            {absentCount} Days
                           </span>
                         </td>
                         <td className="py-3 px-3 text-right">
-                          <button
-                            onClick={() => handleDeleteAttendanceLog(att._id, att.staffName || att.staff?.name, att.date)}
-                            className="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 transition-all"
-                            title="Delete Attendance Record"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
+                          <div className="flex items-center justify-end gap-1">
+                            <button
+                              onClick={() => {
+                                setSelectedPayslipStaff(staff);
+                                setIsPayslipOpen(true);
+                              }}
+                              className="px-2 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 font-extrabold text-xs flex items-center gap-1 transition-all"
+                              title="Generate Payslip for staff"
+                            >
+                              <FileText className="w-3.5 h-3.5" /> Payslip
+                            </button>
+                            <button
+                              onClick={() => setEditingStaff(staff)}
+                              className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
+                              title="Edit Staff Member"
+                            >
+                              <Edit2 className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteStaff(staff._id, staff.name)}
+                              className="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 transition-all"
+                              title="Remove Staff Member"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     );
                   })}
+
+                  {staffList.length === 0 && (
+                    <tr>
+                      <td colSpan={6} className="py-6 text-center text-slate-400 italic text-xs">
+                        No staff members found.
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
 
             {/* Pagination Controls Footer */}
-            {totalAttRecords > 0 && (
+            {totalStaffRecords > 0 && (
               <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-3 border-t border-slate-200 dark:border-slate-800 text-xs">
                 <div className="flex items-center gap-2 text-slate-500 font-semibold">
                   <span>
                     Showing <strong className="text-slate-900 dark:text-white">{attStartIndex + 1}</strong> to{' '}
-                    <strong className="text-slate-900 dark:text-white">{Math.min(attStartIndex + attPageSize, totalAttRecords)}</strong> of{' '}
-                    <strong className="text-slate-900 dark:text-white">{totalAttRecords}</strong> records
+                    <strong className="text-slate-900 dark:text-white">{Math.min(attStartIndex + attPageSize, totalStaffRecords)}</strong> of{' '}
+                    <strong className="text-slate-900 dark:text-white">{totalStaffRecords}</strong> staff members
                   </span>
                   <select
                     value={attPageSize}
@@ -1042,6 +993,16 @@ export const StaffPage: React.FC = () => {
                 />
               </div>
 
+              <div>
+                <label className="font-bold text-slate-700 dark:text-slate-300">Remove Date (Optional):</label>
+                <input
+                  type="date"
+                  value={editingStaff.removeDate ? new Date(editingStaff.removeDate).toISOString().split('T')[0] : ''}
+                  onChange={(e) => setEditingStaff({ ...editingStaff, removeDate: e.target.value })}
+                  className="w-full mt-1 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold"
+                />
+              </div>
+
               <div className="flex justify-end gap-2 pt-2">
                 <button
                   type="button"
@@ -1178,6 +1139,15 @@ export const StaffPage: React.FC = () => {
           </div>
         </div>
       )}
+      {/* MODAL: PAYSLIP GENERATOR */}
+      <PayslipModal
+        isOpen={isPayslipOpen}
+        onClose={() => setIsPayslipOpen(false)}
+        staff={selectedPayslipStaff}
+        staffList={staffList}
+        attendanceSummary={attendanceSummary}
+        shopSettings={shopSettings}
+      />
     </div>
   );
 };
