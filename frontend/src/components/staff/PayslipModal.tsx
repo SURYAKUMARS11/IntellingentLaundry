@@ -92,7 +92,7 @@ export const PayslipModal: React.FC<PayslipModalProps> = ({
   if (!isOpen) return null;
 
   const [selectedStaffId, setSelectedStaffId] = useState<string>(staff?._id || staffList[0]?._id || '');
-  const [viewMode, setViewMode] = useState<'edit' | 'preview'>('preview');
+  const [viewMode, setViewMode] = useState<'edit' | 'preview'>('edit');
 
   const selectedStaff = staffList.find((s) => s._id === selectedStaffId) || staff || staffList[0];
   const summary = attendanceSummary.find((s) => s._id === selectedStaff?._id || s.staffName === selectedStaff?.name);
@@ -104,11 +104,11 @@ export const PayslipModal: React.FC<PayslipModalProps> = ({
   const [presentDays, setPresentDays] = useState<number>(summary?.presentDays || 26);
   const [absentDays, setAbsentDays] = useState<number>(summary?.absentDays || 0);
 
-  // Salary Components
+  // Salary Components (Default amount: 5000)
   const [baseSalary, setBaseSalary] = useState<number>(
     selectedStaff?.dailyWage && selectedStaff?.dailyWage > 0
       ? selectedStaff.dailyWage * (summary?.presentDays || 26)
-      : 15000
+      : 5000
   );
   const [overtimeBonus, setOvertimeBonus] = useState<number>(0);
   const [advanceDeduction, setAdvanceDeduction] = useState<number>(0);
@@ -134,6 +134,8 @@ export const PayslipModal: React.FC<PayslipModalProps> = ({
       setAbsentDays(abs);
       if (selectedStaff.dailyWage && selectedStaff.dailyWage > 0) {
         setBaseSalary(selectedStaff.dailyWage * pres);
+      } else {
+        setBaseSalary(5000);
       }
     }
   }, [selectedStaffId]);
