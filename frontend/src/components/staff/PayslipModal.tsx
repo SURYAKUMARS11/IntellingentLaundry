@@ -14,8 +14,16 @@ import {
   Eye,
   Edit3,
   Loader2,
+  Trash2,
+  Plus,
 } from 'lucide-react';
 import { sendStaffPayslipWhatsAppApi, downloadStaffPayslipPdfApi } from '../../services/api';
+
+export interface IWeeklyPayout {
+  id: string;
+  date: string;
+  amount: number;
+}
 
 interface PayslipModalProps {
   isOpen: boolean;
@@ -114,11 +122,18 @@ export const PayslipModal: React.FC<PayslipModalProps> = ({
   const [advanceDeduction, setAdvanceDeduction] = useState<number>(0);
   const [otherDeduction, setOtherDeduction] = useState<number>(0);
 
+  // Weekly Salary Payout Log
+  const [weeklyPayouts, setWeeklyPayouts] = useState<IWeeklyPayout[]>([
+    { id: '1', date: new Date().toISOString().split('T')[0], amount: 1250 },
+    { id: '2', date: new Date().toISOString().split('T')[0], amount: 1250 },
+    { id: '3', date: new Date().toISOString().split('T')[0], amount: 1250 },
+    { id: '4', date: new Date().toISOString().split('T')[0], amount: 1250 },
+  ]);
+
   // Payment Details
   const [paymentStatus, setPaymentStatus] = useState<'Paid' | 'Pending' | 'Partial'>('Paid');
   const [paymentMode, setPaymentMode] = useState<'Cash' | 'UPI / GPay' | 'Bank Transfer' | 'Cheque'>('Cash');
   const [paymentDate, setPaymentDate] = useState<string>(new Date().toISOString().split('T')[0]);
-  const [remarks, setRemarks] = useState<string>('Salary paid in full');
 
   // Editable Staff Mobile Number
   const [staffMobile, setStaffMobile] = useState<string>(selectedStaff?.mobile || '');
@@ -133,17 +148,33 @@ export const PayslipModal: React.FC<PayslipModalProps> = ({
       setPresentDays(pres);
       setAbsentDays(abs);
       if (selectedStaff.dailyWage && selectedStaff.dailyWage > 0) {
-        setBaseSalary(selectedStaff.dailyWage * pres);
+        const totalW = selectedStaff.dailyWage * pres;
+        setBaseSalary(totalW);
+        const weeklyShare = Math.round(totalW / 4);
+        setWeeklyPayouts([
+          { id: '1', date: new Date().toISOString().split('T')[0], amount: weeklyShare },
+          { id: '2', date: new Date().toISOString().split('T')[0], amount: weeklyShare },
+          { id: '3', date: new Date().toISOString().split('T')[0], amount: weeklyShare },
+          { id: '4', date: new Date().toISOString().split('T')[0], amount: totalW - weeklyShare * 3 },
+        ]);
       } else {
         setBaseSalary(5000);
+        setWeeklyPayouts([
+          { id: '1', date: new Date().toISOString().split('T')[0], amount: 1250 },
+          { id: '2', date: new Date().toISOString().split('T')[0], amount: 1250 },
+          { id: '3', date: new Date().toISOString().split('T')[0], amount: 1250 },
+          { id: '4', date: new Date().toISOString().split('T')[0], amount: 1250 },
+        ]);
       }
     }
   }, [selectedStaffId]);
 
   // Calculations
   const grossEarnings = Number(baseSalary || 0) + Number(overtimeBonus || 0);
-  const totalDeductions = Number(advanceDeduction || 0) + Number(otherDeduction || 0);
+  const totalDeductions = Number(otherDeduction || 0);
   const netPayable = grossEarnings - totalDeductions;
+  const totalWeeklyPaid = weeklyPayouts.reduce((sum: number, p: IWeeklyPayout) => sum + Number(p.amount || 0), 0);
+  const balanceDue = Math.max(0, netPayable - totalWeeklyPaid);
 
   const shopName = shopSettings?.storeName || shopSettings?.companyName || 'INTELLIGENT LAUNDRY & DRY CLEANERS';
   const shopAddress = shopSettings?.address || '123 Commercial Main Road, City Plaza, Sector 4';
@@ -172,11 +203,13 @@ export const PayslipModal: React.FC<PayslipModalProps> = ({
       baseSalary,
       overtimeBonus,
       advanceDeduction,
+      weeklyPayouts,
+      totalWeeklyPaid,
       otherDeduction,
       grossEarnings,
       totalDeductions,
       netPayable,
-      paymentStatus,
+      paymentStatus: balanceDue === 0 ? 'Paid' : paymentStatus,
       paymentMode,
       paymentDate,
     };
@@ -254,7 +287,7 @@ export const PayslipModal: React.FC<PayslipModalProps> = ({
               <div>
                 <h2 className="text-sm sm:text-base font-black text-slate-900 dark:text-white">Staff Payslip Generator</h2>
                 <p className="text-[11px] sm:text-xs text-slate-500 font-semibold line-clamp-1">
-                  Generate, preview, print PDF, or send payslip via WhatsApp
+                  Weekly salary log, preview, print PDF, or send payslip via WhatsApp
                 </p>
               </div>
             </div>
@@ -356,7 +389,7 @@ export const PayslipModal: React.FC<PayslipModalProps> = ({
                   </h3>
 
                   <div>
-                    <label className="font-bold text-slate-700 dark:text-slate-300">Total Present Days:</label>
+                    <label className="font-bold text-slate-700 dark:text-slate-300">Total Working Days:</label>
                     <input
                       type="number"
                       min="0"
@@ -373,7 +406,7 @@ export const PayslipModal: React.FC<PayslipModalProps> = ({
                   </div>
 
                   <div>
-                    <label className="font-bold text-slate-700 dark:text-slate-300">Base Salary / Monthly Wage (₹):</label>
+                    <label className="font-bold text-slate-700 dark:text-slate-300">Base Monthly Salary (₹):</label>
                     <input
                       type="number"
                       min="0"
@@ -384,7 +417,7 @@ export const PayslipModal: React.FC<PayslipModalProps> = ({
                   </div>
 
                   <div>
-                    <label className="font-bold text-slate-700 dark:text-slate-300">Overtime / Performance Bonus (₹):</label>
+                    <label className="font-bold text-slate-700 dark:text-slate-300">Daily Batta / Allowance (₹):</label>
                     <input
                       type="number"
                       min="0"
@@ -395,7 +428,7 @@ export const PayslipModal: React.FC<PayslipModalProps> = ({
                   </div>
 
                   <div className="pt-2 border-t border-emerald-200 dark:border-emerald-800 flex justify-between font-black text-emerald-900 dark:text-emerald-200 text-xs">
-                    <span>Total Gross Earnings:</span>
+                    <span>Total Gross Monthly Earnings:</span>
                     <span>₹{grossEarnings.toLocaleString('en-IN')}</span>
                   </div>
                 </div>
@@ -407,23 +440,12 @@ export const PayslipModal: React.FC<PayslipModalProps> = ({
                   </h3>
 
                   <div>
-                    <label className="font-bold text-slate-700 dark:text-slate-300">Total Absent / Leave Days:</label>
+                    <label className="font-bold text-slate-700 dark:text-slate-300">Total Leave / Absent Days:</label>
                     <input
                       type="number"
                       min="0"
                       value={absentDays}
                       onChange={(e) => setAbsentDays(Number(e.target.value))}
-                      className="w-full mt-1 p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="font-bold text-slate-700 dark:text-slate-300">Salary Advance / Loan Taken (₹):</label>
-                    <input
-                      type="number"
-                      min="0"
-                      value={advanceDeduction}
-                      onChange={(e) => setAdvanceDeduction(Number(e.target.value))}
                       className="w-full mt-1 p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold"
                     />
                   </div>
@@ -446,19 +468,101 @@ export const PayslipModal: React.FC<PayslipModalProps> = ({
                 </div>
               </div>
 
+              {/* Weekly Salary Payout Log Manager */}
+              <div className="p-4 sm:p-5 rounded-2xl bg-blue-50/60 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900/40 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-black text-blue-900 dark:text-blue-200 text-sm flex items-center gap-2">
+                      <Calendar className="w-4 h-4 text-blue-600" /> Weekly Salary Payouts / Disbursements (₹)
+                    </h3>
+                    <p className="text-[11px] text-slate-500 font-semibold mt-0.5">
+                      Log weekly payouts paid to worker during the month (e.g. 4 weekly payments)
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const newEntry = {
+                        id: Date.now().toString(),
+                        date: new Date().toISOString().split('T')[0],
+                        amount: 0,
+                      };
+                      setWeeklyPayouts([...weeklyPayouts, newEntry]);
+                    }}
+                    className="text-[11px] font-extrabold text-blue-700 dark:text-blue-300 hover:underline flex items-center gap-1 cursor-pointer bg-white dark:bg-slate-800 px-3 py-1.5 rounded-xl border border-blue-200"
+                  >
+                    <Plus className="w-3.5 h-3.5" /> Add Weekly Payout Line
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
+                  {weeklyPayouts.map((payout: IWeeklyPayout, idx: number) => (
+                    <div key={payout.id} className="flex items-center gap-2 bg-white dark:bg-slate-900 p-2 rounded-xl border border-blue-100 dark:border-slate-800">
+                      <span className="font-black text-slate-500 text-[11px] shrink-0 w-14">Week {idx + 1}:</span>
+                      <input
+                        type="date"
+                        value={payout.date}
+                        onChange={(e) => {
+                          const updated = weeklyPayouts.map((item: IWeeklyPayout) =>
+                            item.id === payout.id ? { ...item, date: e.target.value } : item
+                          );
+                          setWeeklyPayouts(updated);
+                        }}
+                        className="w-1/2 p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 font-bold text-xs"
+                      />
+                      <input
+                        type="number"
+                        min="0"
+                        placeholder="Payout (₹)"
+                        value={payout.amount || ''}
+                        onChange={(e) => {
+                          const val = Number(e.target.value);
+                          const updated = weeklyPayouts.map((item: IWeeklyPayout) =>
+                            item.id === payout.id ? { ...item, amount: val } : item
+                          );
+                          setWeeklyPayouts(updated);
+                        }}
+                        className="w-1/2 p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 font-bold text-xs"
+                      />
+                      {weeklyPayouts.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const updated = weeklyPayouts.filter((item: IWeeklyPayout) => item.id !== payout.id);
+                            setWeeklyPayouts(updated);
+                          }}
+                          className="p-1 text-rose-500 hover:bg-rose-100 dark:hover:bg-rose-950/40 rounded-lg cursor-pointer shrink-0"
+                          title="Remove payout line"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                <div className="pt-2 border-t border-blue-200 dark:border-blue-900 flex justify-between items-center text-xs">
+                  <span className="font-bold text-slate-600 dark:text-slate-300">Total Weekly Salary Disbursed:</span>
+                  <span className="font-black text-emerald-600 dark:text-emerald-400 text-sm">
+                    ₹{totalWeeklyPaid.toLocaleString('en-IN')}
+                  </span>
+                </div>
+              </div>
+
               {/* Payment Details & Summary Box */}
               <div className="p-4 sm:p-5 rounded-2xl bg-brand-50/60 dark:bg-brand-950/30 border border-brand-200 dark:border-brand-900/40 space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                   <div>
-                    <label className="font-bold text-slate-700 dark:text-slate-300">Payment Status:</label>
+                    <label className="font-bold text-slate-700 dark:text-slate-300">Settlement Status:</label>
                     <select
-                      value={paymentStatus}
+                      value={balanceDue === 0 ? 'Paid' : paymentStatus}
                       onChange={(e) => setPaymentStatus(e.target.value as any)}
                       className="w-full mt-1 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-extrabold"
                     >
-                      <option value="Paid">🟢 Paid</option>
+                      <option value="Paid">🟢 Fully Paid (Weekly)</option>
+                      <option value="Partial">🟡 Partially Paid</option>
                       <option value="Pending">🔴 Pending</option>
-                      <option value="Partial">🟡 Partial</option>
                     </select>
                   </div>
 
@@ -477,7 +581,7 @@ export const PayslipModal: React.FC<PayslipModalProps> = ({
                   </div>
 
                   <div>
-                    <label className="font-bold text-slate-700 dark:text-slate-300">Payment Date:</label>
+                    <label className="font-bold text-slate-700 dark:text-slate-300">Settlement Date:</label>
                     <input
                       type="date"
                       value={paymentDate}
@@ -489,7 +593,7 @@ export const PayslipModal: React.FC<PayslipModalProps> = ({
 
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 p-4 rounded-xl bg-white dark:bg-slate-900 border border-brand-200 dark:border-brand-800 shadow-xs">
                   <div>
-                    <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">NET PAYABLE SALARY</p>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">NET PAYABLE SALARY</p>
                     <p className="text-xl sm:text-2xl font-black text-brand-600 dark:text-brand-400">
                       ₹{netPayable.toLocaleString('en-IN')}
                     </p>
@@ -552,8 +656,8 @@ export const PayslipModal: React.FC<PayslipModalProps> = ({
                     <p className="font-extrabold text-slate-800 truncate">{staffMobile || '-'}</p>
                   </div>
                   <div>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase">Attendance Days</span>
-                    <p className="font-extrabold text-emerald-700">Present: {presentDays}d | Abs: {absentDays}d</p>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase">Working & Leave Days</span>
+                    <p className="font-extrabold text-emerald-700">Working: {presentDays}d | Abs: {absentDays}d</p>
                   </div>
                 </div>
 
@@ -570,7 +674,7 @@ export const PayslipModal: React.FC<PayslipModalProps> = ({
                     </div>
                     {overtimeBonus > 0 && (
                       <div className="grid grid-cols-2 py-2 px-3 sm:px-4">
-                        <span>Overtime / Performance Bonus</span>
+                        <span>Daily Batta / Allowance</span>
                         <span className="text-right font-bold text-emerald-700">+ ₹{overtimeBonus.toLocaleString('en-IN')}</span>
                       </div>
                     )}
@@ -585,19 +689,12 @@ export const PayslipModal: React.FC<PayslipModalProps> = ({
                     <div className="text-right">Amount (₹)</div>
                   </div>
                   <div className="divide-y divide-slate-200">
-                    {advanceDeduction > 0 && (
-                      <div className="grid grid-cols-2 py-2 px-3 sm:px-4">
-                        <span>Salary Advance Taken</span>
-                        <span className="text-right font-bold text-rose-600">- ₹{advanceDeduction.toLocaleString('en-IN')}</span>
-                      </div>
-                    )}
-                    {otherDeduction > 0 && (
+                    {otherDeduction > 0 ? (
                       <div className="grid grid-cols-2 py-2 px-3 sm:px-4">
                         <span>Other Deductions / LOP</span>
                         <span className="text-right font-bold text-rose-600">- ₹{otherDeduction.toLocaleString('en-IN')}</span>
                       </div>
-                    )}
-                    {advanceDeduction === 0 && otherDeduction === 0 && (
+                    ) : (
                       <div className="grid grid-cols-2 py-2 px-3 sm:px-4 text-slate-400 italic">
                         <span>Nil Deductions</span>
                         <span className="text-right">₹0</span>
@@ -610,16 +707,39 @@ export const PayslipModal: React.FC<PayslipModalProps> = ({
                   </div>
                 </div>
 
-                {/* Net Salary Box */}
+                {/* Weekly Salary Payout Log Box */}
+                {weeklyPayouts.some((p: IWeeklyPayout) => Number(p.amount || 0) > 0) && (
+                  <div className="border border-blue-200 rounded-xl overflow-hidden text-xs bg-blue-50/40">
+                    <div className="flex items-center justify-between bg-blue-900 text-white font-bold py-2 px-3 sm:px-4 text-[11px]">
+                      <span>WEEKLY SALARY PAYOUT LOG (DISBURSED)</span>
+                      <span>Total Disbursed: ₹{totalWeeklyPaid.toLocaleString('en-IN')}</span>
+                    </div>
+                    <div className="divide-y divide-blue-100 p-2 sm:p-3 space-y-1">
+                      {weeklyPayouts
+                        .filter((p: IWeeklyPayout) => Number(p.amount || 0) > 0)
+                        .map((payout: IWeeklyPayout, idx: number) => (
+                          <div key={payout.id} className="flex justify-between items-center px-2 py-1 text-slate-700 font-semibold">
+                            <span>
+                              Week {idx + 1} ({payout.date ? new Date(payout.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) : 'Weekly'})
+                            </span>
+                            <span className="font-bold text-emerald-700">₹{Number(payout.amount).toLocaleString('en-IN')}</span>
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Net Settlement Summary Box */}
                 <div className="p-4 rounded-xl bg-slate-900 text-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-md">
                   <div>
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">NET PAYABLE SALARY</span>
                     <h2 className="text-xl sm:text-2xl font-black text-emerald-400">₹{netPayable.toLocaleString('en-IN')}</h2>
                     <p className="text-[11px] text-slate-300 italic font-semibold">{numberToWords(netPayable)}</p>
                   </div>
+
                   <div className="text-left sm:text-right text-xs border-l sm:border-l-0 sm:border-r border-slate-700 pl-3 sm:pl-0 sm:pr-4">
                     <span className="px-2.5 py-1 rounded bg-emerald-500 text-slate-950 font-black text-[11px] uppercase inline-block">
-                      STATUS: {paymentStatus}
+                      STATUS: {paymentStatus.toUpperCase()}
                     </span>
                     <p className="text-[11px] text-slate-300 font-bold mt-1">Payment Mode: {paymentMode}</p>
                   </div>

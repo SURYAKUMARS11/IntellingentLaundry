@@ -235,6 +235,8 @@ export interface IPayslipData {
   baseSalary: number;
   overtimeBonus: number;
   advanceDeduction: number;
+  weeklyPayouts?: Array<{ date: string; amount: number }>;
+  totalWeeklyPaid?: number;
   otherDeduction: number;
   grossEarnings: number;
   totalDeductions: number;
@@ -290,8 +292,8 @@ export const generatePayslipPDFBuffer = async (data: IPayslipData, setting?: any
       doc.fontSize(8).fillColor('#94a3b8').font('Helvetica-Bold').text('MOBILE NUMBER', 310, y + 8);
       doc.fontSize(9.5).fillColor('#334155').font('Helvetica-Bold').text(data.mobile || '-', 310, y + 20);
 
-      doc.fontSize(8).fillColor('#94a3b8').font('Helvetica-Bold').text('ATTENDANCE DAYS', 430, y + 8);
-      doc.fontSize(9.5).fillColor('#15803d').font('Helvetica-Bold').text(`Pres: ${data.presentDays}d | Abs: ${data.absentDays}d`, 430, y + 20);
+      doc.fontSize(8).fillColor('#94a3b8').font('Helvetica-Bold').text('WORKING & LEAVE DAYS', 415, y + 8);
+      doc.fontSize(9.5).fillColor('#15803d').font('Helvetica-Bold').text(`Working: ${data.presentDays}d | Abs: ${data.absentDays}d`, 415, y + 20);
 
       // Financial Details Table
       y += 65;
@@ -306,7 +308,7 @@ export const generatePayslipPDFBuffer = async (data: IPayslipData, setting?: any
       doc.fontSize(9).fillColor('#ffffff').font('Helvetica-Bold').text('DEDUCTIONS (-)', 315, y + 6);
       doc.text('AMOUNT (RS.)', 455, y + 6, { width: 90, align: 'right' });
 
-      // Row 1: Basic Salary vs Advance Taken
+      // Row 1: Basic Salary vs Other Deductions
       y += 22;
       doc.rect(40, y, 250, 22).fill('#ffffff').stroke('#e2e8f0');
       doc.rect(305, y, 250, 22).fill('#ffffff').stroke('#e2e8f0');
@@ -314,22 +316,21 @@ export const generatePayslipPDFBuffer = async (data: IPayslipData, setting?: any
       doc.fontSize(8.5).fillColor('#334155').font('Helvetica').text('Basic / Monthly Salary', 50, y + 6);
       doc.font('Helvetica-Bold').text(`Rs. ${data.baseSalary.toLocaleString('en-IN')}`, 190, y + 6, { width: 90, align: 'right' });
 
-      doc.font('Helvetica').text('Salary Advance Taken', 315, y + 6);
-      doc.font('Helvetica-Bold').fillColor(data.advanceDeduction > 0 ? '#dc2626' : '#64748b');
-      doc.text(`Rs. ${data.advanceDeduction.toLocaleString('en-IN')}`, 455, y + 6, { width: 90, align: 'right' });
+      doc.font('Helvetica').text('Other Deductions / LOP', 315, y + 6);
+      doc.font('Helvetica-Bold').fillColor(data.otherDeduction > 0 ? '#dc2626' : '#64748b');
+      doc.text(`Rs. ${data.otherDeduction.toLocaleString('en-IN')}`, 455, y + 6, { width: 90, align: 'right' });
 
-      // Row 2: Overtime vs Other Deductions
+      // Row 2: Daily Batta vs Nil
       y += 22;
       doc.rect(40, y, 250, 22).fill('#ffffff').stroke('#e2e8f0');
       doc.rect(305, y, 250, 22).fill('#ffffff').stroke('#e2e8f0');
 
-      doc.fontSize(8.5).fillColor('#334155').font('Helvetica').text('Overtime / Performance Bonus', 50, y + 6);
+      doc.fontSize(8.5).fillColor('#334155').font('Helvetica').text('Daily Batta / Allowance', 50, y + 6);
       doc.font('Helvetica-Bold').fillColor(data.overtimeBonus > 0 ? '#15803d' : '#64748b');
       doc.text(`Rs. ${data.overtimeBonus.toLocaleString('en-IN')}`, 190, y + 6, { width: 90, align: 'right' });
 
-      doc.fontSize(8.5).fillColor('#334155').font('Helvetica').text('Other Deductions / LOP', 315, y + 6);
-      doc.font('Helvetica-Bold').fillColor(data.otherDeduction > 0 ? '#dc2626' : '#64748b');
-      doc.text(`Rs. ${data.otherDeduction.toLocaleString('en-IN')}`, 455, y + 6, { width: 90, align: 'right' });
+      doc.fontSize(8.5).fillColor('#94a3b8').font('Helvetica-Oblique').text('Nil Other Deductions', 315, y + 6);
+      doc.font('Helvetica').fillColor('#94a3b8').text('Rs. 0', 455, y + 6, { width: 90, align: 'right' });
 
       // Summary Totals Row
       y += 22;
@@ -342,8 +343,32 @@ export const generatePayslipPDFBuffer = async (data: IPayslipData, setting?: any
       doc.fillColor('#0f172a').text('TOTAL DEDUCTIONS', 315, y + 6);
       doc.fillColor('#b91c1c').text(`Rs. ${data.totalDeductions.toLocaleString('en-IN')}`, 455, y + 6, { width: 90, align: 'right' });
 
+      // Weekly Salary Payouts Log Box (if weeklyPayouts present)
+      const payouts = data.weeklyPayouts && data.weeklyPayouts.length > 0
+        ? data.weeklyPayouts.filter((p) => Number(p.amount || 0) > 0)
+        : [];
+      
+      const totalWeeklyDisbursed = data.totalWeeklyPaid !== undefined ? data.totalWeeklyPaid : payouts.reduce((sum, p) => sum + Number(p.amount || 0), 0);
+      const balanceDue = Math.max(0, data.netPayable - totalWeeklyDisbursed);
+
+      if (payouts.length > 0) {
+        y += 30;
+        const boxHeight = 22 + (payouts.length * 15);
+        doc.rect(40, y, 515, boxHeight).fill('#f8fafc').stroke('#cbd5e1');
+        doc.fontSize(8.5).fillColor('#0f172a').font('Helvetica-Bold').text('WEEKLY SALARY PAYOUT LOG (DISBURSED)', 50, y + 6);
+        doc.fontSize(8).fillColor('#166534').font('Helvetica-Bold').text(`Total Disbursed: Rs. ${totalWeeklyDisbursed.toLocaleString('en-IN')}`, 380, y + 6, { width: 160, align: 'right' });
+        
+        let py = y + 20;
+        payouts.forEach((p, idx) => {
+          doc.fontSize(8).fillColor('#475569').font('Helvetica').text(`Week ${idx + 1} (${p.date || 'Weekly'}):`, 50, py);
+          doc.font('Helvetica-Bold').fillColor('#15803d').text(`Rs. ${Number(p.amount).toLocaleString('en-IN')}`, 190, py);
+          py += 14;
+        });
+        y += boxHeight;
+      }
+
       // Net Salary Highlight Box
-      y += 35;
+      y += 25;
       doc.rect(40, y, 515, 45).fill('#0f172a');
       doc.fontSize(8.5).fillColor('#94a3b8').font('Helvetica-Bold').text('NET PAYABLE SALARY', 55, y + 8);
       doc.fontSize(16).fillColor('#4ade80').font('Helvetica-Bold').text(`Rs. ${data.netPayable.toLocaleString('en-IN')}`, 55, y + 20);
