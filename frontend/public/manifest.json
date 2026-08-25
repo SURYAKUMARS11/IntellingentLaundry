@@ -1,7 +1,7 @@
 {
-  "short_name": "Intelligent Laundry",
-  "name": "Intelligent Laundry",
-  "description": "Intelligent Laundry POS & Management System",
+  "short_name": "Miracle Laundry",
+  "name": "Miracle Laundry",
+  "description": "Miracle Laundry POS & Management System",
   "icons": [
     {
       "src": "/pwa-192.png",
@@ -24,7 +24,7 @@
   ],
   "start_url": "/login",
   "background_color": "#0f172a",
-  "theme_color": "#0284c7",
+  "theme_color": "#7c3aed",
   "display": "standalone",
   "orientation": "any",
   "scope": "/"

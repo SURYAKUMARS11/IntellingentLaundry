@@ -8,13 +8,13 @@
     <link rel="apple-touch-icon" href="/pwa-192.png" />
     <link rel="manifest" href="/manifest.json" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <meta name="theme-color" content="#0284c7" />
+    <meta name="theme-color" content="#7c3aed" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="Intelligent Laundry" />
-    <title>Intelligent Laundry | Laundry Shop Management System</title>
-    <meta name="description" content="Modern, fast, and responsive Laundry Shop Management System for small laundry businesses." />
+    <meta name="apple-mobile-web-app-title" content="Miracle Laundry" />
+    <title>Miracle Laundry | Smart POS & Laundry Management System</title>
+    <meta name="description" content="Modern, fast, and responsive Laundry Shop Management System for Miracle Laundry." />
   </head>
   <body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen">
     <div id="root"></div>
@@ -23,7 +23,7 @@
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('/sw.js').then((reg) => {
-            console.log('IntelligentLaundry PWA Service Worker Registered:', reg.scope);
+            console.log('MiracleLaundry PWA Service Worker Registered:', reg.scope);
           }).catch((err) => {
             console.log('PWA Service Worker Registration Failed:', err);
           });

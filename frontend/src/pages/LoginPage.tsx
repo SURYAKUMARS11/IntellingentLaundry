@@ -41,10 +41,10 @@ export const LoginPage: React.FC = () => {
         {/* Header Logo */}
         <div className="text-center mb-8">
           <div className="w-20 h-20 rounded-2xl bg-white p-1 mx-auto flex items-center justify-center shadow-xl shadow-brand-500/20 ring-4 ring-brand-500/30 mb-3 overflow-hidden">
-            <img src="/logo.jpg" alt="Intelligent Laundry Logo" className="w-full h-full object-cover rounded-xl" />
+            <img src="/logo.jpg" alt="Miracle Laundry Logo" className="w-full h-full object-cover rounded-xl" />
           </div>
           <h1 className="text-2xl font-extrabold text-white tracking-tight flex items-center justify-center gap-1.5">
-            Intelligent Laundry <Sparkles className="w-4 h-4 text-brand-400 fill-brand-400" />
+            Miracle Laundry <Sparkles className="w-4 h-4 text-brand-400 fill-brand-400" />
           </h1>
           <p className="text-xs text-slate-400 mt-1">
             Laundry Shop Admin Management System

@@ -256,10 +256,10 @@ export const generatePayslipPDFBuffer = async (data: IPayslipData, setting?: any
       doc.on('end', () => resolve(Buffer.concat(buffers)));
       doc.on('error', (err) => reject(err));
 
-      const shopName = setting?.storeName || setting?.shopName || setting?.companyName || 'INTELLIGENT LAUNDRY & DRY CLEANERS';
+      const shopName = setting?.storeName || setting?.shopName || setting?.companyName || 'MIRACLE LAUNDRY & DRY CLEANERS';
       const address = setting?.address || '123 Commercial Main Road, City Plaza, Sector 4';
       const phone = setting?.mobile || setting?.phone || '+91 98765 43210';
-      const email = setting?.email || 'contact@intelligentlaundry.com';
+      const email = setting?.email || 'contact@miraclelaundry.com';
 
       // Header
       let y = 45;

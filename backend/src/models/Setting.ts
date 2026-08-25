@@ -22,11 +22,11 @@ export interface ISetting extends Document {
 
 const SettingSchema: Schema = new Schema(
   {
-    shopName: { type: String, required: true, default: 'Intelligent Laundry' },
-    shopTagline: { type: String, default: 'Smart & Premium Laundry Management' },
+    shopName: { type: String, required: true, default: 'Miracle Laundry' },
+    shopTagline: { type: String, default: 'Smart & Premium Laundry Services' },
     logoUrl: { type: String, default: '/logo.jpg' },
     phone: { type: String, required: true, default: '+91 98765 43210' },
-    email: { type: String, required: true, default: 'contact@intelligentlaundry.com' },
+    email: { type: String, required: true, default: 'contact@miraclelaundry.com' },
     address: { type: String, required: true, default: '123 Sparkle Avenue, Suite 4B, Commercial Hub' },
     gstNumber: { type: String, default: '22AAAAA0000A1Z5' },
     gstPercentage: { type: Number, default: 0 },

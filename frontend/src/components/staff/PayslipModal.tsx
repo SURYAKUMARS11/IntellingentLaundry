@@ -176,10 +176,10 @@ export const PayslipModal: React.FC<PayslipModalProps> = ({
   const totalWeeklyPaid = weeklyPayouts.reduce((sum: number, p: IWeeklyPayout) => sum + Number(p.amount || 0), 0);
   const balanceDue = Math.max(0, netPayable - totalWeeklyPaid);
 
-  const shopName = shopSettings?.storeName || shopSettings?.companyName || 'INTELLIGENT LAUNDRY & DRY CLEANERS';
+  const shopName = shopSettings?.storeName || shopSettings?.companyName || 'MIRACLE LAUNDRY & DRY CLEANERS';
   const shopAddress = shopSettings?.address || '123 Commercial Main Road, City Plaza, Sector 4';
   const shopPhone = shopSettings?.mobile || shopSettings?.phone || '+91 98765 43210';
-  const shopEmail = shopSettings?.email || 'contact@intelligentlaundry.com';
+  const shopEmail = shopSettings?.email || 'contact@miraclelaundry.com';
 
   const [isSendingWhatsApp, setIsSendingWhatsApp] = useState<boolean>(false);
 
