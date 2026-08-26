@@ -2,7 +2,16 @@ import mongoose from 'mongoose';
 
 export const connectDB = async (): Promise<boolean> => {
   try {
-    const connStr = process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/intelligentlaundry';
+    let connStr = process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/intelligentlaundry';
+    
+    // Auto-fix accidentally pasted backslashes
+    if (connStr.includes('mongodb+srv:\\')) {
+      connStr = connStr.replace('mongodb+srv:\\', 'mongodb+srv://');
+    }
+    if (connStr.includes('.net\\')) {
+      connStr = connStr.replace('.net\\', '.net/');
+    }
+
     console.log(`[DB] Attempting to connect to MongoDB at: ${connStr.replace(/\/\/([^:]+):([^@]+)@/, '//***:***@')}`);
 
     const conn = await mongoose.connect(connStr, {
