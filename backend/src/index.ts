@@ -38,12 +38,14 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Base API health check
+// Base API health check with process.uptime() stats
 app.get('/api/health', (req: Request, res: Response) => {
   res.json({
     status: 'ok',
     dbConnected: mongoose.connection.readyState === 1,
-    message: 'Miracle Laundry API Server is running',
+    uptimeSeconds: Math.floor(process.uptime()),
+    uptimeFormatted: `${Math.floor(process.uptime() / 3600)}h ${Math.floor((process.uptime() % 3600) / 60)}m ${Math.floor(process.uptime() % 60)}s`,
+    message: 'Miracle Laundry API Server is running smoothly',
     timestamp: new Date().toISOString(),
   });
 });
@@ -92,6 +94,25 @@ app.use((req: Request, res: Response) => {
   });
 });
 
+// Uptime Keep-Alive Worker (Prevents Render Free Tier from going to sleep)
+const startUptimeKeepAlive = () => {
+  const targetUrl = process.env.RENDER_EXTERNAL_URL || process.env.BACKEND_URL;
+  if (!targetUrl) return;
+
+  const healthUrl = `${targetUrl.replace(/\/$/, '')}/api/health`;
+  console.log(`[UPTIME] Initializing Uptime Keep-Alive worker targeting: ${healthUrl}`);
+
+  // Self-ping every 10 minutes (600,000 ms)
+  setInterval(async () => {
+    try {
+      const res = await fetch(healthUrl);
+      console.log(`[UPTIME PING] Keep-alive ping status: ${res.status} (Server Uptime: ${Math.floor(process.uptime())}s)`);
+    } catch (err: any) {
+      console.warn(`[UPTIME PING WARNING] Keep-alive ping failed: ${err.message}`);
+    }
+  }, 10 * 60 * 1000);
+};
+
 // Start Server & Initialize Database
 const startServer = async () => {
   try {
@@ -102,10 +123,11 @@ const startServer = async () => {
     initWhatsAppGateway();
     app.listen(PORT, () => {
       console.log(`====================================================`);
-      console.log(` 🧺 INTELLIGENTLAUNDRY SHOP BACKEND IS RUNNING!`);
+      console.log(` 🧺 MIRACLE LAUNDRY SHOP BACKEND IS RUNNING!`);
       console.log(` 🚀 Listening on: http://localhost:${PORT}`);
       console.log(` 📡 Health Check: http://localhost:${PORT}/api/health`);
       console.log(`====================================================`);
+      startUptimeKeepAlive();
     });
   } catch (error) {
     console.error('Failed to start server:', error);
