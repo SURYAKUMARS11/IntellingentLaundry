@@ -236,7 +236,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed = false, onToggleC
       {/* Footer Info */}
       {!isCollapsed && (
         <div className="p-3 m-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400">
-          <p className="font-semibold text-slate-700 dark:text-slate-300">IntelligentLaundry v1.0</p>
+          <p className="font-semibold text-slate-700 dark:text-slate-300">Miracle Laundry v1.0</p>
           <p className="mt-0.5 text-[11px]">Express Laundry POS</p>
         </div>
       )}

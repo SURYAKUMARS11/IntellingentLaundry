@@ -44,7 +44,7 @@ const ProtectedLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
       <div className="min-h-screen bg-slate-900 text-white flex items-center justify-center">
         <div className="text-center space-y-3">
           <div className="w-12 h-12 border-4 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-xs font-semibold text-slate-400">Loading IntelligentLaundry POS...</p>
+          <p className="text-xs font-semibold text-slate-400">Loading Miracle Laundry POS...</p>
         </div>
       </div>
     );
