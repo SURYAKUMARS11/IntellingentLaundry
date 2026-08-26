@@ -2,6 +2,7 @@ import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import compression from 'compression';
 import dotenv from 'dotenv';
+import mongoose from 'mongoose';
 import { connectDB } from './config/db';
 import { seedDatabase } from './seed';
 
@@ -41,9 +42,21 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.get('/api/health', (req: Request, res: Response) => {
   res.json({
     status: 'ok',
-    message: 'CleanWave Laundry Shop API Server is running smoothly',
+    dbConnected: mongoose.connection.readyState === 1,
+    message: 'Miracle Laundry API Server is running',
     timestamp: new Date().toISOString(),
   });
+});
+
+// Database Connection Guard Middleware
+app.use((req: Request, res: Response, next: NextFunction) => {
+  if (mongoose.connection.readyState !== 1) {
+    return res.status(503).json({
+      success: false,
+      message: 'Database Connection Error: Server cannot reach MongoDB Atlas. Please ensure 0.0.0.0/0 is added under MongoDB Atlas Network Access and MONGODB_URI is correct.',
+    });
+  }
+  next();
 });
 
 // API Routes
