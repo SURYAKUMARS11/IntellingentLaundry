@@ -63,6 +63,9 @@ const fetchApiNetwork = async (endpoint: string, options: RequestInit = {}, retr
 
     const data = await response.json();
     if (!response.ok) {
+      if (response.status === 401 || data.message?.toLowerCase().includes('token')) {
+        removeAuthToken();
+      }
       throw new Error(data.message || 'API request failed');
     }
 
