@@ -129,13 +129,14 @@ export const StaffAttendanceDetailModal: React.FC<StaffAttendanceDetailModalProp
     : 0;
 
   // Change status for a specific day
-  const handleDayStatusChange = async (dateStr: string, newStatus: string) => {
+  const handleDayStatusChange = async (dateStr: string, newStatus: string, currentNotes?: string) => {
     setUpdatingDate(dateStr);
     try {
       const res = await markAttendanceApi({
         staffId: staff._id,
         date: dateStr,
         status: newStatus,
+        notes: currentNotes,
       });
 
       if (res.success) {
@@ -146,6 +147,30 @@ export const StaffAttendanceDetailModal: React.FC<StaffAttendanceDetailModalProp
       }
     } catch (err: any) {
       showToast(err.message || 'Error updating attendance', 'error');
+    } finally {
+      setUpdatingDate(null);
+    }
+  };
+
+  // Change Day Type (Working Day, Weekly Off, Store Holiday, Paid Leave) for a specific day
+  const handleDayTypeChange = async (dateStr: string, newDayType: string, currentStatus: string) => {
+    setUpdatingDate(dateStr);
+    try {
+      const res = await markAttendanceApi({
+        staffId: staff._id,
+        date: dateStr,
+        status: currentStatus || (newDayType === 'Weekly Off' || newDayType === 'Store Holiday' ? 'Leave' : 'Present'),
+        notes: newDayType,
+      });
+
+      if (res.success) {
+        showToast(`Day Type updated to ${newDayType} on ${dateStr}`, 'success');
+        onAttendanceUpdated();
+      } else {
+        showToast(res.message || 'Failed to update Day Type', 'error');
+      }
+    } catch (err: any) {
+      showToast(err.message || 'Error updating Day Type', 'error');
     } finally {
       setUpdatingDate(null);
     }
@@ -308,17 +333,19 @@ export const StaffAttendanceDetailModal: React.FC<StaffAttendanceDetailModalProp
                           {day.dayName}
                         </td>
 
-                        {/* Day Type Badge */}
+                        {/* Editable Day Type Selector */}
                         <td className="py-3 px-4">
-                          {day.isSunday ? (
-                            <span className="px-2 py-0.5 rounded-md bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 font-bold text-[10px]">
-                              Sunday Off
-                            </span>
-                          ) : (
-                            <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-semibold text-[10px]">
-                              Working Day
-                            </span>
-                          )}
+                          <select
+                            disabled={updatingDate === day.formattedDate}
+                            value={day.notes || (day.isSunday ? 'Weekly Off' : 'Working Day')}
+                            onChange={(e) => handleDayTypeChange(day.formattedDate, e.target.value, day.status)}
+                            className="px-2.5 py-1.5 rounded-xl font-extrabold text-xs cursor-pointer border bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 shadow-2xs hover:border-brand-500 transition-all"
+                          >
+                            <option value="Working Day">💼 Working Day</option>
+                            <option value="Weekly Off">🏖️ Weekly Off</option>
+                            <option value="Store Holiday">🎉 Store Holiday</option>
+                            <option value="Paid Leave">🔵 Paid Leave</option>
+                          </select>
                         </td>
 
                         {/* Current Status Pill */}
@@ -355,7 +382,7 @@ export const StaffAttendanceDetailModal: React.FC<StaffAttendanceDetailModalProp
                           <select
                             disabled={updatingDate === day.formattedDate}
                             value={day.status}
-                            onChange={(e) => handleDayStatusChange(day.formattedDate, e.target.value)}
+                            onChange={(e) => handleDayStatusChange(day.formattedDate, e.target.value, day.notes)}
                             className={`px-3 py-1.5 rounded-xl font-extrabold text-xs cursor-pointer border shadow-2xs transition-all ${
                               updatingDate === day.formattedDate
                                 ? 'opacity-50 pointer-events-none'
