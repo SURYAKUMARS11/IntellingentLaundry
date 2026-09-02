@@ -243,43 +243,125 @@ export const StaffAttendanceDetailModal: React.FC<StaffAttendanceDetailModalProp
             </div>
           </div>
 
-          {/* Monthly KPI Stats Cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
-            <div className="p-3 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-200/60 dark:border-emerald-900/40 text-center">
-              <p className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase">Present</p>
-              <p className="text-lg font-black text-emerald-700 dark:text-emerald-300">{presentCount} Days</p>
+          {/* Monthly KPI Stats Cards (3 columns on mobile, 5 on desktop) */}
+          <div className="grid grid-cols-3 sm:grid-cols-5 gap-1.5 sm:gap-2.5">
+            <div className="p-2 sm:p-3 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-200/60 dark:border-emerald-900/40 text-center">
+              <p className="text-[9px] sm:text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase">Present</p>
+              <p className="text-sm sm:text-lg font-black text-emerald-700 dark:text-emerald-300">{presentCount} Days</p>
             </div>
 
-            <div className="p-3 rounded-2xl bg-amber-50/60 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-900/40 text-center">
-              <p className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase">Half Days</p>
-              <p className="text-lg font-black text-amber-700 dark:text-amber-300">{halfDayCount} Days</p>
+            <div className="p-2 sm:p-3 rounded-2xl bg-amber-50/60 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-900/40 text-center">
+              <p className="text-[9px] sm:text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase">Half Days</p>
+              <p className="text-sm sm:text-lg font-black text-amber-700 dark:text-amber-300">{halfDayCount} Days</p>
             </div>
 
-            <div className="p-3 rounded-2xl bg-rose-50/60 dark:bg-rose-950/30 border border-rose-200/60 dark:border-rose-900/40 text-center">
-              <p className="text-[10px] font-bold text-rose-600 dark:text-rose-400 uppercase">Absent</p>
-              <p className="text-lg font-black text-rose-700 dark:text-rose-300">{absentCount} Days</p>
+            <div className="p-2 sm:p-3 rounded-2xl bg-rose-50/60 dark:bg-rose-950/30 border border-rose-200/60 dark:border-rose-900/40 text-center">
+              <p className="text-[9px] sm:text-[10px] font-bold text-rose-600 dark:text-rose-400 uppercase">Absent</p>
+              <p className="text-sm sm:text-lg font-black text-rose-700 dark:text-rose-300">{absentCount} Days</p>
             </div>
 
-            <div className="p-3 rounded-2xl bg-sky-50/60 dark:bg-sky-950/30 border border-sky-200/60 dark:border-sky-900/40 text-center">
-              <p className="text-[10px] font-bold text-sky-600 dark:text-sky-400 uppercase">On Leave</p>
-              <p className="text-lg font-black text-sky-700 dark:text-sky-300">{leaveCount} Days</p>
+            <div className="p-2 sm:p-3 rounded-2xl bg-sky-50/60 dark:bg-sky-950/30 border border-sky-200/60 dark:border-sky-900/40 text-center">
+              <p className="text-[9px] sm:text-[10px] font-bold text-sky-600 dark:text-sky-400 uppercase">On Leave</p>
+              <p className="text-sm sm:text-lg font-black text-sky-700 dark:text-sky-300">{leaveCount} Days</p>
             </div>
 
-            <div className="p-3 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-center col-span-2 sm:col-span-1">
-              <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">Attendance Score</p>
-              <p className="text-lg font-black text-slate-900 dark:text-white">{attendancePercentage}%</p>
+            <div className="p-2 sm:p-3 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-center col-span-2 sm:col-span-1">
+              <p className="text-[9px] sm:text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">Score</p>
+              <p className="text-sm sm:text-lg font-black text-slate-900 dark:text-white">{attendancePercentage}%</p>
             </div>
           </div>
         </div>
 
         {/* Detailed Daily Attendance Register Table */}
-        <div className="flex-1 p-4 sm:p-6 overflow-y-auto space-y-3">
-          <div className="flex items-center justify-between text-xs font-bold text-slate-500 mb-2">
-            <span>Day-by-Day Register ({daysList.length} Total Days)</span>
-            <span className="text-[11px] text-slate-400">Click dropdown on any day to change status</span>
+        <div className="flex-1 p-3 sm:p-6 overflow-y-auto space-y-3">
+          <div className="flex items-center justify-between text-xs font-bold text-slate-500 mb-1">
+            <span>Day-by-Day Register ({daysList.length} Days)</span>
+            <span className="text-[10px] text-slate-400">Select status for any day</span>
           </div>
 
-          <div className="border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-xs">
+          {/* Mobile View: Compact Day Register Cards (< sm) */}
+          <div className="sm:hidden space-y-2">
+            {daysList.map((day) => {
+              const isToday =
+                new Date().getFullYear() === selectedYear &&
+                new Date().getMonth() === selectedMonth &&
+                new Date().getDate() === day.dayNumber;
+
+              return (
+                <div
+                  key={day.formattedDate}
+                  className={`p-3 rounded-2xl border transition-all space-y-2 ${
+                    isToday
+                      ? 'bg-brand-50/40 border-brand-200 dark:bg-brand-950/20 dark:border-brand-900/50'
+                      : day.isSunday
+                      ? 'bg-slate-50/70 border-slate-200/80 dark:bg-slate-900/60 dark:border-slate-800'
+                      : 'bg-white border-slate-200 dark:bg-slate-900 dark:border-slate-800'
+                  }`}
+                >
+                  {/* Top Row: Date & Day Type */}
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="w-6 h-6 rounded-md bg-slate-100 dark:bg-slate-800 flex items-center justify-center font-black text-slate-800 dark:text-slate-200 text-xs">
+                        {day.dayNumber}
+                      </span>
+                      <div>
+                        <p className="font-extrabold text-xs text-slate-900 dark:text-white flex items-center gap-1">
+                          {day.dayNumber} {monthNames[selectedMonth].slice(0, 3)} ({day.dayName})
+                          {isToday && (
+                            <span className="text-[9px] font-black text-brand-600 dark:text-brand-400">● TODAY</span>
+                          )}
+                        </p>
+                      </div>
+                    </div>
+
+                    <select
+                      disabled={updatingDate === day.formattedDate}
+                      value={day.notes || (day.isSunday ? 'Weekly Off' : 'Working Day')}
+                      onChange={(e) => handleDayTypeChange(day.formattedDate, e.target.value, day.status)}
+                      className="px-2 py-1 rounded-xl text-[10px] font-extrabold border bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200"
+                    >
+                      <option value="Working Day">💼 Working</option>
+                      <option value="Weekly Off">🏖️ Off</option>
+                      <option value="Store Holiday">🎉 Holiday</option>
+                      <option value="Paid Leave">🔵 Leave</option>
+                    </select>
+                  </div>
+
+                  {/* Bottom Row: Attendance Status Selector */}
+                  <div className="flex items-center justify-between gap-2 pt-1.5 border-t border-slate-100 dark:border-slate-800/80">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Status</span>
+                    <select
+                      disabled={updatingDate === day.formattedDate}
+                      value={day.status}
+                      onChange={(e) => handleDayStatusChange(day.formattedDate, e.target.value, day.notes)}
+                      className={`px-2.5 py-1 rounded-xl font-extrabold text-xs cursor-pointer border ${
+                        updatingDate === day.formattedDate
+                          ? 'opacity-50 pointer-events-none'
+                          : !day.status
+                          ? 'bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-800 dark:text-slate-200'
+                          : day.status === 'Present'
+                          ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                          : day.status === 'Half Day'
+                          ? 'bg-amber-50 text-amber-800 border-amber-300'
+                          : day.status === 'Absent'
+                          ? 'bg-rose-50 text-rose-800 border-rose-300'
+                          : 'bg-sky-50 text-sky-800 border-sky-300'
+                      }`}
+                    >
+                      <option value="">📋 Not Marked</option>
+                      <option value="Present">🟢 Present</option>
+                      <option value="Half Day">🟡 Half Day</option>
+                      <option value="Absent">🔴 Absent</option>
+                      <option value="Leave">🔵 On Leave</option>
+                    </select>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Desktop View: Day-by-Day Register Table (hidden sm:block) */}
+          <div className="hidden sm:block border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-xs">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
                 <thead>
