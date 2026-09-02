@@ -34,6 +34,7 @@ import {
   DollarSign,
 } from 'lucide-react';
 import { PayslipModal } from '../components/staff/PayslipModal';
+import { StaffAttendanceDetailModal } from '../components/staff/StaffAttendanceDetailModal';
 
 export const StaffPage: React.FC = () => {
   const { showToast } = useToast();
@@ -47,6 +48,9 @@ export const StaffPage: React.FC = () => {
   const [reportData, setReportData] = useState<any>(null);
   const [shopSettings, setShopSettings] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Detailed Attendance Log Modal State
+  const [selectedDetailStaff, setSelectedDetailStaff] = useState<any | null>(null);
 
   // Payslip Modal State
   const [isPayslipOpen, setIsPayslipOpen] = useState(false);
@@ -481,8 +485,17 @@ export const StaffPage: React.FC = () => {
                     return (
                       <tr key={staff._id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-all">
                         <td className="py-3 px-3">
-                          <p className="font-extrabold text-slate-900 dark:text-white">{staff.name}</p>
-                          {staff.mobile && <p className="text-[10px] text-slate-400">Mob: {staff.mobile}</p>}
+                          <button
+                            type="button"
+                            onClick={() => setSelectedDetailStaff(staff)}
+                            className="text-left group cursor-pointer"
+                            title="Click to view detailed day-by-day attendance log"
+                          >
+                            <p className="font-extrabold text-slate-900 dark:text-white group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors flex items-center gap-1.5">
+                              {staff.name} <Calendar className="w-3.5 h-3.5 text-brand-500 opacity-60 group-hover:opacity-100 transition-opacity" />
+                            </p>
+                            {staff.mobile && <p className="text-[10px] text-slate-400">Mob: {staff.mobile}</p>}
+                          </button>
                         </td>
                         <td className="py-3 px-3 font-semibold text-brand-600 dark:text-brand-400">
                           {staff.role || 'Staff'} {staff.assignedTable ? `• ${staff.assignedTable}` : ''}
@@ -517,17 +530,34 @@ export const StaffPage: React.FC = () => {
                           </select>
                         </td>
                         <td className="py-3 px-3 text-center">
-                          <span className="px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-black text-xs">
+                          <button
+                            type="button"
+                            onClick={() => setSelectedDetailStaff(staff)}
+                            className="px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 font-black text-xs transition-all cursor-pointer"
+                            title="Click to view day-by-day present records"
+                          >
                             {presentCount} Days
-                          </span>
+                          </button>
                         </td>
                         <td className="py-3 px-3 text-center">
-                          <span className="px-2.5 py-1 rounded-lg bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 font-black text-xs">
+                          <button
+                            type="button"
+                            onClick={() => setSelectedDetailStaff(staff)}
+                            className="px-2.5 py-1 rounded-lg bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 hover:bg-rose-100 font-black text-xs transition-all cursor-pointer"
+                            title="Click to view day-by-day absent records"
+                          >
                             {absentCount} Days
-                          </span>
+                          </button>
                         </td>
                         <td className="py-3 px-3 text-right">
                           <div className="flex items-center justify-end gap-1">
+                            <button
+                              onClick={() => setSelectedDetailStaff(staff)}
+                              className="px-2 py-1 rounded-lg bg-brand-50 dark:bg-brand-950/60 text-brand-700 dark:text-brand-300 hover:bg-brand-100 font-extrabold text-xs flex items-center gap-1 transition-all"
+                              title="View detailed daily attendance log for staff"
+                            >
+                              <Calendar className="w-3.5 h-3.5" /> Detailed Log
+                            </button>
                             <button
                               onClick={() => {
                                 setSelectedPayslipStaff(staff);
@@ -1147,6 +1177,15 @@ export const StaffPage: React.FC = () => {
         staffList={staffList}
         attendanceSummary={attendanceSummary}
         shopSettings={shopSettings}
+      />
+
+      {/* MODAL: DETAILED STAFF ATTENDANCE CALENDAR REGISTER */}
+      <StaffAttendanceDetailModal
+        isOpen={!!selectedDetailStaff}
+        onClose={() => setSelectedDetailStaff(null)}
+        staff={selectedDetailStaff}
+        attendanceList={attendanceList}
+        onAttendanceUpdated={loadData}
       />
     </div>
   );
