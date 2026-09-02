@@ -27,7 +27,7 @@ export const generateOrderNumber = async (): Promise<string> => {
     }
   });
 
-  const nextNum = maxNum > 0 ? maxNum + 1 : 412;
+  const nextNum = maxNum > 0 ? maxNum + 1 : 1;
   const currentYearSuffix = new Date().getFullYear().toString().slice(-2); // e.g. 26 for 2026
 
   return `${prefix}${nextNum}/${currentYearSuffix}`;
