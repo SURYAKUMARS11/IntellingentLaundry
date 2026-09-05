@@ -71,6 +71,7 @@ export const AccountsPage: React.FC = () => {
 
   // --- Shop Accounts (Expenses) State ---
   const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [allExpensesForSalary, setAllExpensesForSalary] = useState<Expense[]>([]);
   const [expenseSummary, setExpenseSummary] = useState({
     totalExpenseAmount: 0,
     cashExpenses: 0,
@@ -101,7 +102,7 @@ export const AccountsPage: React.FC = () => {
   const loadData = async () => {
     if (!accountsSummary) setIsLoading(true);
     try {
-      const [setRes, accRes, expRes, staffRes] = await Promise.all([
+      const [setRes, accRes, expRes, allExpRes, staffRes] = await Promise.all([
         fetchSettings(),
         fetchAccountsSummary({
           dateFrom: transDateFrom,
@@ -114,6 +115,9 @@ export const AccountsPage: React.FC = () => {
           search: expSearch,
           page: expPage,
           limit: expLimit,
+        }),
+        fetchExpenses({
+          limit: 1000,
         }),
         fetchStaffApi().catch(() => null),
       ]);
@@ -132,6 +136,10 @@ export const AccountsPage: React.FC = () => {
           setExpTotal(expRes.pagination.total);
           setExpTotalPages(expRes.pagination.pages || Math.ceil(expRes.pagination.total / expLimit) || 1);
         }
+      }
+
+      if (allExpRes && allExpRes.success) {
+        setAllExpensesForSalary(allExpRes.expenses || []);
       }
 
       if (staffRes && staffRes.success) {
@@ -901,46 +909,61 @@ export const AccountsPage: React.FC = () => {
       {/* SUB-SECTION 3: STAFF SALARY & ADVANCE ACCOUNTS LEDGER */}
       {/* ========================================================================= */}
       {activeTab === 'salary' && (() => {
-        const salaryExpensesList = expenses.filter((e) => {
+        const salaryExpensesList = allExpensesForSalary.filter((e) => {
           const cat = (e.category || '').toLowerCase();
           const desc = (e.description || '').toLowerCase();
+          const notes = (e.notes || '').toLowerCase();
+          const paidTo = (e.paidTo || '').toLowerCase();
+
           const isSalaryRelated =
             cat.includes('salary') ||
+            cat.includes('salaries') ||
             cat.includes('advance') ||
             cat.includes('wage') ||
             cat.includes('labour') ||
             desc.includes('salary') ||
-            desc.includes('advance');
+            desc.includes('advance') ||
+            desc.includes('wage') ||
+            notes.includes('salary') ||
+            notes.includes('advance');
 
           if (!isSalaryRelated) return false;
 
-          if (salaryTypeFilter === 'Staff Salary' && !(cat.includes('salary') || desc.includes('salary') || cat.includes('wage'))) return false;
-          if (salaryTypeFilter === 'Staff Advance' && !(cat.includes('advance') || desc.includes('advance'))) return false;
+          if (salaryTypeFilter === 'Staff Salary' && !(cat.includes('salary') || cat.includes('salaries') || cat.includes('wage') || desc.includes('salary') || desc.includes('wage') || notes.includes('salary'))) return false;
+          if (salaryTypeFilter === 'Staff Advance' && !(cat.includes('advance') || desc.includes('advance') || notes.includes('advance'))) return false;
 
           if (salaryStaffFilter !== 'All' && e.paidTo !== salaryStaffFilter) return false;
 
           if (salarySearch) {
             const q = salarySearch.toLowerCase();
-            const matchName = (e.paidTo || '').toLowerCase().includes(q);
-            const matchDesc = (e.description || '').toLowerCase().includes(q);
-            const matchNotes = (e.notes || '').toLowerCase().includes(q);
-            if (!matchName && !matchDesc && !matchNotes) return false;
+            const matchName = paidTo.includes(q);
+            const matchDesc = desc.includes(q);
+            const matchNotes = notes.includes(q);
+            const matchCat = cat.includes(q);
+            if (!matchName && !matchDesc && !matchNotes && !matchCat) return false;
           }
 
           return true;
         });
 
-        const totalSalaryPaid = expenses
+        const totalSalaryPaid = allExpensesForSalary
           .filter((e) => {
             const c = (e.category || '').toLowerCase();
-            return c.includes('salary') || c === 'salaries' || c.includes('wage');
+            const d = (e.description || '').toLowerCase();
+            return (
+              (c.includes('salary') || c === 'salaries' || c.includes('wage') || d.includes('salary') || d.includes('wage')) &&
+              !c.includes('advance') &&
+              !d.includes('advance')
+            );
           })
           .reduce((sum, e) => sum + Number(e.amount || 0), 0);
 
-        const totalAdvancesGiven = expenses
+        const totalAdvancesGiven = allExpensesForSalary
           .filter((e) => {
             const c = (e.category || '').toLowerCase();
-            return c.includes('advance');
+            const d = (e.description || '').toLowerCase();
+            const n = (e.notes || '').toLowerCase();
+            return c.includes('advance') || d.includes('advance') || n.includes('advance');
           })
           .reduce((sum, e) => sum + Number(e.amount || 0), 0);
 
