@@ -642,34 +642,23 @@ export const CreateOrderPage: React.FC = () => {
                     </div>
 
                     {/* Unit Price Display or Editable */}
-                    {line.isKgMode ? (
-                      <div className="flex items-center gap-1">
-                        <span className="text-slate-400 font-bold">{currencySymbol}</span>
-                        <input
-                          type="number"
-                          min="0"
-                          value={line.unitPrice}
-                          onChange={(e) => updateItemPrice(idx, Number(e.target.value))}
-                          className="w-16 px-1.5 py-1 text-center font-bold rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"
-                        />
+                    <div className="flex items-center gap-1">
+                      <span className="text-slate-400 font-bold">{currencySymbol}</span>
+                      <input
+                        type="number"
+                        min="0"
+                        value={line.unitPrice}
+                        onChange={(e) => updateItemPrice(idx, Number(e.target.value))}
+                        className="w-16 px-1.5 py-1 text-center font-bold rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"
+                      />
+                      {line.isKgMode ? (
                         <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">/Kg</span>
-                      </div>
-                    ) : line.unitPrice === 0 ? (
-                      <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 text-[10px] font-bold">
-                        In Kg Pack
-                      </span>
-                    ) : (
-                      <div className="flex items-center gap-1">
-                        <span className="text-slate-400 font-bold">{currencySymbol}</span>
-                        <input
-                          type="number"
-                          min="0"
-                          value={line.unitPrice}
-                          onChange={(e) => updateItemPrice(idx, Number(e.target.value))}
-                          className="w-16 px-1.5 py-1 text-center font-bold rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"
-                        />
-                      </div>
-                    )}
+                      ) : line.unitPrice === 0 ? (
+                        <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
+                          (Kg Pack)
+                        </span>
+                      ) : null}
+                    </div>
 
                     {/* Qty Stepper (Works for BOTH items and Kg Bulk line!) */}
                     <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 rounded-xl p-1">
@@ -717,11 +706,7 @@ export const CreateOrderPage: React.FC = () => {
                     </div>
 
                     <div className="w-16 text-right font-black text-slate-900 dark:text-white">
-                      {!line.isKgMode && line.unitPrice === 0 ? (
-                        <span className="text-slate-400 font-normal text-[11px]">-</span>
-                      ) : (
-                        `${currencySymbol}${line.subtotal}`
-                      )}
+                      {`${currencySymbol}${line.subtotal}`}
                     </div>
 
                     <button
