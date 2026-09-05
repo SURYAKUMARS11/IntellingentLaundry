@@ -28,16 +28,40 @@ export const mainServicesList = [
 ] as const;
 
 export interface KgServiceRate {
+  id?: string;
   name: string;
   ratePerKg: number;
 }
 
-export const kgServicesList: KgServiceRate[] = [
-  { name: 'Wash & Iron', ratePerKg: 120 },
-  { name: 'Express Laundry', ratePerKg: 199 },
-  { name: 'Premium Laundry', ratePerKg: 159 },
-  { name: 'Premium Express Laundry', ratePerKg: 299 },
+export const defaultKgServicesList: KgServiceRate[] = [
+  { id: 'kg-1', name: 'Wash & Iron', ratePerKg: 120 },
+  { id: 'kg-2', name: 'Express Laundry', ratePerKg: 199 },
+  { id: 'kg-3', name: 'Premium Laundry', ratePerKg: 159 },
+  { id: 'kg-4', name: 'Premium Express Laundry', ratePerKg: 299 },
 ];
+
+export const getKgServicesList = (): KgServiceRate[] => {
+  try {
+    const saved = localStorage.getItem('kgServicesList');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch (e) {
+    console.error('Failed to parse kgServicesList from localStorage', e);
+  }
+  return defaultKgServicesList;
+};
+
+export const saveKgServicesList = (list: KgServiceRate[]): void => {
+  try {
+    localStorage.setItem('kgServicesList', JSON.stringify(list));
+  } catch (e) {
+    console.error('Failed to save kgServicesList to localStorage', e);
+  }
+};
+
+export const kgServicesList: KgServiceRate[] = getKgServicesList();
 
 /**
  * Dynamic Service-Based Pricing Calculator
