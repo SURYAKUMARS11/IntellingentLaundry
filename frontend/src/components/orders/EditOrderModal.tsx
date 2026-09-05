@@ -1,14 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Order, OrderStatus, Setting } from '../../types';
 import { updateOrderApi } from '../../services/api';
-import { X, Save, Edit, RefreshCw, Calendar, DollarSign, Tag, FileText, CheckCircle } from 'lucide-react';
+import { X, Save, Edit, RefreshCw, Calendar, Plus } from 'lucide-react';
 
 interface EditOrderModalProps {
   order: Order;
   setting?: Setting;
   isOpen: boolean;
   onClose: () => void;
-  onSave: () => void;
+  onSave: (updatedOrder?: Order) => void;
 }
 
 export const EditOrderModal: React.FC<EditOrderModalProps> = ({
@@ -22,6 +22,22 @@ export const EditOrderModal: React.FC<EditOrderModalProps> = ({
 
   const currencySymbol = setting?.currencySymbol || '₹';
 
+  const mapInitialItems = (orderItems: any[]) =>
+    (orderItems || []).map((item) => {
+      const unitP = item.unitPrice !== undefined ? Number(item.unitPrice) : Number(item.price || 0);
+      const qty = Number(item.quantity) || 1;
+      const sub = item.subtotal !== undefined ? Number(item.subtotal) : unitP * qty;
+      return {
+        ...item,
+        itemName: item.itemName || item.name || item.garmentName || 'Item',
+        serviceName: item.serviceName || 'Wash & Iron',
+        quantity: qty,
+        unitPrice: unitP,
+        price: unitP,
+        subtotal: sub,
+      };
+    });
+
   const [status, setStatus] = useState<OrderStatus>(order.status);
   const [paymentStatus, setPaymentStatus] = useState<any>(order.paymentStatus);
   const [paymentMethod, setPaymentMethod] = useState<string>(order.paymentMethod || 'Cash');
@@ -33,9 +49,26 @@ export const EditOrderModal: React.FC<EditOrderModalProps> = ({
       : new Date().toISOString().slice(0, 10)
   );
   const [notes, setNotes] = useState<string>(order.notes || '');
-  const [items, setItems] = useState<any[]>(order.items || []);
+  const [items, setItems] = useState<any[]>(() => mapInitialItems(order.items));
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+
+  useEffect(() => {
+    if (order) {
+      setStatus(order.status);
+      setPaymentStatus(order.paymentStatus);
+      setPaymentMethod(order.paymentMethod || 'Cash');
+      setAdvancePaid(order.advancePaid || 0);
+      setDiscount(order.discount || 0);
+      setExpectedDeliveryDate(
+        order.expectedDeliveryDate
+          ? new Date(order.expectedDeliveryDate).toISOString().slice(0, 10)
+          : new Date().toISOString().slice(0, 10)
+      );
+      setNotes(order.notes || '');
+      setItems(mapInitialItems(order.items));
+    }
+  }, [order]);
 
   const statusOptions: OrderStatus[] = [
     'Received',
@@ -50,18 +83,33 @@ export const EditOrderModal: React.FC<EditOrderModalProps> = ({
 
   // Math calculations
   const subtotal = items.reduce(
-    (sum, item) => sum + (Number(item.subtotal) || Number(item.price || 0) * Number(item.quantity || 1)),
+    (sum, item) => sum + (Number(item.subtotal) !== undefined ? Number(item.subtotal) : Number(item.unitPrice || 0) * Number(item.quantity || 1)),
     0
   );
   const totalAmount = Math.max(0, subtotal - Number(discount || 0));
   const remainingBalance = Math.max(0, totalAmount - Number(advancePaid || 0));
+
+  const handleItemNameChange = (index: number, name: string) => {
+    const updated = [...items];
+    updated[index] = { ...updated[index], itemName: name, name };
+    setItems(updated);
+  };
+
+  const handleServiceNameChange = (index: number, sName: string) => {
+    const updated = [...items];
+    updated[index] = { ...updated[index], serviceName: sName };
+    setItems(updated);
+  };
 
   const handleItemQuantityChange = (index: number, newQty: number) => {
     const qty = Math.max(1, newQty);
     const updated = [...items];
     const item = { ...updated[index] };
     item.quantity = qty;
-    item.subtotal = (Number(item.price) || 0) * qty;
+    const unitP = item.unitPrice !== undefined ? Number(item.unitPrice) : Number(item.price || 0);
+    item.unitPrice = unitP;
+    item.price = unitP;
+    item.subtotal = unitP * qty;
     updated[index] = item;
     setItems(updated);
   };
@@ -70,10 +118,40 @@ export const EditOrderModal: React.FC<EditOrderModalProps> = ({
     const price = Math.max(0, newPrice);
     const updated = [...items];
     const item = { ...updated[index] };
+    item.unitPrice = price;
     item.price = price;
     item.subtotal = price * (Number(item.quantity) || 1);
     updated[index] = item;
     setItems(updated);
+  };
+
+  const handleItemSubtotalChange = (index: number, newSub: number) => {
+    const sub = Math.max(0, newSub);
+    const updated = [...items];
+    const item = { ...updated[index] };
+    const qty = Number(item.quantity) || 1;
+    const unitP = Math.round(sub / qty);
+    item.subtotal = sub;
+    item.unitPrice = unitP;
+    item.price = unitP;
+    updated[index] = item;
+    setItems(updated);
+  };
+
+  const handleAddItem = () => {
+    setItems((prev) => [
+      ...prev,
+      {
+        itemId: `item-${Date.now()}`,
+        itemName: 'New Garment / Service',
+        serviceId: 'service',
+        serviceName: 'Wash & Iron',
+        quantity: 1,
+        unitPrice: 0,
+        price: 0,
+        subtotal: 0,
+      },
+    ]);
   };
 
   const handleRemoveItem = (index: number) => {
@@ -98,6 +176,22 @@ export const EditOrderModal: React.FC<EditOrderModalProps> = ({
         finalPayStatus = 'Partially Paid';
       }
 
+      const normalizedItems = items.map((item) => {
+        const qty = Number(item.quantity) || 1;
+        const unitP = item.unitPrice !== undefined ? Number(item.unitPrice) : Number(item.price || 0);
+        const sub = item.subtotal !== undefined ? Number(item.subtotal) : unitP * qty;
+        return {
+          itemId: item.itemId || `item-${Date.now()}`,
+          itemName: item.itemName || item.name || 'Item',
+          serviceId: item.serviceId || 'service',
+          serviceName: item.serviceName || 'Wash & Iron',
+          quantity: qty,
+          unitPrice: unitP,
+          price: unitP,
+          subtotal: sub,
+        };
+      });
+
       const updatePayload = {
         status,
         paymentStatus: finalPayStatus,
@@ -106,12 +200,12 @@ export const EditOrderModal: React.FC<EditOrderModalProps> = ({
         discount: Number(discount),
         expectedDeliveryDate,
         notes,
-        items,
+        items: normalizedItems,
       };
 
       const res = await updateOrderApi(order._id, updatePayload);
       if (res.success) {
-        onSave();
+        onSave(res.order);
         onClose();
       } else {
         setErrorMsg(res.message || 'Failed to update order');
@@ -258,9 +352,19 @@ export const EditOrderModal: React.FC<EditOrderModalProps> = ({
 
           {/* Items List Table */}
           <div className="space-y-2 border-t border-slate-200 dark:border-slate-800 pt-4">
-            <h3 className="font-extrabold text-xs text-slate-900 dark:text-white flex items-center justify-between">
-              <span>Order Items ({items.length})</span>
-            </h3>
+            <div className="flex items-center justify-between">
+              <h3 className="font-extrabold text-xs text-slate-900 dark:text-white">
+                Order Items ({items.length})
+              </h3>
+              <button
+                type="button"
+                onClick={handleAddItem}
+                className="px-2.5 py-1 rounded-xl bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800 font-bold text-[11px] flex items-center gap-1 hover:bg-amber-100 dark:hover:bg-amber-900/50 transition-colors"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Add Item</span>
+              </button>
+            </div>
 
             <div className="rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
               <table className="w-full text-left text-xs">
@@ -268,17 +372,29 @@ export const EditOrderModal: React.FC<EditOrderModalProps> = ({
                   <tr>
                     <th className="py-2.5 px-3">Item / Service</th>
                     <th className="py-2.5 px-3 text-center">Qty</th>
-                    <th className="py-2.5 px-3 text-right">Price</th>
-                    <th className="py-2.5 px-3 text-right">Subtotal</th>
-                    <th className="py-2.5 px-3 text-center">Remove</th>
+                    <th className="py-2.5 px-3 text-right">Price ({currencySymbol})</th>
+                    <th className="py-2.5 px-3 text-right">Subtotal ({currencySymbol})</th>
+                    <th className="py-2.5 px-3 text-center">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-slate-800 dark:text-slate-200 font-semibold">
                   {items.map((item, idx) => (
                     <tr key={idx}>
                       <td className="py-2 px-3">
-                        <p className="font-bold text-slate-900 dark:text-white">{item.garmentName || item.serviceName || 'Item'}</p>
-                        <p className="text-[10px] text-slate-400">{item.serviceName}</p>
+                        <input
+                          type="text"
+                          value={item.itemName || ''}
+                          onChange={(e) => handleItemNameChange(idx, e.target.value)}
+                          className="w-full px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-bold text-xs outline-none focus:ring-1 focus:ring-amber-500 text-slate-900 dark:text-white"
+                          placeholder="Item Name (e.g. T-Shirt)"
+                        />
+                        <input
+                          type="text"
+                          value={item.serviceName || ''}
+                          onChange={(e) => handleServiceNameChange(idx, e.target.value)}
+                          className="w-full mt-1 px-2 py-0.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-[10px] font-semibold text-brand-600 dark:text-brand-400 outline-none focus:ring-1 focus:ring-amber-500"
+                          placeholder="Service (e.g. Wash & Iron)"
+                        />
                       </td>
                       <td className="py-2 px-3 text-center">
                         <input
@@ -286,26 +402,33 @@ export const EditOrderModal: React.FC<EditOrderModalProps> = ({
                           min="1"
                           value={item.quantity}
                           onChange={(e) => handleItemQuantityChange(idx, Number(e.target.value))}
-                          className="w-14 text-center px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-bold outline-none"
+                          className="w-14 text-center px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-bold outline-none text-slate-900 dark:text-white"
                         />
                       </td>
                       <td className="py-2 px-3 text-right">
                         <input
                           type="number"
                           min="0"
-                          value={item.price}
+                          value={item.unitPrice !== undefined ? item.unitPrice : item.price || 0}
                           onChange={(e) => handleItemPriceChange(idx, Number(e.target.value))}
-                          className="w-20 text-right px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-bold outline-none"
+                          className="w-20 text-right px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-bold outline-none text-slate-900 dark:text-white"
                         />
                       </td>
-                      <td className="py-2 px-3 text-right font-bold text-slate-900 dark:text-white">
-                        {currencySymbol}{item.subtotal || item.price * item.quantity}
+                      <td className="py-2 px-3 text-right">
+                        <input
+                          type="number"
+                          min="0"
+                          value={item.subtotal}
+                          onChange={(e) => handleItemSubtotalChange(idx, Number(e.target.value))}
+                          className="w-20 text-right px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-black outline-none text-slate-900 dark:text-white"
+                        />
                       </td>
                       <td className="py-2 px-3 text-center">
                         <button
                           type="button"
                           onClick={() => handleRemoveItem(idx)}
-                          className="p-1 rounded-lg text-slate-400 hover:text-rose-500"
+                          className="p-1 rounded-lg text-slate-400 hover:text-rose-500 transition-colors"
+                          title="Remove item"
                         >
                           <X className="w-4 h-4" />
                         </button>
