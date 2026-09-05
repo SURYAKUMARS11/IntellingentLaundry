@@ -274,20 +274,20 @@ export const CreateOrderPage: React.FC = () => {
       const updated = [...prev];
       const item = updated[index];
       if (item.isKgMode) {
-        const rateNum = selectedKgService.ratePerKg || item.unitPrice || 120;
+        const rateNum = item.unitPrice > 0 ? item.unitPrice : selectedKgService.ratePerKg;
         const newSubtotal = Math.round(newQty * rateNum);
         updated[index] = {
           ...item,
           quantity: newQty,
           unitPrice: rateNum,
           subtotal: newSubtotal,
-          itemName: `Bulk Laundry - ${selectedKgService.name} (${newQty} Kg @ ${currencySymbol}${rateNum}/Kg)`,
+          itemName: `Bulk Laundry - ${item.serviceName} (${newQty} Kg @ ${currencySymbol}${rateNum}/Kg)`,
         };
       } else {
         updated[index] = {
           ...item,
           quantity: newQty,
-          subtotal: newQty * item.unitPrice,
+          subtotal: Math.round(newQty * item.unitPrice),
         };
       }
       return updated;
@@ -297,8 +297,24 @@ export const CreateOrderPage: React.FC = () => {
   const updateItemPrice = (index: number, newPrice: number) => {
     setOrderItems((prev) => {
       const updated = [...prev];
-      updated[index].unitPrice = Math.max(0, newPrice);
-      updated[index].subtotal = updated[index].quantity * Math.max(0, newPrice);
+      const item = updated[index];
+      const validPrice = Math.max(0, newPrice);
+      const sub = Math.round(item.quantity * validPrice);
+
+      if (item.isKgMode) {
+        updated[index] = {
+          ...item,
+          unitPrice: validPrice,
+          subtotal: sub,
+          itemName: `Bulk Laundry - ${item.serviceName} (${item.quantity} Kg @ ${currencySymbol}${validPrice}/Kg)`,
+        };
+      } else {
+        updated[index] = {
+          ...item,
+          unitPrice: validPrice,
+          subtotal: sub,
+        };
+      }
       return updated;
     });
   };
@@ -627,9 +643,16 @@ export const CreateOrderPage: React.FC = () => {
 
                     {/* Unit Price Display or Editable */}
                     {line.isKgMode ? (
-                      <div className="flex items-center gap-1 font-bold text-brand-600 dark:text-brand-400">
-                        <span className="text-slate-400">{currencySymbol}</span>
-                        <span className="font-black text-xs">{selectedKgService.ratePerKg}/Kg</span>
+                      <div className="flex items-center gap-1">
+                        <span className="text-slate-400 font-bold">{currencySymbol}</span>
+                        <input
+                          type="number"
+                          min="0"
+                          value={line.unitPrice}
+                          onChange={(e) => updateItemPrice(idx, Number(e.target.value))}
+                          className="w-16 px-1.5 py-1 text-center font-bold rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"
+                        />
+                        <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">/Kg</span>
                       </div>
                     ) : line.unitPrice === 0 ? (
                       <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 text-[10px] font-bold">
@@ -652,17 +675,41 @@ export const CreateOrderPage: React.FC = () => {
                     <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 rounded-xl p-1">
                       <button
                         type="button"
-                        onClick={() => updateItemQty(idx, line.quantity - 1)}
+                        onClick={() =>
+                          updateItemQty(
+                            idx,
+                            line.isKgMode ? Number(Math.max(0, line.quantity - 0.5).toFixed(1)) : line.quantity - 1
+                          )
+                        }
                         className="w-6 h-6 rounded-lg bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold flex items-center justify-center hover:bg-slate-200 active:scale-95 transition-all"
                       >
                         -
                       </button>
-                      <span className="min-w-6 px-1 text-center font-bold text-slate-900 dark:text-white">
-                        {line.quantity}{line.isKgMode ? ' Kg' : ''}
-                      </span>
+                      {line.isKgMode ? (
+                        <div className="flex items-center">
+                          <input
+                            type="number"
+                            step="0.1"
+                            min="0.1"
+                            value={line.quantity}
+                            onChange={(e) => updateItemQty(idx, Number(e.target.value))}
+                            className="w-12 text-center font-bold bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded px-1 py-0.5 border border-slate-200 dark:border-slate-600 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                          />
+                          <span className="text-[10px] font-bold text-slate-500 ml-1 pr-1">Kg</span>
+                        </div>
+                      ) : (
+                        <span className="min-w-6 px-1 text-center font-bold text-slate-900 dark:text-white">
+                          {line.quantity}
+                        </span>
+                      )}
                       <button
                         type="button"
-                        onClick={() => updateItemQty(idx, line.quantity + 1)}
+                        onClick={() =>
+                          updateItemQty(
+                            idx,
+                            line.isKgMode ? Number((line.quantity + 0.5).toFixed(1)) : line.quantity + 1
+                          )
+                        }
                         className="w-6 h-6 rounded-lg bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold flex items-center justify-center hover:bg-slate-200 active:scale-95 transition-all"
                       >
                         +
