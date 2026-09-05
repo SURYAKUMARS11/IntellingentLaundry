@@ -291,10 +291,18 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ order, setting, onClos
                       </td>
                       <td className="py-2.5 px-3 text-center font-bold text-slate-800">{item.quantity}</td>
                       <td className="py-2.5 px-3 text-right text-slate-700 font-medium">
-                        {currencySymbol}{item.unitPrice}
+                        {item.unitPrice === 0 ? (
+                          <span className="text-emerald-700 font-bold text-[11px]">In Kg Pack</span>
+                        ) : (
+                          `${currencySymbol}${item.unitPrice}`
+                        )}
                       </td>
                       <td className="py-2.5 px-3 text-right font-extrabold text-slate-900">
-                        {currencySymbol}{item.subtotal}
+                        {item.subtotal === 0 ? (
+                          <span className="text-slate-400 font-normal text-[11px]">-</span>
+                        ) : (
+                          `${currencySymbol}${item.subtotal}`
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -310,11 +318,13 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ order, setting, onClos
                     <p className="font-bold text-slate-900">{item.itemName}</p>
                     <p className="text-[11px] text-brand-600 font-semibold">{item.serviceName}</p>
                     <p className="text-[11px] text-slate-400 mt-0.5">
-                      {item.quantity} × {currencySymbol}{item.unitPrice}
+                      {item.quantity} {item.unitPrice === 0 ? '(In Kg Pack)' : `× ${currencySymbol}${item.unitPrice}`}
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="font-extrabold text-sm text-slate-900">{currencySymbol}{item.subtotal}</p>
+                    <p className="font-extrabold text-sm text-slate-900">
+                      {item.subtotal === 0 ? '-' : `${currencySymbol}${item.subtotal}`}
+                    </p>
                   </div>
                 </div>
               ))}
