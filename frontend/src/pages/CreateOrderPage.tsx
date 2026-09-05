@@ -159,35 +159,112 @@ export const CreateOrderPage: React.FC = () => {
 
   const currencySymbol = setting?.currencySymbol || '₹';
 
+  // Sync Kg Bulk Charge Line when kgWeight, selectedKgService, or orderMode changes
+  useEffect(() => {
+    if (orderMode === 'kg') {
+      const weightNum = parseFloat(kgWeight) || 1;
+      const rateNum = selectedKgService.ratePerKg;
+      const itemSubtotal = Math.round(weightNum * rateNum);
+
+      setOrderItems((prev) => {
+        const kgIdx = prev.findIndex((line) => line.isKgMode);
+        if (kgIdx !== -1) {
+          const updated = [...prev];
+          updated[kgIdx] = {
+            ...updated[kgIdx],
+            itemName: `Bulk Laundry - ${selectedKgService.name} (${weightNum} Kg @ ${currencySymbol}${rateNum}/Kg)`,
+            serviceName: selectedKgService.name,
+            unitPrice: itemSubtotal,
+            subtotal: itemSubtotal,
+          };
+          return updated;
+        }
+        return prev;
+      });
+    }
+  }, [kgWeight, selectedKgService, orderMode, currencySymbol]);
+
   // Add Item to Cart (Clicking Card in Quantity or Kg mode)
   const handleCardClick = (item: POSCatalogItem) => {
-    const serviceName = orderMode === 'quantity' ? selectedServiceCategory : selectedKgService.name;
-    const price = orderMode === 'quantity' ? getItemPriceForService(item, selectedServiceCategory) : selectedKgService.ratePerKg;
+    if (orderMode === 'quantity') {
+      const serviceName = selectedServiceCategory;
+      const price = getItemPriceForService(item, selectedServiceCategory);
 
-    setOrderItems((prev) => {
-      const existingIdx = prev.findIndex(
-        (line) => line.itemId === item.id && line.serviceName === serviceName
-      );
-      if (existingIdx !== -1) {
-        const updated = [...prev];
-        const newQty = updated[existingIdx].quantity + 1;
-        updated[existingIdx].quantity = newQty;
-        updated[existingIdx].subtotal = newQty * updated[existingIdx].unitPrice;
-        return updated;
-      }
-      return [
-        ...prev,
-        {
+      setOrderItems((prev) => {
+        const existingIdx = prev.findIndex(
+          (line) => line.itemId === item.id && line.serviceName === serviceName && !line.isKgMode
+        );
+        if (existingIdx !== -1) {
+          const updated = [...prev];
+          const newQty = updated[existingIdx].quantity + 1;
+          updated[existingIdx].quantity = newQty;
+          updated[existingIdx].subtotal = newQty * updated[existingIdx].unitPrice;
+          return updated;
+        }
+        return [
+          ...prev,
+          {
+            itemId: item.id,
+            itemName: item.name,
+            serviceId: serviceName.toLowerCase().replace(/\s+/g, '-'),
+            serviceName,
+            quantity: 1,
+            unitPrice: price,
+            subtotal: price,
+          },
+        ];
+      });
+    } else {
+      // ORDER MODE === 'kg'
+      const serviceName = selectedKgService.name;
+
+      setOrderItems((prev) => {
+        let updated = [...prev];
+        // Ensure Bulk Kg charge line exists
+        const hasKgBulkLine = updated.some((line) => line.isKgMode);
+        if (!hasKgBulkLine) {
+          const weightNum = parseFloat(kgWeight) || 1;
+          const rateNum = selectedKgService.ratePerKg;
+          const itemSubtotal = Math.round(weightNum * rateNum);
+          updated.unshift({
+            itemId: `kg-bulk-${Date.now()}`,
+            itemName: `Bulk Laundry - ${selectedKgService.name} (${weightNum} Kg @ ${currencySymbol}${rateNum}/Kg)`,
+            serviceId: 'service-kg',
+            serviceName: selectedKgService.name,
+            quantity: 1,
+            unitPrice: itemSubtotal,
+            subtotal: itemSubtotal,
+            isKgMode: true,
+          });
+        }
+
+        const existingIdx = updated.findIndex(
+          (line) => line.itemId === item.id && !line.isKgMode
+        );
+
+        if (existingIdx !== -1) {
+          const newQty = updated[existingIdx].quantity + 1;
+          updated[existingIdx] = {
+            ...updated[existingIdx],
+            quantity: newQty,
+            subtotal: 0,
+          };
+          return updated;
+        }
+
+        updated.push({
           itemId: item.id,
           itemName: item.name,
           serviceId: serviceName.toLowerCase().replace(/\s+/g, '-'),
-          serviceName,
+          serviceName: `${serviceName} (Kg Pack)`,
           quantity: 1,
-          unitPrice: price,
-          subtotal: price,
-        },
-      ];
-    });
+          unitPrice: 0,
+          subtotal: 0,
+        });
+
+        return updated;
+      });
+    }
   };
 
   // Add Direct Kg Weight Line Item to Cart
@@ -196,19 +273,33 @@ export const CreateOrderPage: React.FC = () => {
     const rateNum = selectedKgService.ratePerKg;
     const itemSubtotal = Math.round(weightNum * rateNum);
 
-    setOrderItems((prev) => [
-      ...prev,
-      {
-        itemId: `kg-${Date.now()}`,
-        itemName: `Bulk Laundry (${weightNum} Kg @ ${currencySymbol}${rateNum}/Kg)`,
-        serviceId: 'service-kg',
-        serviceName: selectedKgService.name,
-        quantity: 1,
-        unitPrice: itemSubtotal,
-        subtotal: itemSubtotal,
-        isKgMode: true,
-      },
-    ]);
+    setOrderItems((prev) => {
+      const kgIdx = prev.findIndex((line) => line.isKgMode);
+      if (kgIdx !== -1) {
+        const updated = [...prev];
+        updated[kgIdx] = {
+          ...updated[kgIdx],
+          itemName: `Bulk Laundry - ${selectedKgService.name} (${weightNum} Kg @ ${currencySymbol}${rateNum}/Kg)`,
+          serviceName: selectedKgService.name,
+          unitPrice: itemSubtotal,
+          subtotal: itemSubtotal,
+        };
+        return updated;
+      }
+      return [
+        {
+          itemId: `kg-bulk-${Date.now()}`,
+          itemName: `Bulk Laundry - ${selectedKgService.name} (${weightNum} Kg @ ${currencySymbol}${rateNum}/Kg)`,
+          serviceId: 'service-kg',
+          serviceName: selectedKgService.name,
+          quantity: 1,
+          unitPrice: itemSubtotal,
+          subtotal: itemSubtotal,
+          isKgMode: true,
+        },
+        ...prev,
+      ];
+    });
   };
 
   const updateItemQty = (index: number, newQty: number) => {
@@ -555,17 +646,23 @@ export const CreateOrderPage: React.FC = () => {
                       <p className="text-[11px] font-semibold text-brand-600 dark:text-brand-400">{line.serviceName}</p>
                     </div>
 
-                    {/* Unit Price Editable */}
-                    <div className="flex items-center gap-1">
-                      <span className="text-slate-400 font-bold">{currencySymbol}</span>
-                      <input
-                        type="number"
-                        min="0"
-                        value={line.unitPrice}
-                        onChange={(e) => updateItemPrice(idx, Number(e.target.value))}
-                        className="w-16 px-1.5 py-1 text-center font-bold rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"
-                      />
-                    </div>
+                    {/* Unit Price Editable or In Kg Pack Badge */}
+                    {!line.isKgMode && line.unitPrice === 0 ? (
+                      <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 text-[10px] font-bold">
+                        In Kg Pack
+                      </span>
+                    ) : (
+                      <div className="flex items-center gap-1">
+                        <span className="text-slate-400 font-bold">{currencySymbol}</span>
+                        <input
+                          type="number"
+                          min="0"
+                          value={line.unitPrice}
+                          onChange={(e) => updateItemPrice(idx, Number(e.target.value))}
+                          className="w-16 px-1.5 py-1 text-center font-bold rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"
+                        />
+                      </div>
+                    )}
 
                     {/* Qty Stepper */}
                     {!line.isKgMode && (
@@ -591,7 +688,11 @@ export const CreateOrderPage: React.FC = () => {
                     )}
 
                     <div className="w-16 text-right font-black text-slate-900 dark:text-white">
-                      {currencySymbol}{line.subtotal}
+                      {!line.isKgMode && line.unitPrice === 0 ? (
+                        <span className="text-slate-400 font-normal text-[11px]">-</span>
+                      ) : (
+                        `${currencySymbol}${line.subtotal}`
+                      )}
                     </div>
 
                     <button
@@ -1054,11 +1155,16 @@ export const CreateOrderPage: React.FC = () => {
                           </div>
 
                           <div className="mt-2.5 flex items-center justify-between">
-                            <span className="font-black text-brand-600 dark:text-brand-400 group-hover:text-white text-xs">
-                              {currencySymbol}{selectedKgService.ratePerKg}/Kg
-                            </span>
+                            <div>
+                              <span className="font-black text-brand-600 dark:text-brand-400 group-hover:text-white text-xs">
+                                {currencySymbol}{getItemPriceForService(item, 'Wash and Fold')}
+                              </span>
+                              <span className="text-[9px] text-slate-400 group-hover:text-brand-100 block font-medium">
+                                Orig. Price
+                              </span>
+                            </div>
                             <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-lg bg-brand-100 text-brand-700 dark:bg-brand-950 dark:text-brand-300 group-hover:bg-white/20 group-hover:text-white">
-                              Select
+                              + Add
                             </span>
                           </div>
                         </div>
