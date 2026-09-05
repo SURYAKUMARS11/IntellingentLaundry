@@ -1162,37 +1162,56 @@ export const AccountsPage: React.FC = () => {
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                   Expense Category *
                 </label>
-                <div className="flex gap-1.5 mb-1.5 overflow-x-auto pb-1">
-                  {['Staff Salary', 'Staff Advance', 'Shop Rent', 'Electricity Bill', 'Tea & Refreshments'].map((cat) => (
-                    <button
-                      key={cat}
-                      type="button"
-                      onClick={() =>
-                        setExpFormData({
-                          ...expFormData,
-                          category: cat,
-                          description: expFormData.paidTo ? `${cat} - ${expFormData.paidTo}` : cat,
-                        })
-                      }
-                      className={`px-2.5 py-1 rounded-xl text-[10px] font-bold shrink-0 transition-all ${
-                        expFormData.category === cat
-                          ? 'bg-brand-600 text-white shadow-xs'
-                          : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
-                      }`}
-                    >
-                      {cat}
-                    </button>
-                  ))}
-                </div>
+                {(() => {
+                  const isSalaryContext =
+                    activeTab === 'salary' ||
+                    expFormData.category.toLowerCase().includes('salary') ||
+                    expFormData.category.toLowerCase().includes('advance');
 
-                <input
-                  type="text"
-                  required
-                  value={expFormData.category}
-                  onChange={(e) => setExpFormData({ ...expFormData, category: e.target.value })}
-                  placeholder="Enter category (e.g. Staff Salary, Staff Advance, Rent, EB Bill)"
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-brand-500 font-bold"
-                />
+                  const categoryChips = isSalaryContext
+                    ? ['Staff Salary', 'Staff Advance']
+                    : ['Shop Rent', 'Electricity Bill', 'Detergent & Solvents', 'Tea & Refreshments'];
+
+                  return (
+                    <>
+                      <div className="flex gap-1.5 mb-1.5 overflow-x-auto pb-1">
+                        {categoryChips.map((cat) => (
+                          <button
+                            key={cat}
+                            type="button"
+                            onClick={() =>
+                              setExpFormData({
+                                ...expFormData,
+                                category: cat,
+                                description: expFormData.paidTo ? `${cat} - ${expFormData.paidTo}` : cat,
+                              })
+                            }
+                            className={`px-2.5 py-1 rounded-xl text-[10px] font-bold shrink-0 transition-all ${
+                              expFormData.category === cat
+                                ? 'bg-brand-600 text-white shadow-xs'
+                                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
+                            }`}
+                          >
+                            {cat}
+                          </button>
+                        ))}
+                      </div>
+
+                      <input
+                        type="text"
+                        required
+                        value={expFormData.category}
+                        onChange={(e) => setExpFormData({ ...expFormData, category: e.target.value })}
+                        placeholder={
+                          isSalaryContext
+                            ? 'Enter category (e.g. Staff Salary, Staff Advance)'
+                            : 'Enter category (e.g. Shop Rent, Electricity Bill)'
+                        }
+                        className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-brand-500 font-bold"
+                      />
+                    </>
+                  );
+                })()}
               </div>
 
               {/* Staff Member Selection (for Salary/Advance or Paid To) */}
