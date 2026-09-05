@@ -219,19 +219,19 @@ export const EditOrderModal: React.FC<EditOrderModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden my-auto max-h-[92vh] flex flex-col">
+    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl sm:rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden my-auto max-h-[95vh] sm:max-h-[92vh] flex flex-col">
         {/* Header Bar */}
-        <div className="p-4 sm:p-5 bg-slate-100 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-2.5">
-            <div className="p-2.5 rounded-2xl bg-amber-100 dark:bg-amber-950 text-amber-600">
-              <Edit className="w-5 h-5" />
+        <div className="p-3.5 sm:p-5 bg-slate-100 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-2 sm:gap-2.5">
+            <div className="p-2 sm:p-2.5 rounded-xl sm:rounded-2xl bg-amber-100 dark:bg-amber-950 text-amber-600">
+              <Edit className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
             <div>
-              <h2 className="text-base sm:text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+              <h2 className="text-sm sm:text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
                 Edit Order #{order.orderNumber}
               </h2>
-              <p className="text-xs text-slate-500 font-semibold">
+              <p className="text-[11px] sm:text-xs text-slate-500 font-semibold truncate max-w-[200px] sm:max-w-none">
                 Customer: {order.customerSnapshot?.name || 'Customer'} (+91 {order.customerSnapshot?.mobile})
               </p>
             </div>
@@ -239,14 +239,14 @@ export const EditOrderModal: React.FC<EditOrderModalProps> = ({
 
           <button
             onClick={onClose}
-            className="p-2 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 transition-colors"
+            className="p-1.5 sm:p-2 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Modal Form Content */}
-        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-5 overflow-y-auto flex-1 text-xs">
+        <form onSubmit={handleSubmit} className="p-3.5 sm:p-6 space-y-4 sm:space-y-5 overflow-y-auto flex-1 text-xs">
           {errorMsg && (
             <div className="p-3 rounded-2xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 text-rose-600 font-bold text-xs">
               {errorMsg}
@@ -254,7 +254,7 @@ export const EditOrderModal: React.FC<EditOrderModalProps> = ({
           )}
 
           {/* Status & Delivery Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div>
               <label className="block text-[11px] font-bold text-slate-500 mb-1">Order Progress Status</label>
               <select
@@ -285,7 +285,7 @@ export const EditOrderModal: React.FC<EditOrderModalProps> = ({
           </div>
 
           {/* Payment Status & Method Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3">
             <div>
               <label className="block text-[11px] font-bold text-slate-500 mb-1">Payment Status</label>
               <select
@@ -326,7 +326,7 @@ export const EditOrderModal: React.FC<EditOrderModalProps> = ({
           </div>
 
           {/* Discount & Notes */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div>
               <label className="block text-[11px] font-bold text-slate-500 mb-1">Flat Discount ({currencySymbol})</label>
               <input
@@ -350,8 +350,8 @@ export const EditOrderModal: React.FC<EditOrderModalProps> = ({
             </div>
           </div>
 
-          {/* Items List Table */}
-          <div className="space-y-2 border-t border-slate-200 dark:border-slate-800 pt-4">
+          {/* Items List Section */}
+          <div className="space-y-3 border-t border-slate-200 dark:border-slate-800 pt-4">
             <div className="flex items-center justify-between">
               <h3 className="font-extrabold text-xs text-slate-900 dark:text-white">
                 Order Items ({items.length})
@@ -366,7 +366,8 @@ export const EditOrderModal: React.FC<EditOrderModalProps> = ({
               </button>
             </div>
 
-            <div className="rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+            {/* Desktop / Tablet Table View (hidden sm:block) */}
+            <div className="hidden sm:block rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
               <table className="w-full text-left text-xs">
                 <thead className="bg-slate-100 dark:bg-slate-800 text-slate-500 font-bold">
                   <tr>
@@ -438,10 +439,79 @@ export const EditOrderModal: React.FC<EditOrderModalProps> = ({
                 </tbody>
               </table>
             </div>
+
+            {/* Mobile Card Stack View (block sm:hidden) */}
+            <div className="space-y-3 sm:hidden">
+              {items.map((item, idx) => (
+                <div
+                  key={idx}
+                  className="p-3 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40 space-y-2.5"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <input
+                      type="text"
+                      value={item.itemName || ''}
+                      onChange={(e) => handleItemNameChange(idx, e.target.value)}
+                      className="flex-1 px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-bold text-xs outline-none focus:ring-2 focus:ring-amber-500 text-slate-900 dark:text-white"
+                      placeholder="Item Name (e.g. T-Shirt)"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveItem(idx)}
+                      className="p-1.5 rounded-xl bg-rose-50 dark:bg-rose-950/50 text-rose-500 hover:bg-rose-100 transition-colors shrink-0"
+                      title="Remove item"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  <input
+                    type="text"
+                    value={item.serviceName || ''}
+                    onChange={(e) => handleServiceNameChange(idx, e.target.value)}
+                    className="w-full px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-[11px] font-semibold text-brand-600 dark:text-brand-400 outline-none focus:ring-2 focus:ring-amber-500"
+                    placeholder="Service (e.g. Wash & Iron)"
+                  />
+
+                  <div className="grid grid-cols-3 gap-2 pt-1 border-t border-slate-200/60 dark:border-slate-700/60">
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-400 mb-0.5 text-center">Qty</label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={item.quantity}
+                        onChange={(e) => handleItemQuantityChange(idx, Number(e.target.value))}
+                        className="w-full text-center py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-bold text-xs outline-none focus:ring-2 focus:ring-amber-500 text-slate-900 dark:text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-400 mb-0.5 text-center">Price ({currencySymbol})</label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={item.unitPrice !== undefined ? item.unitPrice : item.price || 0}
+                        onChange={(e) => handleItemPriceChange(idx, Number(e.target.value))}
+                        className="w-full text-center py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-bold text-xs outline-none focus:ring-2 focus:ring-amber-500 text-slate-900 dark:text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-400 mb-0.5 text-center">Subtotal ({currencySymbol})</label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={item.subtotal}
+                        onChange={(e) => handleItemSubtotalChange(idx, Number(e.target.value))}
+                        className="w-full text-center py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-black text-xs outline-none focus:ring-2 focus:ring-amber-500 text-slate-900 dark:text-white"
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
           {/* Totals Summary Banner */}
-          <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 flex flex-wrap items-center justify-between gap-3 text-xs">
+          <div className="p-3 sm:p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 grid grid-cols-2 sm:flex sm:flex-wrap items-center justify-between gap-2.5 sm:gap-3 text-xs">
             <div>
               <span className="text-slate-400 font-semibold">Subtotal:</span>{' '}
               <strong className="text-slate-800 dark:text-slate-200">{currencySymbol}{subtotal}</strong>
@@ -463,11 +533,11 @@ export const EditOrderModal: React.FC<EditOrderModalProps> = ({
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center justify-end gap-3 pt-2">
+          <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2.5 sm:gap-3 pt-2">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-slate-700 font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
+              className="w-full sm:w-auto px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-slate-700 font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all text-center"
             >
               Cancel
             </button>
@@ -475,7 +545,7 @@ export const EditOrderModal: React.FC<EditOrderModalProps> = ({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-6 py-2.5 rounded-2xl bg-amber-600 hover:bg-amber-700 text-white font-extrabold shadow-md shadow-amber-600/30 flex items-center gap-2 active:scale-95 transition-all disabled:opacity-50"
+              className="w-full sm:w-auto px-6 py-2.5 rounded-2xl bg-amber-600 hover:bg-amber-700 text-white font-extrabold shadow-md shadow-amber-600/30 flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-50"
             >
               {isSubmitting ? (
                 <>
