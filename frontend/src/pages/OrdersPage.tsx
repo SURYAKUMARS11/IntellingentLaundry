@@ -523,8 +523,11 @@ export const OrdersPage: React.FC = () => {
             setShowEditModal(false);
             setEditingOrder(null);
           }}
-          onSave={() => {
+          onSave={(updatedOrder?: Order) => {
             loadOrders();
+            if (updatedOrder && selectedOrder && selectedOrder._id === updatedOrder._id) {
+              setSelectedOrder(updatedOrder);
+            }
             showToast('✅ Order details updated successfully!', 'success');
           }}
         />
