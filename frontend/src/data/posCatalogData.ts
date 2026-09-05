@@ -43,9 +43,23 @@ export const kgServicesList: KgServiceRate[] = [
  * Dynamic Service-Based Pricing Calculator
  * Returns the exact unit price for a garment item depending on the selected Service Category
  */
-export const getItemPriceForService = (item: { name: string; price: number; category?: string }, serviceName: string): number => {
-  const name = item.name.toLowerCase();
-  const base = item.price && item.price > 0 ? item.price : 15;
+export const getItemPriceForService = (
+  item: { name: string; price?: number; defaultPrice?: number; category?: string; servicePrices?: Record<string, number> },
+  serviceName: string
+): number => {
+  if (item.servicePrices && typeof item.servicePrices === 'object') {
+    const customRate = (item.servicePrices as any)[serviceName] !== undefined
+      ? (item.servicePrices as any)[serviceName]
+      : typeof (item.servicePrices as any).get === 'function' ? (item.servicePrices as any).get(serviceName) : undefined;
+
+    if (customRate !== undefined && customRate !== null && !isNaN(Number(customRate)) && Number(customRate) >= 0) {
+      return Number(customRate);
+    }
+  }
+
+  const name = (item.name || '').toLowerCase();
+  const rawPrice = item.price !== undefined ? item.price : item.defaultPrice;
+  const base = rawPrice && rawPrice > 0 ? rawPrice : 15;
 
   switch (serviceName) {
     case 'Ironing':
