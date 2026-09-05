@@ -59,6 +59,8 @@ export const AccountsPage: React.FC = () => {
   const [salaryTypeFilter, setSalaryTypeFilter] = useState<'All' | 'Staff Salary' | 'Staff Advance'>('All');
   const [salaryStaffFilter, setSalaryStaffFilter] = useState<string>('All');
   const [salarySearch, setSalarySearch] = useState<string>('');
+  const [salaryPage, setSalaryPage] = useState(1);
+  const [salaryLimit, setSalaryLimit] = useState(10);
 
   // --- Order Accounts State ---
   const [accountsSummary, setAccountsSummary] = useState<AccountsSummary | null>(null);
@@ -969,6 +971,13 @@ export const AccountsPage: React.FC = () => {
 
         const totalStaffOutflow = totalSalaryPaid + totalAdvancesGiven;
 
+        const totalSalaryCount = salaryExpensesList.length;
+        const totalSalaryPages = Math.ceil(totalSalaryCount / salaryLimit) || 1;
+        const paginatedSalaryList = salaryExpensesList.slice(
+          (salaryPage - 1) * salaryLimit,
+          salaryPage * salaryLimit
+        );
+
         return (
           <div className="space-y-6">
             {/* Salary Accounts KPI Summary Cards */}
@@ -1007,7 +1016,10 @@ export const AccountsPage: React.FC = () => {
                     type="text"
                     placeholder="Search by staff name, pay period or notes..."
                     value={salarySearch}
-                    onChange={(e) => setSalarySearch(e.target.value)}
+                    onChange={(e) => {
+                      setSalarySearch(e.target.value);
+                      setSalaryPage(1);
+                    }}
                     className="w-full pl-10 pr-4 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-brand-500 font-medium"
                   />
                 </div>
@@ -1016,7 +1028,10 @@ export const AccountsPage: React.FC = () => {
                   {/* Account Type Filter */}
                   <select
                     value={salaryTypeFilter}
-                    onChange={(e) => setSalaryTypeFilter(e.target.value as any)}
+                    onChange={(e) => {
+                      setSalaryTypeFilter(e.target.value as any);
+                      setSalaryPage(1);
+                    }}
                     className="px-3 py-2 rounded-xl text-xs font-bold border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 outline-none"
                   >
                     <option value="All">All Record Types</option>
@@ -1027,7 +1042,10 @@ export const AccountsPage: React.FC = () => {
                   {/* Staff Member Filter */}
                   <select
                     value={salaryStaffFilter}
-                    onChange={(e) => setSalaryStaffFilter(e.target.value)}
+                    onChange={(e) => {
+                      setSalaryStaffFilter(e.target.value);
+                      setSalaryPage(1);
+                    }}
                     className="px-3 py-2 rounded-xl text-xs font-bold border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 outline-none"
                   >
                     <option value="All">All Staff Members</option>
@@ -1068,70 +1086,115 @@ export const AccountsPage: React.FC = () => {
                   </button>
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs">
-                    <thead>
-                      <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-400 font-extrabold uppercase tracking-wider bg-slate-50/50 dark:bg-slate-800/40">
-                        <th className="py-3 px-4">Date</th>
-                        <th className="py-3 px-4">Staff Member</th>
-                        <th className="py-3 px-4">Account Type</th>
-                        <th className="py-3 px-4">Payment Mode</th>
-                        <th className="py-3 px-4 text-right">Amount</th>
-                        <th className="py-3 px-4 text-right">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-medium">
-                      {salaryExpensesList.map((exp) => {
-                        const isAdvance = (exp.category || '').toLowerCase().includes('advance');
-                        return (
-                          <tr key={exp._id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-all">
-                            <td className="py-3.5 px-4 font-bold text-slate-900 dark:text-white whitespace-nowrap">
-                              {exp.expenseDate ? new Date(exp.expenseDate).toLocaleDateString('en-GB') : '-'}
-                            </td>
-                            <td className="py-3.5 px-4">
-                              <p className="font-extrabold text-slate-900 dark:text-white">{exp.paidTo || exp.description || 'Staff'}</p>
-                              {exp.notes && <p className="text-[10px] text-slate-400 mt-0.5">{exp.notes}</p>}
-                            </td>
-                            <td className="py-3.5 px-4">
-                              {isAdvance ? (
-                                <span className="px-2.5 py-1 rounded-full bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 font-extrabold text-[11px] inline-flex items-center gap-1">
-                                  🟡 Staff Advance
-                                </span>
-                              ) : (
-                                <span className="px-2.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 font-extrabold text-[11px] inline-flex items-center gap-1">
-                                  🟢 Staff Salary Payout
-                                </span>
-                              )}
-                            </td>
-                            <td className="py-3.5 px-4 font-semibold text-slate-600 dark:text-slate-300">
-                              {exp.paymentMethod || 'Cash'}
-                            </td>
-                            <td className="py-3.5 px-4 text-right font-black text-sm text-rose-600">
-                              -{currencySymbol}{exp.amount}
-                            </td>
-                            <td className="py-3.5 px-4 text-right">
-                              <div className="flex items-center justify-end gap-1.5">
-                                <button
-                                  onClick={() => handleOpenEditExpense(exp)}
-                                  className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 transition-all"
-                                  title="Edit Record"
-                                >
-                                  <Edit className="w-3.5 h-3.5" />
-                                </button>
-                                <button
-                                  onClick={() => setDeleteExpenseId(exp._id)}
-                                  className="p-1.5 rounded-lg bg-rose-50 text-rose-500 hover:bg-rose-100 transition-all"
-                                  title="Delete Record"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
+                <div className="space-y-3">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs">
+                      <thead>
+                        <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-400 font-extrabold uppercase tracking-wider bg-slate-50/50 dark:bg-slate-800/40">
+                          <th className="py-3 px-4">Date</th>
+                          <th className="py-3 px-4">Staff Member</th>
+                          <th className="py-3 px-4">Account Type</th>
+                          <th className="py-3 px-4">Payment Mode</th>
+                          <th className="py-3 px-4 text-right">Amount</th>
+                          <th className="py-3 px-4 text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-medium">
+                        {paginatedSalaryList.map((exp) => {
+                          const isAdvance = (exp.category || '').toLowerCase().includes('advance');
+                          return (
+                            <tr key={exp._id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-all">
+                              <td className="py-3.5 px-4 font-bold text-slate-900 dark:text-white whitespace-nowrap">
+                                {exp.expenseDate ? new Date(exp.expenseDate).toLocaleDateString('en-GB') : '-'}
+                              </td>
+                              <td className="py-3.5 px-4">
+                                <p className="font-extrabold text-slate-900 dark:text-white">{exp.paidTo || exp.description || 'Staff'}</p>
+                                {exp.notes && <p className="text-[10px] text-slate-400 mt-0.5">{exp.notes}</p>}
+                              </td>
+                              <td className="py-3.5 px-4">
+                                {isAdvance ? (
+                                  <span className="px-2.5 py-1 rounded-full bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 font-extrabold text-[11px] inline-flex items-center gap-1">
+                                    🟡 Staff Advance
+                                  </span>
+                                ) : (
+                                  <span className="px-2.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 font-extrabold text-[11px] inline-flex items-center gap-1">
+                                    🟢 Staff Salary Payout
+                                  </span>
+                                )}
+                              </td>
+                              <td className="py-3.5 px-4 font-semibold text-slate-600 dark:text-slate-300">
+                                {exp.paymentMethod || 'Cash'}
+                              </td>
+                              <td className="py-3.5 px-4 text-right font-black text-sm text-rose-600">
+                                -{currencySymbol}{exp.amount}
+                              </td>
+                              <td className="py-3.5 px-4 text-right">
+                                <div className="flex items-center justify-end gap-1.5">
+                                  <button
+                                    onClick={() => handleOpenEditExpense(exp)}
+                                    className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 transition-all"
+                                    title="Edit Record"
+                                  >
+                                    <Edit className="w-3.5 h-3.5" />
+                                  </button>
+                                  <button
+                                    onClick={() => setDeleteExpenseId(exp._id)}
+                                    className="p-1.5 rounded-lg bg-rose-50 text-rose-500 hover:bg-rose-100 transition-all"
+                                    title="Delete Record"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* LIMIT & PAGINATION CONTROLS BAR */}
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-slate-200 dark:border-slate-800 text-xs">
+                    <div className="flex items-center gap-2">
+                      <span className="text-slate-500 font-semibold">Rows per page:</span>
+                      <select
+                        value={salaryLimit}
+                        onChange={(e) => {
+                          setSalaryLimit(Number(e.target.value));
+                          setSalaryPage(1);
+                        }}
+                        className="px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 outline-none font-bold"
+                      >
+                        <option value={10}>10</option>
+                        <option value={20}>20</option>
+                        <option value={50}>50</option>
+                        <option value={100}>100</option>
+                      </select>
+                      <span className="text-slate-500 font-medium ml-2">
+                        Showing {totalSalaryCount === 0 ? 0 : (salaryPage - 1) * salaryLimit + 1} - {Math.min(totalSalaryCount, salaryPage * salaryLimit)} of {totalSalaryCount} records
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        disabled={salaryPage <= 1}
+                        onClick={() => setSalaryPage((p) => Math.max(1, p - 1))}
+                        className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 flex items-center gap-1"
+                      >
+                        <ChevronLeft className="w-4 h-4" /> Previous
+                      </button>
+                      <span className="px-2 font-bold text-slate-700 dark:text-slate-300">
+                        Page {salaryPage} of {totalSalaryPages || 1}
+                      </span>
+                      <button
+                        disabled={salaryPage >= totalSalaryPages}
+                        onClick={() => setSalaryPage((p) => Math.min(totalSalaryPages, p + 1))}
+                        className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 flex items-center gap-1"
+                      >
+                        Next <ChevronRight className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
