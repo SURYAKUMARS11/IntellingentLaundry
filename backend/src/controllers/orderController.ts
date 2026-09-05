@@ -512,12 +512,27 @@ export const updateOrder = async (req: Request, res: Response) => {
     }
 
     if (items && Array.isArray(items)) {
-      const subtotal = items.reduce((sum: number, item: any) => sum + (Number(item.subtotal) || Number(item.price || 0) * Number(item.quantity || 1)), 0);
+      const normalizedItems = items.map((item: any) => {
+        const qty = Number(item.quantity) || 1;
+        const unitP = item.unitPrice !== undefined ? Number(item.unitPrice) : Number(item.price || 0);
+        const sub = item.subtotal !== undefined ? Number(item.subtotal) : unitP * qty;
+        return {
+          itemId: item.itemId || item.id || `item-${Date.now()}`,
+          itemName: item.itemName || item.name || item.garmentName || 'Item',
+          serviceId: item.serviceId || 'service',
+          serviceName: item.serviceName || 'Wash & Iron',
+          quantity: qty,
+          unitPrice: unitP,
+          subtotal: sub,
+        };
+      });
+
+      const subtotal = normalizedItems.reduce((sum: number, item: any) => sum + item.subtotal, 0);
       const disc = Number(discount !== undefined ? discount : order.discount || 0);
       order.discount = disc;
       order.subtotal = subtotal;
       order.totalAmount = Math.max(0, subtotal - disc);
-      order.items = items;
+      order.items = normalizedItems;
     } else if (discount !== undefined) {
       const disc = Number(discount);
       order.discount = disc;
