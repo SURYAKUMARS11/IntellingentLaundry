@@ -102,7 +102,7 @@ export const getItems = async (req: Request, res: Response) => {
 
 export const createItem = async (req: Request, res: Response) => {
   try {
-    const { name, defaultPrice, category, icon, isActive } = req.body;
+    const { name, defaultPrice, category, servicePrices, icon, isActive } = req.body;
 
     if (!name || defaultPrice === undefined) {
       return res.status(400).json({ success: false, message: 'Item name and default price are required' });
@@ -112,6 +112,7 @@ export const createItem = async (req: Request, res: Response) => {
       name,
       defaultPrice: Number(defaultPrice),
       category: category || 'Regular',
+      servicePrices: servicePrices || {},
       icon: icon || 'Shirt',
       isActive: isActive !== undefined ? isActive : true,
     });
@@ -126,7 +127,7 @@ export const createItem = async (req: Request, res: Response) => {
 
 export const updateItem = async (req: Request, res: Response) => {
   try {
-    const { name, defaultPrice, category, icon, isActive } = req.body;
+    const { name, defaultPrice, category, servicePrices, icon, isActive } = req.body;
     const item = await LaundryItem.findById(req.params.id);
 
     if (!item) {
@@ -136,6 +137,7 @@ export const updateItem = async (req: Request, res: Response) => {
     if (name) item.name = name;
     if (defaultPrice !== undefined) item.defaultPrice = Number(defaultPrice);
     if (category) item.category = category;
+    if (servicePrices) item.servicePrices = servicePrices;
     if (icon) item.icon = icon;
     if (isActive !== undefined) item.isActive = isActive;
 

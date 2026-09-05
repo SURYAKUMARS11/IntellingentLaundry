@@ -48,6 +48,7 @@ export interface LaundryItem {
   name: string;
   defaultPrice: number;
   category: string;
+  servicePrices?: Record<string, number>;
   icon?: string;
   isActive: boolean;
   createdAt?: string;

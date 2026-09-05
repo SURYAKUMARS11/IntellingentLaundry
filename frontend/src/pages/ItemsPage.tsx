@@ -84,9 +84,13 @@ export const ItemsPage: React.FC = () => {
 
   const handleOpenEdit = (item: LaundryItem) => {
     setEditingItem(item);
+    const activeServicePrice = getItemPriceForService(
+      { name: item.name, price: item.defaultPrice, category: item.category, servicePrices: item.servicePrices },
+      selectedService
+    );
     setFormData({
       name: item.name,
-      defaultPrice: item.defaultPrice,
+      defaultPrice: activeServicePrice,
       category: item.category || 'Regular',
       serviceName: selectedService || 'Wash and Fold',
       icon: item.icon || 'Shirt',
@@ -98,10 +102,28 @@ export const ItemsPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const newRate = Number(formData.defaultPrice);
+      const currentServicePrices = editingItem?.servicePrices || {};
+      const updatedServicePrices = {
+        ...currentServicePrices,
+        [formData.serviceName]: newRate,
+      };
+
+      const newDefaultPrice = formData.serviceName === 'Wash and Fold' ? newRate : (editingItem?.defaultPrice || newRate);
+
+      const payload = {
+        name: formData.name,
+        defaultPrice: newDefaultPrice,
+        category: formData.category,
+        servicePrices: updatedServicePrices,
+        icon: formData.icon,
+        isActive: formData.isActive,
+      };
+
       if (editingItem) {
-        await updateItemApi(editingItem._id, formData);
+        await updateItemApi(editingItem._id, payload);
       } else {
-        await createItemApi(formData);
+        await createItemApi(payload);
       }
       setShowModal(false);
       loadData();
@@ -266,7 +288,7 @@ export const ItemsPage: React.FC = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredItems.map((item) => {
             const activeServicePrice = getItemPriceForService(
-              { name: item.name, price: item.defaultPrice, category: item.category },
+              { name: item.name, price: item.defaultPrice, category: item.category, servicePrices: item.servicePrices },
               selectedService
             );
             return (
@@ -370,7 +392,16 @@ export const ItemsPage: React.FC = () => {
                   </label>
                   <select
                     value={formData.serviceName}
-                    onChange={(e) => setFormData({ ...formData, serviceName: e.target.value })}
+                    onChange={(e) => {
+                      const newSrv = e.target.value;
+                      const rateForNewSrv = editingItem
+                        ? getItemPriceForService(
+                            { name: editingItem.name, price: editingItem.defaultPrice, category: editingItem.category, servicePrices: editingItem.servicePrices },
+                            newSrv
+                          )
+                        : formData.defaultPrice;
+                      setFormData({ ...formData, serviceName: newSrv, defaultPrice: rateForNewSrv });
+                    }}
                     className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none font-bold text-brand-600"
                   >
                     {mainServicesList.map((srv) => (
