@@ -319,6 +319,31 @@ export const CreateOrderPage: React.FC = () => {
     });
   };
 
+  const updateItemSubtotal = (index: number, newSubtotal: number) => {
+    setOrderItems((prev) => {
+      const updated = [...prev];
+      const item = updated[index];
+      const validSubtotal = Math.max(0, newSubtotal);
+      const computedUnitPrice = item.quantity > 0 ? Math.round(validSubtotal / item.quantity) : validSubtotal;
+
+      if (item.isKgMode) {
+        updated[index] = {
+          ...item,
+          unitPrice: computedUnitPrice,
+          subtotal: validSubtotal,
+          itemName: `Bulk Laundry - ${item.serviceName} (${item.quantity} Kg @ ${currencySymbol}${computedUnitPrice}/Kg)`,
+        };
+      } else {
+        updated[index] = {
+          ...item,
+          unitPrice: computedUnitPrice,
+          subtotal: validSubtotal,
+        };
+      }
+      return updated;
+    });
+  };
+
   const removeItem = (index: number) => {
     setOrderItems((prev) => prev.filter((_, i) => i !== index));
   };
@@ -705,8 +730,16 @@ export const CreateOrderPage: React.FC = () => {
                       </button>
                     </div>
 
-                    <div className="w-16 text-right font-black text-slate-900 dark:text-white">
-                      {`${currencySymbol}${line.subtotal}`}
+                    {/* Editable Line Subtotal */}
+                    <div className="flex items-center gap-0.5">
+                      <span className="text-slate-400 font-bold">{currencySymbol}</span>
+                      <input
+                        type="number"
+                        min="0"
+                        value={line.subtotal}
+                        onChange={(e) => updateItemSubtotal(idx, Number(e.target.value))}
+                        className="w-16 px-1.5 py-1 text-center font-black rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"
+                      />
                     </div>
 
                     <button
