@@ -9,23 +9,23 @@ export default {
     extend: {
       colors: {
         brand: {
-          50: '#f5f3ff',
-          100: '#ede9fe',
-          200: '#ddd6fe',
-          300: '#c4b5fd',
-          400: '#a78bfa',
-          500: '#8b5cf6', // Primary Violet / Purple
-          600: '#7c3aed',
-          700: '#6d28d9',
-          800: '#5b21b6',
-          900: '#4c1d95',
-          950: '#2e1065',
+          50: '#f0f9ff',
+          100: '#e0f2fe',
+          200: '#bae6fd',
+          300: '#7dd3fc',
+          400: '#38bdf8',
+          500: '#0284c7', // Primary Intelligent Laundry Blue
+          600: '#0369a1', // Deep Intelligent Laundry Blue
+          700: '#075985',
+          800: '#0c4a6e',
+          900: '#0a3651',
+          950: '#031f30',
         },
         accent: {
-          50: '#fdf4ff',
-          100: '#fae8ff',
-          500: '#d946ef',
-          600: '#c026d3',
+          50: '#f0fdf4',
+          100: '#dcfce7',
+          500: '#10b981',
+          600: '#059669',
         }
       },
       fontFamily: {
@@ -33,7 +33,7 @@ export default {
       },
       boxShadow: {
         'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
-        'glow': '0 0 25px -5px rgba(124, 58, 237, 0.25)',
+        'glow': '0 0 25px -5px rgba(2, 132, 199, 0.25)',
       }
     },
   },
