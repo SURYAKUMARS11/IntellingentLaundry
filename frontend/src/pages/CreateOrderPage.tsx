@@ -159,44 +159,30 @@ export const CreateOrderPage: React.FC = () => {
 
   const currencySymbol = setting?.currencySymbol || '₹';
 
-  // Explicitly add or increment a Bulk Kg Charge Line for a given service
-  const handleAddKgBulkLine = (kgServ: KgServiceRate) => {
-    const serviceName = kgServ.name;
-    const rateNum = kgServ.ratePerKg;
+  // Sync Kg Bulk Charge Line when selectedKgService or orderMode changes
+  useEffect(() => {
+    if (orderMode === 'kg') {
+      const rateNum = selectedKgService.ratePerKg;
 
-    setOrderItems((prev) => {
-      const existingIdx = prev.findIndex(
-        (line) => line.isKgMode && line.serviceName === serviceName
-      );
-
-      if (existingIdx !== -1) {
-        const updated = [...prev];
-        const newQty = Number((updated[existingIdx].quantity + 1).toFixed(1));
-        const rate = updated[existingIdx].unitPrice || rateNum;
-        updated[existingIdx] = {
-          ...updated[existingIdx],
-          quantity: newQty,
-          subtotal: Math.round(newQty * rate),
-          itemName: `Bulk Laundry - ${serviceName} (${newQty} Kg @ ${currencySymbol}${rate}/Kg)`,
-        };
-        return updated;
-      }
-
-      return [
-        ...prev,
-        {
-          itemId: `kg-bulk-${serviceName.toLowerCase().replace(/\s+/g, '-')}`,
-          itemName: `Bulk Laundry - ${serviceName} (1 Kg @ ${currencySymbol}${rateNum}/Kg)`,
-          serviceId: `service-${serviceName.toLowerCase().replace(/\s+/g, '-')}`,
-          serviceName: serviceName,
-          quantity: 1,
-          unitPrice: rateNum,
-          subtotal: rateNum,
-          isKgMode: true,
-        },
-      ];
-    });
-  };
+      setOrderItems((prev) => {
+        const kgIdx = prev.findIndex((line) => line.isKgMode);
+        if (kgIdx !== -1) {
+          const updated = [...prev];
+          const currQty = updated[kgIdx].quantity || 1;
+          const itemSubtotal = Math.round(currQty * rateNum);
+          updated[kgIdx] = {
+            ...updated[kgIdx],
+            itemName: `Bulk Laundry - ${selectedKgService.name} (${currQty} Kg @ ${currencySymbol}${rateNum}/Kg)`,
+            serviceName: selectedKgService.name,
+            unitPrice: rateNum,
+            subtotal: itemSubtotal,
+          };
+          return updated;
+        }
+        return prev;
+      });
+    }
+  }, [selectedKgService, orderMode, currencySymbol]);
 
   // Add Item to Cart (Clicking Card in Quantity or Kg mode)
   const handleCardClick = (item: POSCatalogItem) => {
@@ -231,22 +217,18 @@ export const CreateOrderPage: React.FC = () => {
     } else {
       // ORDER MODE === 'kg'
       const serviceName = selectedKgService.name;
-      const rateNum = selectedKgService.ratePerKg;
 
       setOrderItems((prev) => {
         let updated = [...prev];
-
-        // 1. Ensure Bulk Kg charge line exists FOR THIS SPECIFIC SERVICE
-        const hasKgBulkLineForService = updated.some(
-          (line) => line.isKgMode && line.serviceName === serviceName
-        );
-
-        if (!hasKgBulkLineForService) {
-          updated.push({
-            itemId: `kg-bulk-${serviceName.toLowerCase().replace(/\s+/g, '-')}`,
-            itemName: `Bulk Laundry - ${serviceName} (1 Kg @ ${currencySymbol}${rateNum}/Kg)`,
-            serviceId: `service-${serviceName.toLowerCase().replace(/\s+/g, '-')}`,
-            serviceName: serviceName,
+        // Ensure Bulk Kg charge line exists
+        const hasKgBulkLine = updated.some((line) => line.isKgMode);
+        if (!hasKgBulkLine) {
+          const rateNum = selectedKgService.ratePerKg;
+          updated.unshift({
+            itemId: `kg-bulk-${Date.now()}`,
+            itemName: `Bulk Laundry - ${selectedKgService.name} (1 Kg @ ${currencySymbol}${rateNum}/Kg)`,
+            serviceId: 'service-kg',
+            serviceName: selectedKgService.name,
             quantity: 1,
             unitPrice: rateNum,
             subtotal: rateNum,
@@ -254,9 +236,8 @@ export const CreateOrderPage: React.FC = () => {
           });
         }
 
-        // 2. Add or increment breakdown item under THIS SPECIFIC SERVICE
         const existingIdx = updated.findIndex(
-          (line) => line.itemId === item.id && !line.isKgMode && line.serviceName === `${serviceName} (Kg Pack)`
+          (line) => line.itemId === item.id && !line.isKgMode
         );
 
         if (existingIdx !== -1) {
@@ -272,7 +253,7 @@ export const CreateOrderPage: React.FC = () => {
         updated.push({
           itemId: item.id,
           itemName: item.name,
-          serviceId: `service-${serviceName.toLowerCase().replace(/\s+/g, '-')}`,
+          serviceId: serviceName.toLowerCase().replace(/\s+/g, '-'),
           serviceName: `${serviceName} (Kg Pack)`,
           quantity: 1,
           unitPrice: 0,
@@ -1099,18 +1080,10 @@ export const CreateOrderPage: React.FC = () => {
 
               {/* 3. Target Group Garment Items Selection for Kg Mode */}
               <div className="pt-2 space-y-3">
-                <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center justify-between">
                   <span className="block text-xs font-extrabold uppercase tracking-wider text-slate-400">
                     Add Garments under {selectedKgService.name}
                   </span>
-                  <button
-                    type="button"
-                    onClick={() => handleAddKgBulkLine(selectedKgService)}
-                    className="px-2.5 py-1 rounded-xl bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300 font-bold text-[11px] border border-brand-200 dark:border-brand-800 hover:bg-brand-100 dark:hover:bg-brand-900/50 flex items-center gap-1 transition-all"
-                  >
-                    <Plus className="w-3.5 h-3.5 text-brand-600 dark:text-brand-400" />
-                    <span>Add {selectedKgService.name} (1 Kg Charge)</span>
-                  </button>
                 </div>
 
                 {/* Target Group Tabs */}

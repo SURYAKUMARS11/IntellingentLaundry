@@ -72,7 +72,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed = false, onToggleC
           {!isCollapsed && (
             <div className="truncate">
               <h1 className="font-bold text-sm tracking-tight text-slate-900 dark:text-white flex items-center gap-1">
-                Miracle Laundry <Sparkles className="w-3 h-3 text-brand-500 fill-brand-500 shrink-0" />
+                Intelligent Laundry <Sparkles className="w-3 h-3 text-brand-500 fill-brand-500 shrink-0" />
               </h1>
               <p className="text-[10px] text-slate-500 dark:text-slate-400">Laundry Admin POS</p>
             </div>
@@ -236,7 +236,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed = false, onToggleC
       {/* Footer Info */}
       {!isCollapsed && (
         <div className="p-3 m-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400">
-          <p className="font-semibold text-slate-700 dark:text-slate-300">Miracle Laundry v1.0</p>
+          <p className="font-semibold text-slate-700 dark:text-slate-300">Intelligent Laundry v1.0</p>
           <p className="mt-0.5 text-[11px]">Express Laundry POS</p>
         </div>
       )}
