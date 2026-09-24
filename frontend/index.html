@@ -12,9 +12,9 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="Miracle Laundry" />
-    <title>Miracle Laundry | Smart POS & Laundry Management System</title>
-    <meta name="description" content="Modern, fast, and responsive Laundry Shop Management System for Miracle Laundry." />
+    <meta name="apple-mobile-web-app-title" content="Intelligent Laundry" />
+    <title>Intelligent Laundry | Smart POS & Laundry Management System</title>
+    <meta name="description" content="Modern, fast, and responsive Laundry Shop Management System for Intelligent Laundry." />
   </head>
   <body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen">
     <div id="root"></div>
@@ -23,7 +23,7 @@
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('/sw.js').then((reg) => {
-            console.log('MiracleLaundry PWA Service Worker Registered:', reg.scope);
+            console.log('IntelligentLaundry PWA Service Worker Registered:', reg.scope);
           }).catch((err) => {
             console.log('PWA Service Worker Registration Failed:', err);
           });

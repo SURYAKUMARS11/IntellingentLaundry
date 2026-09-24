@@ -45,7 +45,7 @@ app.get('/api/health', (req: Request, res: Response) => {
     dbConnected: mongoose.connection.readyState === 1,
     uptimeSeconds: Math.floor(process.uptime()),
     uptimeFormatted: `${Math.floor(process.uptime() / 3600)}h ${Math.floor((process.uptime() % 3600) / 60)}m ${Math.floor(process.uptime() % 60)}s`,
-    message: 'Miracle Laundry API Server is running smoothly',
+    message: 'Intelligent Laundry API Server is running smoothly',
     timestamp: new Date().toISOString(),
   });
 });
@@ -123,7 +123,7 @@ const startServer = async () => {
     initWhatsAppGateway();
     app.listen(PORT, () => {
       console.log(`====================================================`);
-      console.log(` 🧺 MIRACLE LAUNDRY SHOP BACKEND IS RUNNING!`);
+      console.log(` 🧺 INTELLIGENT LAUNDRY SHOP BACKEND IS RUNNING!`);
       console.log(` 🚀 Listening on: http://localhost:${PORT}`);
       console.log(` 📡 Health Check: http://localhost:${PORT}/api/health`);
       console.log(`====================================================`);
