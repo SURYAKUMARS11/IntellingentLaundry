@@ -113,7 +113,7 @@ export const CreateOrderPage: React.FC = () => {
     const loadInitial = async () => {
       try {
         const [custRes, setRes, itemRes] = await Promise.all([
-          fetchCustomers(),
+          fetchCustomers({ limit: 1000 }),
           fetchSettings(),
           fetchItems(),
         ]);
@@ -156,6 +156,28 @@ export const CreateOrderPage: React.FC = () => {
     };
     loadInitial();
   }, []);
+
+  // Live Backend Customer Search when typing in customerSearch box
+  useEffect(() => {
+    if (!customerSearch.trim()) return;
+
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetchCustomers({ search: customerSearch.trim(), limit: 100 });
+        if (res.success && Array.isArray(res.customers)) {
+          setCustomers((prev) => {
+            const existingIds = new Set(prev.map((c) => c._id));
+            const newCustomers = res.customers.filter((c: Customer) => !existingIds.has(c._id));
+            return [...newCustomers, ...prev];
+          });
+        }
+      } catch (err) {
+        console.error('Failed to search customers live', err);
+      }
+    }, 250);
+
+    return () => clearTimeout(timer);
+  }, [customerSearch]);
 
   const currencySymbol = setting?.currencySymbol || '₹';
 
@@ -364,6 +386,8 @@ export const CreateOrderPage: React.FC = () => {
         setCustomers((prev) => [res.customer, ...prev]);
         setSelectedCustomerId(res.customer._id);
         setShowNewCustModal(false);
+        setIsCustDropdownOpen(false);
+        setCustomerSearch('');
         setNewCustName('');
         setNewCustMobile('');
         setNewCustAddress('');
@@ -481,11 +505,26 @@ export const CreateOrderPage: React.FC = () => {
     );
   }
 
-  const filteredCustomers = customers.filter(
-    (c) =>
-      c.name.toLowerCase().includes(customerSearch.toLowerCase()) ||
-      c.mobile.includes(customerSearch)
-  );
+  const searchLower = customerSearch.trim().toLowerCase();
+  const searchDigits = searchLower.replace(/\D/g, '');
+
+  const filteredCustomers = customers.filter((c) => {
+    if (!searchLower) return true;
+    const nameStr = (c.name || '').toLowerCase();
+    const mobileStr = (c.mobile || '').toLowerCase();
+    const mobileDigits = mobileStr.replace(/\D/g, '');
+    const addressStr = (c.address || '').toLowerCase();
+    const emailStr = (c.email || '').toLowerCase();
+
+    const nameMatch = nameStr.includes(searchLower);
+    const mobileMatch =
+      mobileStr.includes(searchLower) ||
+      (searchDigits.length > 0 && mobileDigits.includes(searchDigits));
+    const addressMatch = addressStr.includes(searchLower);
+    const emailMatch = emailStr.includes(searchLower);
+
+    return nameMatch || mobileMatch || addressMatch || emailMatch;
+  });
 
   const selectedCustomerObj = customers.find((c) => c._id === selectedCustomerId);
 
@@ -572,7 +611,7 @@ export const CreateOrderPage: React.FC = () => {
               </div>
             ) : (
               <div className="relative space-y-2">
-                <div className="relative">
+                <div className="relative z-20">
                   <Search className="w-4 h-4 absolute left-3.5 top-3 text-slate-400" />
                   <input
                     type="text"
@@ -587,48 +626,56 @@ export const CreateOrderPage: React.FC = () => {
                   />
                 </div>
 
-                {/* Dropdown list - ONLY SHOWN WHEN CLICKED/FOCUSED OR SEARCHING */}
+                {/* Backdrop & Dropdown list */}
                 {isCustDropdownOpen && (
-                  <div className="absolute z-20 left-0 right-0 top-full mt-1 max-h-52 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-2xl shadow-xl">
-                    {filteredCustomers.length === 0 ? (
-                      <div className="p-4 text-center text-xs text-slate-400">
-                        No matching customers found.{' '}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setIsCustDropdownOpen(false);
-                            setShowNewCustModal(true);
-                          }}
-                          className="text-brand-600 font-bold underline"
-                        >
-                          + Add New Customer
-                        </button>
-                      </div>
-                    ) : (
-                      filteredCustomers.slice(0, 10).map((cust) => (
-                        <button
-                          key={cust._id}
-                          type="button"
-                          onClick={() => {
-                            setSelectedCustomerId(cust._id);
-                            setIsCustDropdownOpen(false);
-                            setCustomerSearch('');
-                          }}
-                          className="w-full text-left p-3 hover:bg-brand-50/60 dark:hover:bg-slate-800 transition-colors flex justify-between items-center text-xs group"
-                        >
-                          <div>
-                            <p className="font-extrabold text-slate-900 dark:text-white group-hover:text-brand-600">
-                              {cust.name}
-                            </p>
-                            <p className="text-slate-500 text-[11px] font-medium">+91 {cust.mobile}</p>
-                          </div>
-                          <span className="text-[10px] px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold group-hover:bg-brand-600 group-hover:text-white transition-all">
-                            Select
-                          </span>
-                        </button>
-                      ))
-                    )}
-                  </div>
+                  <>
+                    <div
+                      className="fixed inset-0 z-10"
+                      onClick={() => setIsCustDropdownOpen(false)}
+                    />
+                    <div className="absolute z-20 left-0 right-0 top-full mt-1 max-h-60 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-2xl shadow-xl">
+                      {filteredCustomers.length === 0 ? (
+                        <div className="p-4 text-center text-xs text-slate-400">
+                          No matching customers found.{' '}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsCustDropdownOpen(false);
+                              setShowNewCustModal(true);
+                            }}
+                            className="text-brand-600 font-bold underline"
+                          >
+                            + Add New Customer
+                          </button>
+                        </div>
+                      ) : (
+                        filteredCustomers.slice(0, 50).map((cust) => (
+                          <button
+                            key={cust._id}
+                            type="button"
+                            onClick={() => {
+                              setSelectedCustomerId(cust._id);
+                              setIsCustDropdownOpen(false);
+                              setCustomerSearch('');
+                            }}
+                            className="w-full text-left p-3 hover:bg-brand-50/60 dark:hover:bg-slate-800 transition-colors flex justify-between items-center text-xs group"
+                          >
+                            <div>
+                              <p className="font-extrabold text-slate-900 dark:text-white group-hover:text-brand-600">
+                                {cust.name}
+                              </p>
+                              <p className="text-slate-500 text-[11px] font-medium">
+                                +91 {cust.mobile} {cust.address ? `• ${cust.address}` : ''}
+                              </p>
+                            </div>
+                            <span className="text-[10px] px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold group-hover:bg-brand-600 group-hover:text-white transition-all">
+                              Select
+                            </span>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  </>
                 )}
               </div>
             )}
