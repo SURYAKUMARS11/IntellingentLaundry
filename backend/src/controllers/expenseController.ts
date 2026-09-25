@@ -188,45 +188,47 @@ export const getAccountsSummary = async (req: Request, res: Response) => {
     const orders = await Order.find(orderQuery).sort({ createdAt: -1 }).lean();
     const expenses = await Expense.find(expenseQuery).sort({ expenseDate: -1 }).lean();
 
-    const incomeMap = new Map<string, any>();
+    const incomeTransactions: any[] = [];
+    const processedOrderIds = new Set<string>();
+    const processedOrderNums = new Set<string>();
 
-    payments.forEach((p) => {
+    payments.forEach((p: any) => {
+      if (p.orderNumber) processedOrderNums.add(p.orderNumber);
+      if (p.orderId) processedOrderIds.add(p.orderId.toString());
+
       const ref = p.orderNumber ? `#${p.orderNumber}` : `PAY-${p._id.toString().slice(-6)}`;
-      const key = p.orderNumber || (p.orderId ? p.orderId.toString() : p._id.toString());
-      if (!incomeMap.has(key)) {
-        incomeMap.set(key, {
-          id: p._id.toString(),
-          refNumber: ref,
-          date: p.paidAt,
-          type: 'Income' as const,
-          category: 'Order Payment',
-          description: `Order #${p.orderNumber || ''} payment from ${p.customerName || 'Customer'}`,
-          paymentMethod: p.paymentMethod || 'Cash',
-          amount: p.amount,
-        });
-      }
+      incomeTransactions.push({
+        id: p._id.toString(),
+        refNumber: ref,
+        date: p.paidAt || p.createdAt,
+        type: 'Income' as const,
+        category: 'Order Payment',
+        description: `Order #${p.orderNumber || ''} payment from ${p.customerName || 'Customer'}`,
+        paymentMethod: p.paymentMethod || 'Cash',
+        amount: p.amount,
+      });
     });
 
     orders.forEach((o: any) => {
-      const amt = o.paymentStatus === 'Paid' ? o.totalAmount : (o.advancePaid > 0 ? o.advancePaid : 0);
-      const ref = `#${o.orderNumber}`;
-      const oNum = o.orderNumber;
       const oId = o._id.toString();
-      if (amt > 0 && !incomeMap.has(oNum) && !incomeMap.has(oId)) {
-        incomeMap.set(oNum || oId, {
-          id: oId,
-          refNumber: ref,
-          date: o.orderDate || o.createdAt,
-          type: 'Income' as const,
-          category: 'Order Payment',
-          description: `Order #${o.orderNumber} payment from ${o.customerSnapshot?.name || 'Customer'}`,
-          paymentMethod: o.paymentMethod || 'Cash',
-          amount: amt,
-        });
+      const oNum = o.orderNumber;
+      if (!processedOrderIds.has(oId) && (!oNum || !processedOrderNums.has(oNum))) {
+        const amt = o.paymentStatus === 'Paid' ? o.totalAmount : (o.advancePaid > 0 ? o.advancePaid : 0);
+        if (amt > 0) {
+          const ref = `#${o.orderNumber}`;
+          incomeTransactions.push({
+            id: oId,
+            refNumber: ref,
+            date: o.orderDate || o.createdAt,
+            type: 'Income' as const,
+            category: 'Order Payment',
+            description: `Order #${o.orderNumber} payment from ${o.customerSnapshot?.name || 'Customer'}`,
+            paymentMethod: o.paymentMethod || 'Cash',
+            amount: amt,
+          });
+        }
       }
     });
-
-    const incomeTransactions = Array.from(incomeMap.values());
     const expenseTransactions = expenses.map((e) => ({
       id: e._id.toString(),
       refNumber: e.voucherNumber,
