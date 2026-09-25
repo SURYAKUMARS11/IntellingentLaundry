@@ -181,31 +181,6 @@ export const CreateOrderPage: React.FC = () => {
 
   const currencySymbol = setting?.currencySymbol || '₹';
 
-  // Sync Kg Bulk Charge Line when selectedKgService or orderMode changes
-  useEffect(() => {
-    if (orderMode === 'kg') {
-      const rateNum = selectedKgService.ratePerKg;
-
-      setOrderItems((prev) => {
-        const kgIdx = prev.findIndex((line) => line.isKgMode);
-        if (kgIdx !== -1) {
-          const updated = [...prev];
-          const currQty = updated[kgIdx].quantity || 1;
-          const itemSubtotal = Math.round(currQty * rateNum);
-          updated[kgIdx] = {
-            ...updated[kgIdx],
-            itemName: `Bulk Laundry - ${selectedKgService.name} (${currQty} Kg @ ${currencySymbol}${rateNum}/Kg)`,
-            serviceName: selectedKgService.name,
-            unitPrice: rateNum,
-            subtotal: itemSubtotal,
-          };
-          return updated;
-        }
-        return prev;
-      });
-    }
-  }, [selectedKgService, orderMode, currencySymbol]);
-
   // Add Item to Cart (Clicking Card in Quantity or Kg mode)
   const handleCardClick = (item: POSCatalogItem) => {
     if (orderMode === 'quantity') {
@@ -239,18 +214,21 @@ export const CreateOrderPage: React.FC = () => {
     } else {
       // ORDER MODE === 'kg'
       const serviceName = selectedKgService.name;
+      const serviceId = selectedKgService.id || serviceName.toLowerCase().replace(/\s+/g, '-');
 
       setOrderItems((prev) => {
         let updated = [...prev];
-        // Ensure Bulk Kg charge line exists
-        const hasKgBulkLine = updated.some((line) => line.isKgMode);
+        // Ensure Bulk Kg charge line exists FOR THIS SPECIFIC SERVICE
+        const hasKgBulkLine = updated.some(
+          (line) => line.isKgMode && line.serviceName === serviceName
+        );
         if (!hasKgBulkLine) {
           const rateNum = selectedKgService.ratePerKg;
-          updated.unshift({
-            itemId: `kg-bulk-${Date.now()}`,
-            itemName: `Bulk Laundry - ${selectedKgService.name} (1 Kg @ ${currencySymbol}${rateNum}/Kg)`,
-            serviceId: 'service-kg',
-            serviceName: selectedKgService.name,
+          updated.push({
+            itemId: `kg-bulk-${serviceId}-${Date.now()}`,
+            itemName: `Bulk Laundry - ${serviceName} (1 Kg @ ${currencySymbol}${rateNum}/Kg)`,
+            serviceId: serviceId,
+            serviceName: serviceName,
             quantity: 1,
             unitPrice: rateNum,
             subtotal: rateNum,
@@ -259,7 +237,10 @@ export const CreateOrderPage: React.FC = () => {
         }
 
         const existingIdx = updated.findIndex(
-          (line) => line.itemId === item.id && !line.isKgMode
+          (line) =>
+            line.itemId === item.id &&
+            !line.isKgMode &&
+            line.serviceName === `${serviceName} (Kg Pack)`
         );
 
         if (existingIdx !== -1) {
@@ -275,7 +256,7 @@ export const CreateOrderPage: React.FC = () => {
         updated.push({
           itemId: item.id,
           itemName: item.name,
-          serviceId: serviceName.toLowerCase().replace(/\s+/g, '-'),
+          serviceId: serviceId,
           serviceName: `${serviceName} (Kg Pack)`,
           quantity: 1,
           unitPrice: 0,
@@ -287,29 +268,33 @@ export const CreateOrderPage: React.FC = () => {
     }
   };
 
-  const updateItemQty = (index: number, newQty: number) => {
-    if (newQty <= 0) {
+  const updateItemQty = (index: number, newQty: number, options?: { isTyping?: boolean }) => {
+    if (newQty <= 0 && !options?.isTyping) {
       removeItem(index);
       return;
     }
     setOrderItems((prev) => {
       const updated = [...prev];
       const item = updated[index];
+      if (!item) return prev;
+
+      const validQty = Math.max(0, isNaN(newQty) ? 0 : newQty);
+
       if (item.isKgMode) {
         const rateNum = item.unitPrice > 0 ? item.unitPrice : selectedKgService.ratePerKg;
-        const newSubtotal = Math.round(newQty * rateNum);
+        const newSubtotal = Math.round(validQty * rateNum);
         updated[index] = {
           ...item,
-          quantity: newQty,
+          quantity: validQty,
           unitPrice: rateNum,
           subtotal: newSubtotal,
-          itemName: `Bulk Laundry - ${item.serviceName} (${newQty} Kg @ ${currencySymbol}${rateNum}/Kg)`,
+          itemName: `Bulk Laundry - ${item.serviceName} (${validQty} Kg @ ${currencySymbol}${rateNum}/Kg)`,
         };
       } else {
         updated[index] = {
           ...item,
-          quantity: newQty,
-          subtotal: Math.round(newQty * item.unitPrice),
+          quantity: validQty,
+          subtotal: Math.round(validQty * item.unitPrice),
         };
       }
       return updated;
@@ -739,7 +724,9 @@ export const CreateOrderPage: React.FC = () => {
                         onClick={() =>
                           updateItemQty(
                             idx,
-                            line.isKgMode ? Number(Math.max(0, line.quantity - 0.5).toFixed(1)) : line.quantity - 1
+                            line.isKgMode
+                              ? Number(Math.max(0, line.quantity - 0.5).toFixed(1))
+                              : line.quantity - 1
                           )
                         }
                         className="w-6 h-6 rounded-lg bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold flex items-center justify-center hover:bg-slate-200 active:scale-95 transition-all"
@@ -751,24 +738,64 @@ export const CreateOrderPage: React.FC = () => {
                           <input
                             type="number"
                             step="0.1"
-                            min="0.1"
-                            value={line.quantity}
-                            onChange={(e) => updateItemQty(idx, Number(e.target.value))}
-                            className="w-12 text-center font-bold bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded px-1 py-0.5 border border-slate-200 dark:border-slate-600 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                            min="0"
+                            value={line.quantity === 0 ? '' : line.quantity}
+                            placeholder="0"
+                            onChange={(e) => {
+                              const valStr = e.target.value;
+                              if (valStr === '') {
+                                updateItemQty(idx, 0, { isTyping: true });
+                              } else {
+                                const num = parseFloat(valStr);
+                                if (!isNaN(num)) {
+                                  updateItemQty(idx, num, { isTyping: true });
+                                }
+                              }
+                            }}
+                            onBlur={() => {
+                              if (!line.quantity || line.quantity <= 0) {
+                                updateItemQty(idx, 1);
+                              }
+                            }}
+                            className="w-14 text-center font-bold bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded px-1 py-0.5 border border-slate-200 dark:border-slate-600 focus:outline-none focus:ring-1 focus:ring-brand-500"
                           />
                           <span className="text-[10px] font-bold text-slate-500 ml-1 pr-1">Kg</span>
                         </div>
                       ) : (
-                        <span className="min-w-6 px-1 text-center font-bold text-slate-900 dark:text-white">
-                          {line.quantity}
-                        </span>
+                        <div className="flex items-center">
+                          <input
+                            type="number"
+                            min="0"
+                            value={line.quantity === 0 ? '' : line.quantity}
+                            placeholder="0"
+                            onChange={(e) => {
+                              const valStr = e.target.value;
+                              if (valStr === '') {
+                                updateItemQty(idx, 0, { isTyping: true });
+                              } else {
+                                const num = parseInt(valStr, 10);
+                                if (!isNaN(num)) {
+                                  updateItemQty(idx, num, { isTyping: true });
+                                }
+                              }
+                            }}
+                            onBlur={() => {
+                              if (!line.quantity || line.quantity <= 0) {
+                                updateItemQty(idx, 1);
+                              }
+                            }}
+                            className="w-12 text-center font-bold bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded px-1 py-0.5 border border-slate-200 dark:border-slate-600 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                          />
+                        </div>
                       )}
                       <button
                         type="button"
                         onClick={() =>
                           updateItemQty(
                             idx,
-                            line.isKgMode ? Number((line.quantity + 0.5).toFixed(1)) : line.quantity + 1
+                            line.isKgMode
+                              ? Number((line.quantity + 0.5).toFixed(1))
+                              : line.quantity + 1
                           )
                         }
                         className="w-6 h-6 rounded-lg bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold flex items-center justify-center hover:bg-slate-200 active:scale-95 transition-all"
