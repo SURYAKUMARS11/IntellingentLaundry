@@ -459,7 +459,9 @@ export const DashboardPage: React.FC = () => {
                 {stats?.totalOrders ?? ordersList.length}
               </p>
             )}
-            <p className="hidden sm:block text-[10px] font-semibold text-blue-600 mt-0.5">View all orders</p>
+            <p className="text-[10px] font-bold text-blue-600 dark:text-blue-400 mt-0.5 truncate">
+              Total: {currencySymbol}{(stats?.totalBilled ?? ordersList.reduce((sum: number, o: any) => sum + Number(o.totalAmount || 0), 0)).toLocaleString('en-IN')}
+            </p>
           </div>
         </div>
 

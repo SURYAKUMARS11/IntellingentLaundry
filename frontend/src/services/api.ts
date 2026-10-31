@@ -937,6 +937,8 @@ export const fetchDashboardStats = async (params: {
 
   const stats: DashboardStats = {
     orders: localOrders.length,
+    totalOrders: localOrders.length,
+    totalBilled: localOrders.reduce((sum, o) => sum + Number(o.totalAmount || 0), 0),
     paymentsReceived: totalRev,
     activeOrders: activeOrds.length,
     newCustomers: localCustomers.length,
