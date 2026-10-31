@@ -924,7 +924,15 @@ export const fetchDashboardStats = async (params: {
 
   const activeOrds = localOrders.filter((o) => o.status !== 'Delivered' && o.status !== 'Cancelled');
   const overdueOrds = localOrders.filter(isOrderOverdue);
-  const totalRev = localOrders.reduce((acc, o) => acc + (o.advancePaid || 0), 0);
+  const deliveredOrds = localOrders.filter((o) => o.status === 'Delivered');
+  const totalRev = localOrders.reduce((acc, o) => {
+    const paid = o.paymentStatus === 'Paid' ? (o.totalAmount || 0) : (o.advancePaid || 0);
+    return acc + paid;
+  }, 0);
+  const deliveredRev = deliveredOrds.reduce((acc, o) => {
+    const paid = o.paymentStatus === 'Paid' ? (o.totalAmount || 0) : (o.advancePaid || 0);
+    return acc + paid;
+  }, 0);
   const monthlyRev = totalRev;
 
   const stats: DashboardStats = {
@@ -937,7 +945,8 @@ export const fetchDashboardStats = async (params: {
     pendingOrders: activeOrds.length,
     inProgress: activeOrds.length,
     readyForPickup: localOrders.filter((o) => o.status === 'Ready for Pickup').length,
-    deliveredOrders: localOrders.filter((o) => o.status === 'Delivered').length,
+    deliveredOrders: deliveredOrds.length,
+    deliveredRevenue: deliveredRev,
     todayRevenue: totalRev,
     monthlyRevenue: monthlyRev,
     periodRevenue: totalRev,
@@ -949,14 +958,14 @@ export const fetchDashboardStats = async (params: {
     stats,
     ordersList: localOrders,
     paymentsList: localOrders
-      .filter((o) => o.advancePaid > 0)
+      .filter((o) => o.paymentStatus === 'Paid' || (o.advancePaid || 0) > 0)
       .map((o) => ({
         _id: o._id,
         orderNumber: o.orderNumber,
         customerName: o.customerSnapshot?.name || 'Customer',
         paymentMethod: o.paymentMethod || 'Cash',
         paidAt: o.orderDate,
-        amount: o.advancePaid,
+        amount: o.paymentStatus === 'Paid' ? (o.totalAmount || 0) : (o.advancePaid || 0),
       })),
     activeOrdersList: activeOrds,
     newCustomersList: localCustomers,

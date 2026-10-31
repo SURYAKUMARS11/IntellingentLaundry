@@ -473,7 +473,7 @@ export const DashboardPage: React.FC = () => {
           }`}
         >
           <div className="flex items-center justify-between">
-            <span className="text-[11px] sm:text-xs font-bold text-slate-600 dark:text-slate-300 truncate">Income</span>
+            <span className="text-[11px] sm:text-xs font-bold text-slate-600 dark:text-slate-300 truncate">Total Collected</span>
             <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400 shrink-0">
               <DollarSign className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
@@ -486,7 +486,7 @@ export const DashboardPage: React.FC = () => {
                 {currencySymbol}{stats?.paymentsReceived ?? (paymentsList.length > 0 ? paymentsList : ordersList).reduce((acc, o: any) => acc + (o.amount || o.advancePaid || 0), 0)}
               </p>
             )}
-            <p className="hidden sm:block text-[10px] font-semibold text-emerald-600 mt-0.5">View income</p>
+            <p className="hidden sm:block text-[10px] font-semibold text-emerald-600 mt-0.5">Collected on orders</p>
           </div>
         </div>
 
@@ -554,7 +554,7 @@ export const DashboardPage: React.FC = () => {
           }`}
         >
           <div className="flex items-center justify-between">
-            <span className="text-[11px] sm:text-xs font-bold text-slate-600 dark:text-slate-300 truncate">Delivered Income</span>
+            <span className="text-[11px] sm:text-xs font-bold text-slate-600 dark:text-slate-300 truncate">Delivered Value</span>
             <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-teal-100 text-teal-600 dark:bg-teal-950 dark:text-teal-400 shrink-0">
               <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
@@ -570,7 +570,7 @@ export const DashboardPage: React.FC = () => {
                 }, 0)).toLocaleString('en-IN')}
               </p>
             )}
-            <p className="hidden sm:block text-[10px] font-semibold text-teal-600 mt-0.5">Delivered revenue</p>
+            <p className="hidden sm:block text-[10px] font-semibold text-teal-600 mt-0.5">From delivered orders</p>
           </div>
         </div>
 
@@ -611,7 +611,7 @@ export const DashboardPage: React.FC = () => {
           }`}
         >
           <div className="flex items-center justify-between">
-            <span className="text-[11px] sm:text-xs font-bold text-slate-600 dark:text-slate-300 truncate">Overdue</span>
+            <span className="text-[11px] sm:text-xs font-bold text-slate-600 dark:text-slate-300 truncate">Overdue & Due</span>
             <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-rose-100 text-rose-600 dark:bg-rose-950 dark:text-rose-400 shrink-0">
               <Clock className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
@@ -667,12 +667,12 @@ export const DashboardPage: React.FC = () => {
             </h3>
             <p className="hidden sm:block text-xs text-slate-500 mt-0.5">
               {activeCard === 'orders' && 'Showing all orders matching filter criteria.'}
-              {activeCard === 'payments' && 'Showing payment collection receipts matching filter criteria.'}
+              {activeCard === 'payments' && 'Showing all payments collected on matching filtered orders.'}
               {activeCard === 'active' && 'Active orders currently in washing, drying, ironing, packing, or ready for delivery.'}
               {activeCard === 'delivered_orders' && 'Showing completed orders that have been delivered.'}
-              {activeCard === 'delivered_revenue' && 'Showing delivered orders and total revenue income collected.'}
+              {activeCard === 'delivered_revenue' && 'Showing completed delivered orders and realized revenue collected.'}
               {activeCard === 'customers' && 'Showing new customer profiles registered during selected period.'}
-              {activeCard === 'overdue' && 'Showing active orders that have exceeded their expected delivery date.'}
+              {activeCard === 'overdue' && 'Showing orders with pending dues or that have exceeded their expected delivery date.'}
             </p>
           </div>
 

@@ -90,28 +90,52 @@ export const getDashboardStats = async (req: Request, res: Response) => {
     const totalOrdersCount = await Order.countDocuments(orderQuery);
     const ordersList = await Order.find(orderQuery).sort({ orderDate: -1, createdAt: -1 }).lean();
 
-    // 2. Payments Received List & Total
-    let paymentMatch: any = {};
-    if (startDate || endDate) {
-      paymentMatch.paidAt = {};
-      if (startDate) paymentMatch.paidAt.$gte = startDate;
-      if (endDate) paymentMatch.paidAt.$lte = endDate;
-    }
-    let paymentsList = await Payment.find(paymentMatch).sort({ paidAt: -1 }).lean();
-    const periodPayments = await Payment.aggregate([
-      { $match: paymentMatch },
-      { $group: { _id: null, total: { $sum: '$amount' } } },
-    ]);
-    const periodRevenue = periodPayments[0]?.total || 0;
+    // Calculate unified financial totals strictly on the filtered orders:
+    const totalBilledRevenue = ordersList.reduce((sum, o: any) => sum + Number(o.totalAmount || 0), 0);
 
-    // 3. Active Orders List & Count (Respects active date filter if selected)
-    const activeQuery: any = {
-      ...orderQuery,
-      status: { $in: ['Received', 'Washing', 'Drying', 'Ironing', 'Packing', 'Ready for Delivery', 'Ready for Pickup'] },
-    };
+    const totalCollectedRevenue = ordersList.reduce((sum, o: any) => {
+      const paid = o.paymentStatus === 'Paid' ? Number(o.totalAmount || 0) : Number(o.advancePaid || 0);
+      return sum + paid;
+    }, 0);
 
-    const activeOrdersCount = await Order.countDocuments(activeQuery);
-    const activeOrdersList = await Order.find(activeQuery).sort({ orderDate: -1, createdAt: -1 }).lean();
+    const totalPendingBalance = ordersList.reduce((sum, o: any) => {
+      const rem = o.remainingBalance !== undefined
+        ? Number(o.remainingBalance || 0)
+        : Math.max(0, Number(o.totalAmount || 0) - Number(o.advancePaid || 0));
+      return sum + rem;
+    }, 0);
+
+    // 2. Payments Collected List (Matching the filtered orders)
+    const orderIds = ordersList.map((o) => o._id);
+    const orderNumbers = ordersList.map((o) => o.orderNumber).filter(Boolean);
+
+    let directPayments = await Payment.find({
+      $or: [
+        { orderId: { $in: orderIds } },
+        { orderNumber: { $in: orderNumbers } },
+      ],
+    }).sort({ paidAt: -1 }).lean();
+
+    const recordedOrderNums = new Set(directPayments.map((p: any) => p.orderNumber).filter(Boolean));
+    const synthesizedPayments = ordersList
+      .filter((o: any) => (o.paymentStatus === 'Paid' || Number(o.advancePaid || 0) > 0) && !recordedOrderNums.has(o.orderNumber))
+      .map((o: any) => ({
+        _id: o._id,
+        orderId: o._id,
+        orderNumber: o.orderNumber,
+        customerName: o.customerSnapshot?.name || 'Customer',
+        paymentMethod: o.paymentMethod || 'Cash',
+        paidAt: o.orderDate,
+        amount: o.paymentStatus === 'Paid' ? Number(o.totalAmount || 0) : Number(o.advancePaid || 0),
+      }));
+
+    const paymentsList = [...directPayments, ...synthesizedPayments].sort(
+      (a: any, b: any) => new Date(b.paidAt || 0).getTime() - new Date(a.paidAt || 0).getTime()
+    );
+
+    // 3. Active Orders List & Count
+    const activeOrdersList = ordersList.filter((o: any) => !/delivered|cancelled/i.test(o.status || ''));
+    const activeOrdersCount = activeOrdersList.length;
 
     // 4. New Customers List & Count
     let customerQuery: any = {};
@@ -123,25 +147,22 @@ export const getDashboardStats = async (req: Request, res: Response) => {
     const newCustomersCount = await Customer.countDocuments(customerQuery);
     const newCustomersList = await Customer.find(customerQuery).sort({ createdAt: -1, _id: -1 }).lean();
 
-    // 5. Overdue Orders List & Count (Respects active date filter if selected)
-    const overdueQuery: any = {
-      ...orderQuery,
-      status: { $nin: ['Delivered', 'Cancelled'] },
-    };
+    // 5. Overdue / Due Orders List & Count
+    const nowRef = new Date();
+    const overdueOrdersList = ordersList.filter((o: any) => {
+      const rem = o.remainingBalance !== undefined
+        ? Number(o.remainingBalance || 0)
+        : Math.max(0, Number(o.totalAmount || 0) - Number(o.advancePaid || 0));
+      const isPastDelivery = o.expectedDeliveryDate && new Date(o.expectedDeliveryDate) < nowRef && !/delivered|cancelled/i.test(o.status || '');
+      return rem > 0 || isPastDelivery;
+    });
+    const overdueOrdersCount = overdueOrdersList.length;
 
-    const overdueOrdersCount = await Order.countDocuments(overdueQuery);
-    const overdueOrdersList = await Order.find(overdueQuery).sort({ expectedDeliveryDate: 1 }).lean();
-
-    // 6. Delivered Orders List, Count & Delivered Income (Actual Money Collected on Delivered Orders)
-    const deliveredQuery: any = {
-      ...orderQuery,
-      status: { $regex: /^delivered$/i },
-    };
-
-    const deliveredOrdersCount = await Order.countDocuments(deliveredQuery);
-    const deliveredOrdersList = await Order.find(deliveredQuery).sort({ deliveredAt: -1, orderDate: -1 }).lean();
+    // 6. Delivered Orders List, Count & Delivered Revenue
+    const deliveredOrdersList = ordersList.filter((o: any) => /delivered/i.test(o.status || ''));
+    const deliveredOrdersCount = deliveredOrdersList.length;
     
-    // Sum only actual money collected on delivered orders (deducting unpaid balance)
+    // Sum only actual money collected on delivered orders
     const deliveredRevenue = deliveredOrdersList.reduce((sum, ord: any) => {
       const paid = ord.paymentStatus === 'Paid' ? Number(ord.totalAmount || 0) : Number(ord.advancePaid || 0);
       return sum + paid;
@@ -200,28 +221,15 @@ export const getDashboardStats = async (req: Request, res: Response) => {
     const monthAdvTotal = monthOrdersSum[0]?.totalAdv || 0;
     const monthlyRevenue = monthPayTotal > 0 ? monthPayTotal : monthAdvTotal;
 
-    const periodRev = periodRevenue > 0 ? periodRevenue : todayRevenue;
-
-    // If paymentsList is empty, derive payment records strictly from orders with collected money > 0
-    if (paymentsList.length === 0 && ordersList.length > 0) {
-      paymentsList = ordersList
-        .filter((o) => o.paymentStatus === 'Paid' || o.advancePaid > 0)
-        .map((o) => ({
-          _id: o._id,
-          orderNumber: o.orderNumber,
-          customerName: o.customerSnapshot?.name || 'Customer',
-          paymentMethod: o.paymentMethod || 'Cash',
-          paidAt: o.orderDate,
-          amount: o.paymentStatus === 'Paid' ? o.totalAmount : o.advancePaid,
-        })) as any;
-    }
-
     res.json({
       success: true,
       stats: {
         totalOrders: totalOrdersCount,
         orders: totalOrdersCount,
-        paymentsReceived: periodRev,
+        paymentsReceived: totalCollectedRevenue,
+        collectedRevenue: totalCollectedRevenue,
+        totalBilled: totalBilledRevenue,
+        totalPendingBalance,
         activeOrders: activeOrdersCount,
         newCustomers: newCustomersCount,
         overdueOrders: overdueOrdersCount,
@@ -233,7 +241,7 @@ export const getDashboardStats = async (req: Request, res: Response) => {
         deliveredRevenue: deliveredRevenue,
         todayRevenue,
         monthlyRevenue,
-        periodRevenue: periodRev,
+        periodRevenue: totalCollectedRevenue,
         totalCustomers: newCustomersCount,
       },
       ordersList,
