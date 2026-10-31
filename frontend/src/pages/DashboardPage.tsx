@@ -42,7 +42,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 
-type CardType = 'orders' | 'payments' | 'active' | 'customers' | 'overdue' | 'delivered_orders' | 'delivered_revenue';
+type CardType = 'orders' | 'payments' | 'active' | 'customers' | 'overdue' | 'delivered_orders';
 
 export const DashboardPage: React.FC = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -240,7 +240,6 @@ export const DashboardPage: React.FC = () => {
     : activeCard === 'active' ? activeOrdersList
     : activeCard === 'customers' ? processedCustomersList
     : activeCard === 'delivered_orders' ? deliveredOrdersList
-    : activeCard === 'delivered_revenue' ? deliveredOrdersList
     : overdueOrdersList;
 
   const totalDashRecords = activeList.length;
@@ -464,8 +463,8 @@ export const DashboardPage: React.FC = () => {
         )}
       </div>
 
-      {/* THE 7 DYNAMIC KEY METRIC CARDS */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5 sm:gap-3">
+      {/* THE 6 DYNAMIC KEY METRIC CARDS */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 sm:gap-3">
         {/* CARD 1: Orders */}
         <div
           onClick={() => setActiveCard('orders')}
@@ -576,37 +575,7 @@ export const DashboardPage: React.FC = () => {
           </div>
         </div>
 
-        {/* CARD 5: Delivered Income */}
-        <div
-          onClick={() => setActiveCard('delivered_revenue')}
-          className={`col-span-1 glass-card p-3 sm:p-4 flex flex-col justify-between cursor-pointer transition-all duration-200 select-none ${
-            activeCard === 'delivered_revenue'
-              ? 'ring-2 ring-teal-500 border-teal-500 bg-teal-50/50 dark:bg-teal-950/50 shadow-md'
-              : 'hover:border-teal-300'
-          }`}
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] sm:text-xs font-bold text-slate-600 dark:text-slate-300 truncate">Delivered Income</span>
-            <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-teal-100 text-teal-600 dark:bg-teal-950 dark:text-teal-400 shrink-0">
-              <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5" />
-            </div>
-          </div>
-          <div className="mt-2 sm:mt-3">
-            {isLoading ? (
-              <div className="h-6 sm:h-7 w-20 bg-slate-200 dark:bg-slate-700 animate-pulse rounded-lg mt-1" />
-            ) : (
-              <p className="text-base sm:text-2xl font-black text-teal-600 dark:text-teal-400 truncate">
-                {currencySymbol}{(stats?.deliveredRevenue ?? deliveredOrdersList.reduce((acc, o: any) => {
-                  const paid = o.paymentStatus === 'Paid' ? Number(o.totalAmount || 0) : Number(o.advancePaid || 0);
-                  return acc + paid;
-                }, 0)).toLocaleString('en-IN')}
-              </p>
-            )}
-            <p className="hidden sm:block text-[10px] font-semibold text-teal-600 mt-0.5">Delivered revenue</p>
-          </div>
-        </div>
-
-        {/* CARD 6: New Customers */}
+        {/* CARD 5: New Customers */}
         <div
           onClick={() => setActiveCard('customers')}
           className={`col-span-1 glass-card p-3 sm:p-4 flex flex-col justify-between cursor-pointer transition-all duration-200 select-none ${
@@ -633,7 +602,7 @@ export const DashboardPage: React.FC = () => {
           </div>
         </div>
 
-        {/* CARD 7: Overdue Orders */}
+        {/* CARD 6: Overdue Orders */}
         <div
           onClick={() => setActiveCard('overdue')}
           className={`col-span-1 glass-card p-3 sm:p-4 flex flex-col justify-between cursor-pointer transition-all duration-200 select-none ${
@@ -676,7 +645,6 @@ export const DashboardPage: React.FC = () => {
               {activeCard === 'payments' && <DollarSign className="w-4 h-4 text-emerald-500" />}
               {activeCard === 'active' && <WashingMachine className="w-4 h-4 text-cyan-500" />}
               {activeCard === 'delivered_orders' && <PackageCheck className="w-4 h-4 text-emerald-500" />}
-              {activeCard === 'delivered_revenue' && <TrendingUp className="w-4 h-4 text-teal-500" />}
               {activeCard === 'customers' && <Users className="w-4 h-4 text-indigo-500" />}
               {activeCard === 'overdue' && <AlertTriangle className="w-4 h-4 text-rose-500" />}
 
@@ -685,7 +653,6 @@ export const DashboardPage: React.FC = () => {
                 {activeCard === 'payments' && `Payments Collected (${totalDashRecords})`}
                 {activeCard === 'active' && `Active Orders (${totalDashRecords})`}
                 {activeCard === 'delivered_orders' && `Delivered Orders (${totalDashRecords})`}
-                {activeCard === 'delivered_revenue' && `Delivered Income Orders (${totalDashRecords})`}
                 {activeCard === 'customers' && `Customers (${totalDashRecords})`}
                 {activeCard === 'overdue' && `Overdue Orders (${totalDashRecords})`}
               </span>
@@ -702,7 +669,6 @@ export const DashboardPage: React.FC = () => {
               {activeCard === 'payments' && 'Showing payment collection receipts matching filter criteria.'}
               {activeCard === 'active' && 'Active orders currently in washing, drying, ironing, packing, or ready for delivery.'}
               {activeCard === 'delivered_orders' && 'Showing completed orders that have been delivered.'}
-              {activeCard === 'delivered_revenue' && 'Showing delivered orders and total revenue income collected.'}
               {activeCard === 'customers' && 'Showing new customer profiles registered during selected period.'}
               {activeCard === 'overdue' && 'Showing active orders that have exceeded their expected delivery date or have pending balance.'}
             </p>
@@ -742,8 +708,8 @@ export const DashboardPage: React.FC = () => {
           </div>
         ) : (
           <>
-        {/* --- VIEW 1: ORDERS LIST (activeCard === 'orders' | 'delivered_orders' | 'delivered_revenue') --- */}
-        {(activeCard === 'orders' || activeCard === 'delivered_orders' || activeCard === 'delivered_revenue') && (
+        {/* --- VIEW 1: ORDERS LIST (activeCard === 'orders' | 'delivered_orders') --- */}
+        {(activeCard === 'orders' || activeCard === 'delivered_orders') && (
           <div>
             {paginatedList.length === 0 ? (
               <div className="text-center py-8 text-slate-500 text-xs">No orders found matching filters.</div>
