@@ -83,6 +83,10 @@ export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
 
   const loadData = async () => {
+    // If a custom date range is partially selected, wait until both From and To dates are set
+    if ((dateFrom && !dateTo) || (!dateFrom && dateTo)) {
+      return;
+    }
     setIsLoading(true);
     try {
       const [dashRes, setRes] = await Promise.all([
@@ -135,6 +139,10 @@ export const DashboardPage: React.FC = () => {
   };
 
   useEffect(() => {
+    // Wait until both From Date and To Date are selected before triggering filter
+    if ((dateFrom && !dateTo) || (!dateFrom && dateTo)) {
+      return;
+    }
     loadData();
     setDashPage(1);
   }, [preset, paymentStatus, orderStatus, dateType, dateFrom, dateTo]);
@@ -291,8 +299,14 @@ export const DashboardPage: React.FC = () => {
             </h2>
             <span className="px-2 py-0.5 rounded-full bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300 font-bold text-[10px] border border-brand-200 truncate flex items-center gap-1.5">
               {isLoading && <RefreshCw className="w-2.5 h-2.5 animate-spin text-brand-600 shrink-0" />}
-              <span>{dateFrom || dateTo ? 'Custom' : activePresetLabel}</span>
+              <span>{dateFrom && dateTo ? 'Custom' : (dateFrom || dateTo) ? 'Selecting Range...' : activePresetLabel}</span>
               {isLoading && <span className="text-[9px] font-semibold text-brand-600 animate-pulse">(Updating...)</span>}
+              {!isLoading && (dateFrom && !dateTo) && (
+                <span className="text-[9px] font-semibold text-amber-600 dark:text-amber-400 animate-pulse">(Select To Date)</span>
+              )}
+              {!isLoading && (!dateFrom && dateTo) && (
+                <span className="text-[9px] font-semibold text-amber-600 dark:text-amber-400 animate-pulse">(Select From Date)</span>
+              )}
             </span>
           </div>
 
@@ -415,9 +429,17 @@ export const DashboardPage: React.FC = () => {
                 <input
                   type="date"
                   value={dateFrom}
+                  max={dateTo || undefined}
                   onChange={(e) => { setDateFrom(e.target.value); setPreset(''); }}
-                  className="w-full px-2 py-1.5 text-[11px] rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none"
+                  className={`w-full px-2 py-1.5 text-[11px] rounded-xl border bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none transition-all ${
+                    !dateFrom && dateTo
+                      ? 'border-brand-500 ring-2 ring-brand-500/20'
+                      : 'border-slate-200 dark:border-slate-700'
+                  }`}
                 />
+                {!dateFrom && dateTo && (
+                  <p className="text-[9px] font-semibold text-amber-600 dark:text-amber-400 mt-0.5">Select From Date</p>
+                )}
               </div>
 
               <div>
@@ -425,9 +447,17 @@ export const DashboardPage: React.FC = () => {
                 <input
                   type="date"
                   value={dateTo}
+                  min={dateFrom || undefined}
                   onChange={(e) => { setDateTo(e.target.value); setPreset(''); }}
-                  className="w-full px-2 py-1.5 text-[11px] rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none"
+                  className={`w-full px-2 py-1.5 text-[11px] rounded-xl border bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none transition-all ${
+                    dateFrom && !dateTo
+                      ? 'border-brand-500 ring-2 ring-brand-500/20'
+                      : 'border-slate-200 dark:border-slate-700'
+                  }`}
                 />
+                {dateFrom && !dateTo && (
+                  <p className="text-[9px] font-semibold text-amber-600 dark:text-amber-400 mt-0.5">Select To Date to filter</p>
+                )}
               </div>
             </div>
           </div>
