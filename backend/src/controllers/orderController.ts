@@ -445,7 +445,36 @@ export const recordOrderPayment = async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, message: 'Please enter a valid positive payment amount' });
     }
 
-    const newAdvance = order.advancePaid + payAmount;
+    // 1. Guard against paying an already fully-paid order
+    if (order.remainingBalance <= 0 || order.paymentStatus === 'Paid') {
+      return res.status(400).json({
+        success: false,
+        message: `Order #${order.orderNumber} is already fully paid. No pending balance remaining.`,
+      });
+    }
+
+    // 2. Guard against overpayment exceeding remaining balance
+    if (payAmount > order.remainingBalance) {
+      return res.status(400).json({
+        success: false,
+        message: `Payment amount (₹${payAmount}) cannot exceed remaining balance (₹${order.remainingBalance}).`,
+      });
+    }
+
+    // 3. Debounce rapid duplicate submissions (within 60 seconds)
+    const recentDuplicate = await Payment.findOne({
+      orderId: order._id,
+      amount: payAmount,
+      paidAt: { $gte: new Date(Date.now() - 60000) },
+    });
+    if (recentDuplicate) {
+      return res.status(400).json({
+        success: false,
+        message: 'A payment of this amount for this order was already recorded moments ago.',
+      });
+    }
+
+    const newAdvance = Math.min(order.totalAmount, order.advancePaid + payAmount);
     order.advancePaid = newAdvance;
     order.remainingBalance = Math.max(0, order.totalAmount - newAdvance);
 
@@ -570,6 +599,78 @@ export const fixOrder412 = async (req: Request, res: Response) => {
       return res.json({ success: true, message: `Successfully updated ${oldNum} to ORD-1/26`, order });
     }
     res.json({ success: true, message: 'No order with 412 found' });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const fixDuplicatePayments = async (req: Request, res: Response) => {
+  try {
+    const allPayments = await Payment.find().sort({ paidAt: 1 }).lean();
+    const paymentsByOrder: { [key: string]: any[] } = {};
+
+    allPayments.forEach((p: any) => {
+      const key = (p.orderNumber || p.orderId?.toString() || '').trim();
+      if (!key) return;
+      if (!paymentsByOrder[key]) paymentsByOrder[key] = [];
+      paymentsByOrder[key].push(p);
+    });
+
+    const deletedIds: any[] = [];
+    const fixedOrders: any[] = [];
+
+    for (const orderKey of Object.keys(paymentsByOrder)) {
+      const list = paymentsByOrder[orderKey];
+      if (list.length <= 1) continue;
+
+      const seen: any[] = [];
+      for (const p of list) {
+        const isDupe = seen.some((s) => {
+          const sameAmount = Number(s.amount) === Number(p.amount);
+          const timeDiff = Math.abs(
+            new Date(p.paidAt || p.createdAt).getTime() - new Date(s.paidAt || s.createdAt).getTime()
+          );
+          return sameAmount && timeDiff < 5 * 60 * 1000;
+        });
+
+        if (isDupe) {
+          deletedIds.push(p._id);
+        } else {
+          seen.push(p);
+        }
+      }
+
+      const order = await Order.findOne({
+        $or: [{ orderNumber: orderKey }, { orderNumber: orderKey.replace(/^#/, '') }],
+      });
+      if (order) {
+        const validSum = seen.reduce((sum, sp) => sum + Number(sp.amount || 0), 0);
+        if (order.advancePaid > validSum || order.advancePaid > order.totalAmount) {
+          order.advancePaid = Math.min(order.totalAmount, validSum);
+          order.remainingBalance = Math.max(0, order.totalAmount - order.advancePaid);
+          if (order.remainingBalance === 0) {
+            order.paymentStatus = 'Paid';
+          }
+          await order.save();
+          fixedOrders.push({
+            orderNumber: order.orderNumber,
+            totalAmount: order.totalAmount,
+            fixedAdvancePaid: order.advancePaid,
+          });
+        }
+      }
+    }
+
+    if (deletedIds.length > 0) {
+      await Payment.deleteMany({ _id: { $in: deletedIds } });
+    }
+
+    return res.json({
+      success: true,
+      message: `Cleaned up ${deletedIds.length} duplicate payment records across ${fixedOrders.length} orders.`,
+      deletedCount: deletedIds.length,
+      fixedOrders,
+    });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });
   }

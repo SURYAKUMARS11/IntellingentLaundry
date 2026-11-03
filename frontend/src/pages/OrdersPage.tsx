@@ -496,11 +496,19 @@ export const OrdersPage: React.FC = () => {
           setting={setting}
           onClose={() => setShowPaymentModal(false)}
           onSuccess={async (paymentData) => {
-            await recordOrderPaymentApi(selectedOrder._id, paymentData);
-            setShowPaymentModal(false);
-            loadOrders();
-            setSelectedOrder(null);
-            showToast('✅ Payment recorded successfully!', 'success');
+            try {
+              const res = await recordOrderPaymentApi(selectedOrder._id, paymentData);
+              if (res && res.success === false) {
+                showToast(res.message || 'Failed to record payment', 'error');
+                return;
+              }
+              setShowPaymentModal(false);
+              loadOrders();
+              setSelectedOrder(null);
+              showToast('✅ Payment recorded successfully!', 'success');
+            } catch (err: any) {
+              showToast(err.message || 'Failed to record payment', 'error');
+            }
           }}
         />
       )}

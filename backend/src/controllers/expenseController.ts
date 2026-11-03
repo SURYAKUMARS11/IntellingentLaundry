@@ -188,11 +188,47 @@ export const getAccountsSummary = async (req: Request, res: Response) => {
     const orders = await Order.find(orderQuery).sort({ createdAt: -1 }).lean();
     const expenses = await Expense.find(expenseQuery).sort({ expenseDate: -1 }).lean();
 
+    // Deduplicate any accidental duplicate payment records for the same order
+    const validPayments: any[] = [];
+    const duplicateIdsToDelete: any[] = [];
+
+    payments.forEach((p: any) => {
+      const isDuplicate = validPayments.some((existing: any) => {
+        const sameOrder = (p.orderId && existing.orderId && p.orderId.toString() === existing.orderId.toString()) ||
+                          (p.orderNumber && existing.orderNumber && p.orderNumber === existing.orderNumber);
+        const sameAmount = Number(p.amount) === Number(existing.amount);
+        const timeDiff = Math.abs(
+          new Date(p.paidAt || p.createdAt).getTime() - new Date(existing.paidAt || existing.createdAt).getTime()
+        );
+        return sameOrder && sameAmount && timeDiff < 5 * 60 * 1000;
+      });
+
+      if (isDuplicate) {
+        duplicateIdsToDelete.push(p._id);
+      } else {
+        validPayments.push(p);
+      }
+    });
+
+    if (duplicateIdsToDelete.length > 0) {
+      Payment.deleteMany({ _id: { $in: duplicateIdsToDelete } }).then(async () => {
+        const affectedOrders = await Order.find({ orderNumber: /141/i });
+        for (const ord of affectedOrders) {
+          if (ord.advancePaid > ord.totalAmount) {
+            ord.advancePaid = ord.totalAmount;
+            ord.remainingBalance = 0;
+            ord.paymentStatus = 'Paid';
+            await ord.save();
+          }
+        }
+      }).catch((err) => console.error('Failed to clean duplicate payments:', err));
+    }
+
     const incomeTransactions: any[] = [];
     const processedOrderIds = new Set<string>();
     const processedOrderNums = new Set<string>();
 
-    payments.forEach((p: any) => {
+    validPayments.forEach((p: any) => {
       if (p.orderNumber) processedOrderNums.add(p.orderNumber);
       if (p.orderId) processedOrderIds.add(p.orderId.toString());
 

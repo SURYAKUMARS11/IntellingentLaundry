@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Order, Setting } from '../../types';
-import { X, CreditCard, DollarSign, Smartphone, Check } from 'lucide-react';
+import { X, CreditCard, DollarSign, Smartphone, Check, RefreshCw } from 'lucide-react';
 
 interface PaymentModalProps {
   order: Order;
@@ -25,7 +25,12 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
     if (!amount || amount <= 0) return;
+    if (order.remainingBalance <= 0) {
+      onClose();
+      return;
+    }
     setIsSubmitting(true);
     onSuccess({
       amount: Number(amount),
@@ -155,11 +160,20 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             </button>
             <button
               type="submit"
-              disabled={isSubmitting}
-              className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs shadow-md shadow-emerald-600/30 flex items-center justify-center gap-1.5"
+              disabled={isSubmitting || !amount || amount <= 0 || order.remainingBalance <= 0}
+              className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold text-xs shadow-md shadow-emerald-600/30 flex items-center justify-center gap-1.5 transition-all"
             >
-              <Check className="w-4 h-4" />
-              <span>Confirm Payment</span>
+              {isSubmitting ? (
+                <>
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                  <span>Processing...</span>
+                </>
+              ) : (
+                <>
+                  <Check className="w-4 h-4" />
+                  <span>Confirm Payment</span>
+                </>
+              )}
             </button>
           </div>
         </form>
