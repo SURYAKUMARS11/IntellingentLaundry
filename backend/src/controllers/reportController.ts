@@ -154,14 +154,13 @@ export const getDashboardStats = async (req: Request, res: Response) => {
     const newCustomersCount = await Customer.countDocuments(customerQuery);
     const newCustomersList = await Customer.find(customerQuery).sort({ createdAt: -1, _id: -1 }).lean();
 
-    // 5. Overdue / Due Orders List & Count
-    const nowRef = new Date();
+    // 5. Overdue / Due Orders List & Count (Strictly orders with unpaid balance)
     const overdueOrdersList = ordersList.filter((o: any) => {
+      if (o.status === 'Cancelled' || o.paymentStatus === 'Paid') return false;
       const rem = o.remainingBalance !== undefined
         ? Number(o.remainingBalance || 0)
         : Math.max(0, Number(o.totalAmount || 0) - Number(o.advancePaid || 0));
-      const isPastDelivery = o.expectedDeliveryDate && new Date(o.expectedDeliveryDate) < nowRef && !/delivered|cancelled/i.test(o.status || '');
-      return rem > 0 || isPastDelivery;
+      return rem > 0;
     });
     const overdueOrdersCount = overdueOrdersList.length;
 

@@ -918,8 +918,11 @@ export const fetchDashboardStats = async (params: {
 
   const now = new Date();
   const isOrderOverdue = (o: Order) => {
-    if (o.status === 'Delivered' || o.status === 'Cancelled') return false;
-    return Boolean(o.expectedDeliveryDate && new Date(o.expectedDeliveryDate) < now);
+    if (o.status === 'Cancelled' || o.paymentStatus === 'Paid') return false;
+    const rem = o.remainingBalance !== undefined
+      ? Number(o.remainingBalance || 0)
+      : Math.max(0, Number(o.totalAmount || 0) - Number(o.advancePaid || 0));
+    return rem > 0;
   };
 
   const activeOrds = localOrders.filter((o) => o.status !== 'Delivered' && o.status !== 'Cancelled');

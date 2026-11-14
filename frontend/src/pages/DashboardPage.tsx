@@ -66,6 +66,8 @@ export const DashboardPage: React.FC = () => {
   const [allTimePendingByMonth, setAllTimePendingByMonth] = useState<MonthPendingGroup[]>([]);
   const [overdueViewMode, setOverdueViewMode] = useState<'filter' | 'all_months'>('filter');
   const [expandedMonthKeys, setExpandedMonthKeys] = useState<string[]>([]);
+  const [monthPages, setMonthPages] = useState<{ [monthKey: string]: number }>({});
+  const [touchStartX, setTouchStartX] = useState<number | null>(null);
 
   // Pagination states for Dashboard Table
   const [dashPage, setDashPage] = useState<number>(1);
@@ -708,7 +710,7 @@ export const DashboardPage: React.FC = () => {
               {activeCard === 'customers' && 'Showing new customer profiles registered during selected period.'}
               {activeCard === 'overdue' && (
                 overdueViewMode === 'filter'
-                  ? 'Showing active orders that have exceeded their expected delivery date or have pending balance in selected period.'
+                  ? 'Showing orders with pending balance in selected period.'
                   : 'Showing cumulative uncollected order balances across all historical months. Select "Record Pay" on any order to collect payment.'
               )}
             </p>
@@ -1141,7 +1143,7 @@ export const DashboardPage: React.FC = () => {
               <div>
                 {paginatedList.length === 0 ? (
                   <div className="text-center py-8 text-slate-500 text-xs font-semibold">
-                    No overdue orders found in selected period. All active orders are on schedule!
+                    No pending due orders found in selected period. All orders are settled!
                   </div>
                 ) : (
                   <div>
@@ -1325,130 +1327,211 @@ export const DashboardPage: React.FC = () => {
                           </div>
 
                           {/* Accordion Month Orders List */}
-                          {isExpanded && (
-                            <div className="border-t border-slate-100 dark:border-slate-800 bg-slate-50/40 dark:bg-slate-950/20 p-2 sm:p-4">
-                              {/* Desktop Table */}
-                              <div className="hidden md:block overflow-x-auto">
-                                <table className="w-full text-left text-xs">
-                                  <thead className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-slate-700">
-                                    <tr>
-                                      <th className="py-2.5 px-3">Order ID</th>
-                                      <th className="py-2.5 px-3">Customer</th>
-                                      <th className="py-2.5 px-3">Order Date & Time</th>
-                                      <th className="py-2.5 px-3">Total Amount</th>
-                                      <th className="py-2.5 px-3">Pending Balance</th>
-                                      <th className="py-2.5 px-3">Status</th>
-                                      <th className="py-2.5 px-3 text-center">Actions</th>
-                                    </tr>
-                                  </thead>
-                                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-slate-800 dark:text-slate-200">
-                                    {grp.orders.map((ord: Order) => {
-                                      const rem = ord.remainingBalance !== undefined
-                                        ? Number(ord.remainingBalance)
-                                        : Math.max(0, Number(ord.totalAmount || 0) - Number(ord.advancePaid || 0));
-                                      return (
-                                        <tr key={ord._id} className="hover:bg-rose-50/20 dark:hover:bg-rose-950/20">
-                                          <td className="py-3 px-3 font-bold text-rose-600 dark:text-rose-400 whitespace-nowrap">
-                                            <button onClick={() => setSelectedOrder(ord)} className="hover:underline">
-                                              #{ord.orderNumber}
-                                            </button>
-                                          </td>
-                                          <td className="py-3 px-3">
-                                            <p className="font-bold">{ord.customerSnapshot?.name}</p>
-                                            <p className="text-[10px] text-slate-400">+91 {ord.customerSnapshot?.mobile}</p>
-                                          </td>
-                                          <td className="py-3 px-3 text-slate-500 whitespace-nowrap">
-                                            {formatDateTime(ord.orderDate || ord.createdAt)}
-                                          </td>
-                                          <td className="py-3 px-3 font-bold">
-                                            {currencySymbol}{ord.totalAmount}
-                                          </td>
-                                          <td className="py-3 px-3 font-black text-rose-600 dark:text-rose-400 text-sm whitespace-nowrap">
-                                            {currencySymbol}{rem}
-                                          </td>
-                                          <td className="py-3 px-3">
-                                            <StatusBadge status={ord.status} size="sm" />
-                                          </td>
-                                          <td className="py-3 px-3 text-center">
-                                            <div className="flex items-center justify-center gap-1.5">
-                                              <button
-                                                onClick={() => {
-                                                  setSelectedOrder(ord);
-                                                  setShowPaymentModal(true);
-                                                }}
-                                                title="Collect Pending Payment"
-                                                className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs"
-                                              >
-                                                Record Pay
-                                              </button>
-                                              <button
-                                                onClick={() => handleWhatsAppShare(ord)}
-                                                title="WhatsApp Reminder"
-                                                className="p-2 rounded-xl bg-emerald-50 text-emerald-600 hover:bg-emerald-500 hover:text-white transition-colors"
-                                              >
-                                                <Smartphone className="w-4 h-4" />
-                                              </button>
-                                            </div>
-                                          </td>
-                                        </tr>
-                                      );
-                                    })}
-                                  </tbody>
-                                </table>
-                              </div>
+                          {isExpanded && (() => {
+                            const PAGE_SIZE = 5;
+                            const totalPages = Math.ceil(grp.orders.length / PAGE_SIZE) || 1;
+                            const curPage = Math.min(Math.max(1, monthPages[grp.monthKey] || 1), totalPages);
+                            const pagedOrders = grp.orders.slice((curPage - 1) * PAGE_SIZE, curPage * PAGE_SIZE);
 
-                              {/* Mobile Cards */}
-                              <div className="md:hidden space-y-2.5">
-                                {grp.orders.map((ord: Order) => {
-                                  const rem = ord.remainingBalance !== undefined
-                                    ? Number(ord.remainingBalance)
-                                    : Math.max(0, Number(ord.totalAmount || 0) - Number(ord.advancePaid || 0));
-                                  return (
-                                    <div
-                                      key={ord._id}
-                                      className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2"
-                                    >
-                                      <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-1.5">
-                                        <button onClick={() => setSelectedOrder(ord)} className="font-black text-xs text-rose-600 dark:text-rose-400">
-                                          #{ord.orderNumber}
-                                        </button>
-                                        <StatusBadge status={ord.status} size="sm" />
-                                      </div>
-                                      <div className="flex justify-between items-start text-xs">
-                                        <div>
-                                          <p className="font-bold text-slate-900 dark:text-white">{ord.customerSnapshot?.name}</p>
-                                          <p className="text-[10px] text-slate-400">+91 {ord.customerSnapshot?.mobile}</p>
-                                        </div>
-                                        <div className="text-right">
-                                          <p className="font-black text-rose-600 dark:text-rose-400">
-                                            Bal: {currencySymbol}{rem}
-                                          </p>
-                                          <p className="text-[10px] text-slate-400">Total: {currencySymbol}{ord.totalAmount}</p>
-                                        </div>
-                                      </div>
-                                      <div className="flex items-center justify-end gap-2 pt-1.5 border-t border-slate-100 dark:border-slate-800">
-                                        <button
-                                          onClick={() => {
-                                            setSelectedOrder(ord);
-                                            setShowPaymentModal(true);
-                                          }}
-                                          className="px-3 py-1.5 rounded-xl bg-emerald-600 text-white font-bold text-xs flex-1 text-center"
-                                        >
-                                          Record Pay
-                                        </button>
-                                        <button
-                                          onClick={() => handleWhatsAppShare(ord)}
-                                          className="py-1.5 px-3 rounded-xl bg-emerald-50 text-emerald-700 font-bold text-xs flex items-center justify-center gap-1"
-                                        >
-                                          <Smartphone className="w-3.5 h-3.5" /> WhatsApp
-                                        </button>
-                                      </div>
+                            return (
+                              <div
+                                className="border-t border-slate-100 dark:border-slate-800 bg-slate-50/40 dark:bg-slate-950/20 p-2.5 sm:p-4 space-y-3"
+                                onTouchStart={(e) => setTouchStartX(e.touches[0].clientX)}
+                                onTouchEnd={(e) => {
+                                  if (touchStartX === null) return;
+                                  const diff = touchStartX - e.changedTouches[0].clientX;
+                                  if (Math.abs(diff) > 40) {
+                                    if (diff > 0 && curPage < totalPages) {
+                                      setMonthPages((p) => ({ ...p, [grp.monthKey]: curPage + 1 }));
+                                    } else if (diff < 0 && curPage > 1) {
+                                      setMonthPages((p) => ({ ...p, [grp.monthKey]: curPage - 1 }));
+                                    }
+                                  }
+                                  setTouchStartX(null);
+                                }}
+                              >
+                                {/* Fixed 5-Item Navigation Bar (when more than 5 orders) */}
+                                {grp.orders.length > PAGE_SIZE && (
+                                  <div className="flex flex-row items-center justify-between gap-2 px-1 text-xs">
+                                    <div className="flex items-center gap-1.5 text-slate-500 font-medium text-[11px] sm:text-xs">
+                                      <span className="font-bold text-slate-800 dark:text-slate-200">
+                                        Showing {(curPage - 1) * PAGE_SIZE + 1} - {Math.min(grp.count, curPage * PAGE_SIZE)}
+                                      </span>
+                                      <span>of {grp.count} orders</span>
+                                      <span className="hidden sm:inline text-slate-400">• (5 fixed per view)</span>
+                                      <span className="sm:hidden text-[10px] text-rose-500 font-semibold">• Swipe left/right</span>
                                     </div>
-                                  );
-                                })}
+
+                                    <div className="flex items-center gap-1.5 shrink-0">
+                                      <button
+                                        disabled={curPage <= 1}
+                                        onClick={() => setMonthPages((p) => ({ ...p, [grp.monthKey]: Math.max(1, curPage - 1) }))}
+                                        className="px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-100 dark:hover:bg-slate-700 transition-all flex items-center gap-0.5"
+                                        title="Previous 5 orders"
+                                      >
+                                        <ChevronLeft className="w-3.5 h-3.5" />
+                                        <span className="hidden sm:inline">Prev</span>
+                                      </button>
+                                      <span className="px-1.5 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 font-extrabold text-[11px] text-slate-700 dark:text-slate-300">
+                                        {curPage} / {totalPages}
+                                      </span>
+                                      <button
+                                        disabled={curPage >= totalPages}
+                                        onClick={() => setMonthPages((p) => ({ ...p, [grp.monthKey]: Math.min(totalPages, curPage + 1) }))}
+                                        className="px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-100 dark:hover:bg-slate-700 transition-all flex items-center gap-0.5"
+                                        title="Next 5 orders"
+                                      >
+                                        <span className="hidden sm:inline">Next</span>
+                                        <ChevronRight className="w-3.5 h-3.5" />
+                                      </button>
+                                    </div>
+                                  </div>
+                                )}
+
+                                {/* Desktop Table: Fixed Container for 5 Data Items */}
+                                <div className="hidden md:block overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs">
+                                  <table className="w-full text-left text-xs">
+                                    <thead className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-slate-700">
+                                      <tr>
+                                        <th className="py-2.5 px-3">Order ID</th>
+                                        <th className="py-2.5 px-3">Customer</th>
+                                        <th className="py-2.5 px-3">Order Date & Time</th>
+                                        <th className="py-2.5 px-3">Total Amount</th>
+                                        <th className="py-2.5 px-3">Pending Balance</th>
+                                        <th className="py-2.5 px-3">Status</th>
+                                        <th className="py-2.5 px-3 text-center">Actions</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-slate-800 dark:text-slate-200">
+                                      {pagedOrders.map((ord: Order) => {
+                                        const rem = ord.remainingBalance !== undefined
+                                          ? Number(ord.remainingBalance)
+                                          : Math.max(0, Number(ord.totalAmount || 0) - Number(ord.advancePaid || 0));
+                                        return (
+                                          <tr key={ord._id} className="hover:bg-rose-50/20 dark:hover:bg-rose-950/20 h-11">
+                                            <td className="py-2.5 px-3 font-bold text-rose-600 dark:text-rose-400 whitespace-nowrap">
+                                              <button onClick={() => setSelectedOrder(ord)} className="hover:underline">
+                                                #{ord.orderNumber}
+                                              </button>
+                                            </td>
+                                            <td className="py-2.5 px-3">
+                                              <p className="font-bold">{ord.customerSnapshot?.name}</p>
+                                              <p className="text-[10px] text-slate-400">+91 {ord.customerSnapshot?.mobile}</p>
+                                            </td>
+                                            <td className="py-2.5 px-3 text-slate-500 whitespace-nowrap">
+                                              {formatDateTime(ord.orderDate || ord.createdAt)}
+                                            </td>
+                                            <td className="py-2.5 px-3 font-bold">
+                                              {currencySymbol}{ord.totalAmount}
+                                            </td>
+                                            <td className="py-2.5 px-3 font-black text-rose-600 dark:text-rose-400 text-sm whitespace-nowrap">
+                                              {currencySymbol}{rem}
+                                            </td>
+                                            <td className="py-2.5 px-3">
+                                              <StatusBadge status={ord.status} size="sm" />
+                                            </td>
+                                            <td className="py-2.5 px-3 text-center">
+                                              <div className="flex items-center justify-center gap-1.5">
+                                                <button
+                                                  onClick={() => {
+                                                    setSelectedOrder(ord);
+                                                    setShowPaymentModal(true);
+                                                  }}
+                                                  title="Collect Pending Payment"
+                                                  className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs"
+                                                >
+                                                  Record Pay
+                                                </button>
+                                                <button
+                                                  onClick={() => handleWhatsAppShare(ord)}
+                                                  title="WhatsApp Reminder"
+                                                  className="p-2 rounded-xl bg-emerald-50 text-emerald-600 hover:bg-emerald-500 hover:text-white transition-colors"
+                                                >
+                                                  <Smartphone className="w-4 h-4" />
+                                                </button>
+                                              </div>
+                                            </td>
+                                          </tr>
+                                        );
+                                      })}
+                                    </tbody>
+                                  </table>
+                                </div>
+
+                                {/* Mobile Cards: Fixed Container for 5 Data Items with Swipe */}
+                                <div className="md:hidden space-y-2.5">
+                                  {pagedOrders.map((ord: Order) => {
+                                    const rem = ord.remainingBalance !== undefined
+                                      ? Number(ord.remainingBalance)
+                                      : Math.max(0, Number(ord.totalAmount || 0) - Number(ord.advancePaid || 0));
+                                    return (
+                                      <div
+                                        key={ord._id}
+                                        className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2 shadow-2xs"
+                                      >
+                                        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-1.5">
+                                          <button onClick={() => setSelectedOrder(ord)} className="font-black text-xs text-rose-600 dark:text-rose-400">
+                                            #{ord.orderNumber}
+                                          </button>
+                                          <StatusBadge status={ord.status} size="sm" />
+                                        </div>
+                                        <div className="flex justify-between items-start text-xs">
+                                          <div>
+                                            <p className="font-bold text-slate-900 dark:text-white">{ord.customerSnapshot?.name}</p>
+                                            <p className="text-[10px] text-slate-400">+91 {ord.customerSnapshot?.mobile}</p>
+                                          </div>
+                                          <div className="text-right">
+                                            <p className="font-black text-rose-600 dark:text-rose-400">
+                                              Bal: {currencySymbol}{rem}
+                                            </p>
+                                            <p className="text-[10px] text-slate-400">Total: {currencySymbol}{ord.totalAmount}</p>
+                                          </div>
+                                        </div>
+                                        <div className="flex items-center justify-end gap-2 pt-1.5 border-t border-slate-100 dark:border-slate-800">
+                                          <button
+                                            onClick={() => {
+                                              setSelectedOrder(ord);
+                                              setShowPaymentModal(true);
+                                            }}
+                                            className="px-3 py-1.5 rounded-xl bg-emerald-600 text-white font-bold text-xs flex-1 text-center shadow-xs"
+                                          >
+                                            Record Pay
+                                          </button>
+                                          <button
+                                            onClick={() => handleWhatsAppShare(ord)}
+                                            className="py-1.5 px-3 rounded-xl bg-emerald-50 text-emerald-700 font-bold text-xs flex items-center justify-center gap-1"
+                                          >
+                                            <Smartphone className="w-3.5 h-3.5" /> WhatsApp
+                                          </button>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+
+                                {/* Bottom Swipe / Dot Indicators for Mobile */}
+                                {grp.orders.length > PAGE_SIZE && (
+                                  <div className="flex items-center justify-center gap-1.5 pt-1">
+                                    {Array.from({ length: Math.min(totalPages, 8) }).map((_, idx) => (
+                                      <button
+                                        key={idx}
+                                        onClick={() => setMonthPages((p) => ({ ...p, [grp.monthKey]: idx + 1 }))}
+                                        className={`h-1.5 rounded-full transition-all ${
+                                          curPage === idx + 1
+                                            ? 'w-5 bg-rose-600 dark:bg-rose-400'
+                                            : 'w-1.5 bg-slate-300 dark:bg-slate-700 hover:bg-slate-400'
+                                        }`}
+                                        title={`Page ${idx + 1}`}
+                                      />
+                                    ))}
+                                    {totalPages > 8 && (
+                                      <span className="text-[9px] text-slate-400 font-bold">+{totalPages - 8}</span>
+                                    )}
+                                  </div>
+                                )}
                               </div>
-                            </div>
-                          )}
+                            );
+                          })()}
                         </div>
                       );
                     })}
