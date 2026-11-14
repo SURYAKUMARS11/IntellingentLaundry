@@ -935,11 +935,68 @@ export const fetchDashboardStats = async (params: {
   }, 0);
   const monthlyRev = totalRev;
 
+  const allTimePendingOrders = localOrders.filter((o) => {
+    if (o.status === 'Cancelled') return false;
+    const rem = o.remainingBalance !== undefined
+      ? Number(o.remainingBalance || 0)
+      : Math.max(0, Number(o.totalAmount || 0) - Number(o.advancePaid || 0));
+    return rem > 0 && o.paymentStatus !== 'Paid';
+  });
+
+  const allTimePendingTotal = allTimePendingOrders.reduce((sum, o) => {
+    const rem = o.remainingBalance !== undefined
+      ? Number(o.remainingBalance || 0)
+      : Math.max(0, Number(o.totalAmount || 0) - Number(o.advancePaid || 0));
+    return sum + rem;
+  }, 0);
+
+  const monthlyPendingMap: {
+    [key: string]: {
+      monthKey: string;
+      monthName: string;
+      year: number;
+      month: number;
+      totalDue: number;
+      count: number;
+      orders: Order[];
+    };
+  } = {};
+
+  allTimePendingOrders.forEach((o) => {
+    const d = o.orderDate ? new Date(o.orderDate) : new Date(o.createdAt || Date.now());
+    const monthName = d.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+    const sortKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+
+    if (!monthlyPendingMap[sortKey]) {
+      monthlyPendingMap[sortKey] = {
+        monthKey: sortKey,
+        monthName,
+        year: d.getFullYear(),
+        month: d.getMonth() + 1,
+        totalDue: 0,
+        count: 0,
+        orders: [],
+      };
+    }
+    const rem = o.remainingBalance !== undefined
+      ? Number(o.remainingBalance || 0)
+      : Math.max(0, Number(o.totalAmount || 0) - Number(o.advancePaid || 0));
+    monthlyPendingMap[sortKey].totalDue += rem;
+    monthlyPendingMap[sortKey].count += 1;
+    monthlyPendingMap[sortKey].orders.push(o);
+  });
+
+  const allTimePendingByMonth = Object.keys(monthlyPendingMap)
+    .sort((a, b) => b.localeCompare(a))
+    .map((key) => monthlyPendingMap[key]);
+
   const stats: DashboardStats = {
     orders: localOrders.length,
     totalOrders: localOrders.length,
     totalBilled: localOrders.reduce((sum, o) => sum + Number(o.totalAmount || 0), 0),
     paymentsReceived: totalRev,
+    allTimePendingTotal,
+    allTimePendingCount: allTimePendingOrders.length,
     activeOrders: activeOrds.length,
     newCustomers: localCustomers.length,
     overdueOrders: overdueOrds.length,
@@ -972,6 +1029,8 @@ export const fetchDashboardStats = async (params: {
     activeOrdersList: activeOrds,
     newCustomersList: localCustomers,
     overdueOrdersList: overdueOrds,
+    allTimePendingOrders,
+    allTimePendingByMonth,
   };
 };
 

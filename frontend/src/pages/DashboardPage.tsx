@@ -7,7 +7,7 @@ import {
   recordOrderPaymentApi,
   prefetchAllAppData,
 } from '../services/api';
-import { DashboardStats, Order, OrderStatus, Setting, Customer, Payment } from '../types';
+import { DashboardStats, Order, OrderStatus, Setting, Customer, Payment, MonthPendingGroup } from '../types';
 import { StatusBadge } from '../components/ui/Badge';
 import { OrderDetailModal } from '../components/orders/OrderDetailModal';
 import { InvoiceView } from '../components/invoice/InvoiceView';
@@ -40,6 +40,7 @@ import {
   UserCheck,
   ChevronLeft,
   ChevronRight,
+  Calendar,
 } from 'lucide-react';
 
 type CardType = 'orders' | 'payments' | 'active' | 'customers' | 'overdue' | 'delivered_orders';
@@ -59,6 +60,12 @@ export const DashboardPage: React.FC = () => {
   const [deliveredOrdersList, setDeliveredOrdersList] = useState<Order[]>([]);
   const [newCustomersList, setNewCustomersList] = useState<Customer[]>([]);
   const [overdueOrdersList, setOverdueOrdersList] = useState<Order[]>([]);
+
+  // All-time pending dues across all months (unrestricted by date filters)
+  const [allTimePendingOrders, setAllTimePendingOrders] = useState<Order[]>([]);
+  const [allTimePendingByMonth, setAllTimePendingByMonth] = useState<MonthPendingGroup[]>([]);
+  const [overdueViewMode, setOverdueViewMode] = useState<'filter' | 'all_months'>('filter');
+  const [expandedMonthKeys, setExpandedMonthKeys] = useState<string[]>([]);
 
   // Pagination states for Dashboard Table
   const [dashPage, setDashPage] = useState<number>(1);
@@ -81,6 +88,20 @@ export const DashboardPage: React.FC = () => {
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
 
   const navigate = useNavigate();
+
+  const toggleMonthExpansion = (key: string) => {
+    setExpandedMonthKeys((prev) =>
+      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
+    );
+  };
+
+  const toggleAllMonths = () => {
+    if (expandedMonthKeys.length === allTimePendingByMonth.length) {
+      setExpandedMonthKeys([]);
+    } else {
+      setExpandedMonthKeys(allTimePendingByMonth.map((m) => m.monthKey));
+    }
+  };
 
   const loadData = async () => {
     // If a custom date range is partially selected, wait until both From and To dates are set
@@ -124,6 +145,12 @@ export const DashboardPage: React.FC = () => {
         setDeliveredOrdersList(delOrds);
         setNewCustomersList(dashRes.newCustomersList || []);
         setOverdueOrdersList(dashRes.overdueOrdersList || dashRes.pendingReminders || []);
+
+        const pendingOrds = dashRes.allTimePendingOrders || [];
+        const byMonth: MonthPendingGroup[] = dashRes.allTimePendingByMonth || [];
+        setAllTimePendingOrders(pendingOrds);
+        setAllTimePendingByMonth(byMonth);
+        setExpandedMonthKeys((prev) => (prev.length === 0 && byMonth.length > 0 ? [byMonth[0].monthKey] : prev));
       }
       if (setRes.success) {
         setSetting(setRes.setting);
@@ -625,9 +652,14 @@ export const DashboardPage: React.FC = () => {
                 {stats?.overdueOrders ?? overdueOrdersList.length}
               </p>
             )}
-            <p className="text-[10px] font-bold text-rose-600 dark:text-rose-400 mt-0.5 truncate">
-              Due: {currencySymbol}{overdueOrdersList.reduce((sum: number, o: any) => sum + Math.max(0, o.remainingBalance !== undefined ? Number(o.remainingBalance) : (Number(o.totalAmount || 0) - Number(o.advancePaid || 0))), 0).toLocaleString('en-IN')}
-            </p>
+            <div className="mt-0.5 space-y-0.5">
+              <p className="text-[10px] font-bold text-rose-600 dark:text-rose-400 truncate">
+                Due: {currencySymbol}{overdueOrdersList.reduce((sum: number, o: any) => sum + Math.max(0, o.remainingBalance !== undefined ? Number(o.remainingBalance) : (Number(o.totalAmount || 0) - Number(o.advancePaid || 0))), 0).toLocaleString('en-IN')}
+              </p>
+              <p className="text-[9px] font-bold text-slate-500 dark:text-slate-400 truncate">
+                All Months: {currencySymbol}{(stats?.allTimePendingTotal ?? allTimePendingOrders.reduce((sum, o: any) => sum + Math.max(0, o.remainingBalance !== undefined ? Number(o.remainingBalance) : (Number(o.totalAmount || 0) - Number(o.advancePaid || 0))), 0)).toLocaleString('en-IN')}
+              </p>
+            </div>
           </div>
         </div>
       </div>
@@ -654,7 +686,11 @@ export const DashboardPage: React.FC = () => {
                 {activeCard === 'active' && `Active Orders (${totalDashRecords})`}
                 {activeCard === 'delivered_orders' && `Delivered Orders (${totalDashRecords})`}
                 {activeCard === 'customers' && `Customers (${totalDashRecords})`}
-                {activeCard === 'overdue' && `Overdue Orders (${totalDashRecords})`}
+                {activeCard === 'overdue' && (
+                  overdueViewMode === 'filter'
+                    ? `Overdue Orders (${overdueOrdersList.length})`
+                    : `All-Time Dues by Month (${stats?.allTimePendingCount ?? allTimePendingOrders.length})`
+                )}
               </span>
 
               {isLoading && (
@@ -670,17 +706,55 @@ export const DashboardPage: React.FC = () => {
               {activeCard === 'active' && 'Active orders currently in washing, drying, ironing, packing, or ready for delivery.'}
               {activeCard === 'delivered_orders' && 'Showing completed orders that have been delivered.'}
               {activeCard === 'customers' && 'Showing new customer profiles registered during selected period.'}
-              {activeCard === 'overdue' && 'Showing active orders that have exceeded their expected delivery date or have pending balance.'}
+              {activeCard === 'overdue' && (
+                overdueViewMode === 'filter'
+                  ? 'Showing active orders that have exceeded their expected delivery date or have pending balance in selected period.'
+                  : 'Showing cumulative uncollected order balances across all historical months. Select "Record Pay" on any order to collect payment.'
+              )}
             </p>
           </div>
 
-          <button
-            onClick={() => navigate(activeCard === 'customers' ? '/customers' : '/orders')}
-            className="text-xs font-bold text-brand-600 hover:text-brand-700 dark:text-brand-400 flex items-center gap-1 self-start sm:self-auto"
-          >
-            <span>View All {activeCard === 'customers' ? 'Customers' : 'Orders'}</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </button>
+          <div className="flex items-center gap-2 flex-wrap">
+            {activeCard === 'overdue' && (
+              <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+                <button
+                  onClick={() => setOverdueViewMode('filter')}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+                    overdueViewMode === 'filter'
+                      ? 'bg-white dark:bg-slate-900 text-rose-600 dark:text-rose-400 shadow-xs'
+                      : 'text-slate-600 dark:text-slate-300 hover:text-slate-900'
+                  }`}
+                >
+                  <span>Selected Period</span>
+                  <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-rose-50 text-rose-600 dark:bg-rose-950 dark:text-rose-300 font-extrabold">
+                    {overdueOrdersList.length}
+                  </span>
+                </button>
+                <button
+                  onClick={() => setOverdueViewMode('all_months')}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+                    overdueViewMode === 'all_months'
+                      ? 'bg-white dark:bg-slate-900 text-rose-600 dark:text-rose-400 shadow-xs'
+                      : 'text-slate-600 dark:text-slate-300 hover:text-slate-900'
+                  }`}
+                >
+                  <Calendar className="w-3.5 h-3.5" />
+                  <span>All-Time by Month</span>
+                  <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-rose-50 text-rose-600 dark:bg-rose-950 dark:text-rose-300 font-extrabold">
+                    {stats?.allTimePendingCount ?? allTimePendingOrders.length}
+                  </span>
+                </button>
+              </div>
+            )}
+
+            <button
+              onClick={() => navigate(activeCard === 'customers' ? '/customers' : '/orders')}
+              className="text-xs font-bold text-brand-600 hover:text-brand-700 dark:text-brand-400 flex items-center gap-1 self-start sm:self-auto"
+            >
+              <span>View All {activeCard === 'customers' ? 'Customers' : 'Orders'}</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
 
         {/* SKELETON TABLE SHIMMER LOADER WHEN FETCHING BACKEND DATA */}
@@ -1062,118 +1136,331 @@ export const DashboardPage: React.FC = () => {
         {/* --- VIEW 5: OVERDUE & PENDING BALANCE ORDERS (activeCard === 'overdue') --- */}
         {activeCard === 'overdue' && (
           <div>
-            {paginatedList.length === 0 ? (
-              <div className="text-center py-8 text-slate-500 text-xs font-semibold">No overdue orders found. All active orders are on schedule!</div>
-            ) : (
+            {overdueViewMode === 'filter' ? (
+              // TAB 1: Selected Period Overdue Orders Table (Filtered)
               <div>
-                <div className="hidden md:block overflow-x-auto">
-                  <table className="w-full text-left text-xs">
-                    <thead className="bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 font-semibold border-b border-rose-100 dark:border-rose-900/60">
-                      <tr>
-                        <th className="py-3 px-4">Order ID</th>
-                        <th className="py-3 px-4">Customer</th>
-                        <th className="py-3 px-4">Order Date & Time</th>
-                        <th className="py-3 px-4">Total Amount</th>
-                        <th className="py-3 px-4">Pending Balance</th>
-                        <th className="py-3 px-4">Status</th>
-                        <th className="py-3 px-4 text-center">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-slate-800 dark:text-slate-200">
+                {paginatedList.length === 0 ? (
+                  <div className="text-center py-8 text-slate-500 text-xs font-semibold">
+                    No overdue orders found in selected period. All active orders are on schedule!
+                  </div>
+                ) : (
+                  <div>
+                    <div className="hidden md:block overflow-x-auto">
+                      <table className="w-full text-left text-xs">
+                        <thead className="bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 font-semibold border-b border-rose-100 dark:border-rose-900/60">
+                          <tr>
+                            <th className="py-3 px-4">Order ID</th>
+                            <th className="py-3 px-4">Customer</th>
+                            <th className="py-3 px-4">Order Date & Time</th>
+                            <th className="py-3 px-4">Total Amount</th>
+                            <th className="py-3 px-4">Pending Balance</th>
+                            <th className="py-3 px-4">Status</th>
+                            <th className="py-3 px-4 text-center">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-slate-800 dark:text-slate-200">
+                          {(paginatedList as Order[]).map((ord) => (
+                            <tr key={ord._id} className="hover:bg-rose-50/20 dark:hover:bg-rose-950/20">
+                              <td className="py-3.5 px-4 font-bold text-rose-600 dark:text-rose-400 whitespace-nowrap">
+                                <button onClick={() => setSelectedOrder(ord)} className="hover:underline">
+                                  #{ord.orderNumber}
+                                </button>
+                              </td>
+                              <td className="py-3.5 px-4">
+                                <p className="font-bold">{ord.customerSnapshot?.name}</p>
+                                <p className="text-[10px] text-slate-400">+91 {ord.customerSnapshot?.mobile}</p>
+                              </td>
+                              <td className="py-3.5 px-4 text-slate-500 whitespace-nowrap">
+                                {formatDateTime(ord.orderDate)}
+                              </td>
+                              <td className="py-3.5 px-4 font-bold">
+                                {currencySymbol}{ord.totalAmount}
+                              </td>
+                              <td className="py-3.5 px-4 font-black text-rose-600 dark:text-rose-400 text-sm whitespace-nowrap">
+                                {currencySymbol}{ord.remainingBalance}
+                              </td>
+                              <td className="py-3.5 px-4">
+                                <StatusBadge status={ord.status} size="sm" />
+                              </td>
+                              <td className="py-3.5 px-4 text-center">
+                                <div className="flex items-center justify-center gap-1.5">
+                                  <button
+                                    onClick={() => {
+                                      setSelectedOrder(ord);
+                                      setShowPaymentModal(true);
+                                    }}
+                                    title="Collect Pending Payment"
+                                    className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs"
+                                  >
+                                    Record Pay
+                                  </button>
+
+                                  <button onClick={() => handleWhatsAppShare(ord)} title="WhatsApp Reminder" className="p-2 rounded-xl bg-emerald-50 text-emerald-600 hover:bg-emerald-500 hover:text-white transition-colors">
+                                    <Smartphone className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Mobile Cards */}
+                    <div className="md:hidden space-y-3">
                       {(paginatedList as Order[]).map((ord) => (
-                        <tr key={ord._id} className="hover:bg-rose-50/20 dark:hover:bg-rose-950/20">
-                          <td className="py-3.5 px-4 font-bold text-rose-600 dark:text-rose-400 whitespace-nowrap">
-                            <button onClick={() => setSelectedOrder(ord)} className="hover:underline">
+                        <div key={ord._id} className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-rose-200 dark:border-rose-900/60 shadow-sm space-y-3">
+                          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
+                            <button onClick={() => setSelectedOrder(ord)} className="font-black text-sm text-rose-600 dark:text-rose-400">
                               #{ord.orderNumber}
                             </button>
-                          </td>
-                          <td className="py-3.5 px-4">
-                            <p className="font-bold">{ord.customerSnapshot?.name}</p>
-                            <p className="text-[10px] text-slate-400">+91 {ord.customerSnapshot?.mobile}</p>
-                          </td>
-                          <td className="py-3.5 px-4 text-slate-500 whitespace-nowrap">
-                            {formatDateTime(ord.orderDate)}
-                          </td>
-                          <td className="py-3.5 px-4 font-bold">
-                            {currencySymbol}{ord.totalAmount}
-                          </td>
-                          <td className="py-3.5 px-4 font-black text-rose-600 dark:text-rose-400 text-sm whitespace-nowrap">
-                            {currencySymbol}{ord.remainingBalance}
-                          </td>
-                          <td className="py-3.5 px-4">
                             <StatusBadge status={ord.status} size="sm" />
-                          </td>
-                          <td className="py-3.5 px-4 text-center">
-                            <div className="flex items-center justify-center gap-1.5">
-                              <button
-                                onClick={() => {
-                                  setSelectedOrder(ord);
-                                  setShowPaymentModal(true);
-                                }}
-                                title="Collect Pending Payment"
-                                className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs"
-                              >
-                                Record Pay
-                              </button>
-
-                              <button onClick={() => handleWhatsAppShare(ord)} title="WhatsApp Reminder" className="p-2 rounded-xl bg-emerald-50 text-emerald-600 hover:bg-emerald-500 hover:text-white transition-colors">
-                                <Smartphone className="w-4 h-4" />
-                              </button>
+                          </div>
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <p className="font-bold text-xs text-slate-900 dark:text-white">{ord.customerSnapshot?.name}</p>
+                              <p className="text-[11px] text-slate-500">+91 {ord.customerSnapshot?.mobile}</p>
                             </div>
-                          </td>
-                        </tr>
+                            <div className="text-right">
+                              <p className="font-black text-sm text-rose-600 dark:text-rose-400">
+                                Bal: {currencySymbol}{ord.remainingBalance}
+                              </p>
+                              <p className="text-[10px] text-slate-400">Total: {currencySymbol}{ord.totalAmount}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                            <button
+                              onClick={() => {
+                                setSelectedOrder(ord);
+                                setShowPaymentModal(true);
+                              }}
+                              className="px-3 py-1.5 rounded-xl bg-emerald-600 text-white font-bold text-xs flex-1 text-center"
+                            >
+                              Record Pay
+                            </button>
+
+                            <button onClick={() => handleWhatsAppShare(ord)} className="py-1.5 px-3 rounded-xl bg-emerald-50 text-emerald-700 font-bold text-xs flex items-center justify-center gap-1">
+                              <Smartphone className="w-3.5 h-3.5" /> WhatsApp
+                            </button>
+                          </div>
+                        </div>
                       ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* Mobile Cards */}
-                <div className="md:hidden space-y-3">
-                  {(paginatedList as Order[]).map((ord) => (
-                    <div key={ord._id} className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-rose-200 dark:border-rose-900/60 shadow-sm space-y-3">
-                      <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
-                        <button onClick={() => setSelectedOrder(ord)} className="font-black text-sm text-rose-600 dark:text-rose-400">
-                          #{ord.orderNumber}
-                        </button>
-                        <StatusBadge status={ord.status} size="sm" />
-                      </div>
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <p className="font-bold text-xs text-slate-900 dark:text-white">{ord.customerSnapshot?.name}</p>
-                          <p className="text-[11px] text-slate-500">+91 {ord.customerSnapshot?.mobile}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-black text-sm text-rose-600 dark:text-rose-400">
-                            Bal: {currencySymbol}{ord.remainingBalance}
-                          </p>
-                          <p className="text-[10px] text-slate-400">Total: {currencySymbol}{ord.totalAmount}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
-                        <button
-                          onClick={() => {
-                            setSelectedOrder(ord);
-                            setShowPaymentModal(true);
-                          }}
-                          className="px-3 py-1.5 rounded-xl bg-emerald-600 text-white font-bold text-xs flex-1 text-center"
-                        >
-                          Record Pay
-                        </button>
-
-                        <button onClick={() => handleWhatsAppShare(ord)} className="py-1.5 px-3 rounded-xl bg-emerald-50 text-emerald-700 font-bold text-xs flex items-center justify-center gap-1">
-                          <Smartphone className="w-3.5 h-3.5" /> WhatsApp
-                        </button>
-                      </div>
                     </div>
-                  ))}
+                  </div>
+                )}
+              </div>
+            ) : (
+              // TAB 2: All-Time Dues Grouped Month-by-Month (Unrestricted by Date Filters)
+              <div className="space-y-4">
+                {/* Summary Banner */}
+                <div className="p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-rose-500/10 via-amber-500/10 to-rose-500/10 border border-rose-200 dark:border-rose-900/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white">
+                        Total Uncollected Dues (All Months):
+                      </span>
+                      <span className="text-sm sm:text-base font-black text-rose-600 dark:text-rose-400">
+                        {currencySymbol}{(stats?.allTimePendingTotal ?? allTimePendingOrders.reduce((sum, o: any) => sum + Math.max(0, o.remainingBalance !== undefined ? Number(o.remainingBalance) : (Number(o.totalAmount || 0) - Number(o.advancePaid || 0))), 0)).toLocaleString('en-IN')}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                      Cumulative pending dues from previous and current months ({allTimePendingByMonth.length} months with pending balance). These persist until collected.
+                    </p>
+                  </div>
+
+                  {allTimePendingByMonth.length > 0 && (
+                    <button
+                      onClick={toggleAllMonths}
+                      className="text-xs font-bold text-rose-600 dark:text-rose-400 hover:underline shrink-0"
+                    >
+                      {expandedMonthKeys.length === allTimePendingByMonth.length ? 'Collapse All' : 'Expand All'}
+                    </button>
+                  )}
                 </div>
+
+                {allTimePendingByMonth.length === 0 ? (
+                  <div className="text-center py-10 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 text-slate-500 space-y-1">
+                    <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400">All Caught Up!</p>
+                    <p className="text-xs">Zero outstanding customer dues across all historical months.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {allTimePendingByMonth.map((grp) => {
+                      const isExpanded = expandedMonthKeys.includes(grp.monthKey);
+                      return (
+                        <div
+                          key={grp.monthKey}
+                          className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shadow-xs transition-all"
+                        >
+                          {/* Accordion Month Header */}
+                          <div
+                            onClick={() => toggleMonthExpansion(grp.monthKey)}
+                            className="p-3.5 sm:p-4 flex items-center justify-between cursor-pointer hover:bg-slate-50/70 dark:hover:bg-slate-800/50 select-none transition-colors"
+                          >
+                            <div className="flex items-center gap-2.5">
+                              <div className="p-2 rounded-xl bg-rose-100 text-rose-600 dark:bg-rose-950 dark:text-rose-400">
+                                <Calendar className="w-4 h-4" />
+                              </div>
+                              <div>
+                                <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                  <span>{grp.monthName}</span>
+                                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                                    {grp.count} {grp.count === 1 ? 'order' : 'orders'}
+                                  </span>
+                                </h4>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-3">
+                              <div className="text-right">
+                                <p className="text-xs sm:text-sm font-black text-rose-600 dark:text-rose-400">
+                                  {currencySymbol}{grp.totalDue.toLocaleString('en-IN')}
+                                </p>
+                                <p className="text-[10px] text-slate-400 font-semibold">Pending Due</p>
+                              </div>
+                              <div className="p-1 rounded-lg text-slate-400 hover:text-slate-600">
+                                {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Accordion Month Orders List */}
+                          {isExpanded && (
+                            <div className="border-t border-slate-100 dark:border-slate-800 bg-slate-50/40 dark:bg-slate-950/20 p-2 sm:p-4">
+                              {/* Desktop Table */}
+                              <div className="hidden md:block overflow-x-auto">
+                                <table className="w-full text-left text-xs">
+                                  <thead className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-slate-700">
+                                    <tr>
+                                      <th className="py-2.5 px-3">Order ID</th>
+                                      <th className="py-2.5 px-3">Customer</th>
+                                      <th className="py-2.5 px-3">Order Date & Time</th>
+                                      <th className="py-2.5 px-3">Total Amount</th>
+                                      <th className="py-2.5 px-3">Pending Balance</th>
+                                      <th className="py-2.5 px-3">Status</th>
+                                      <th className="py-2.5 px-3 text-center">Actions</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-slate-800 dark:text-slate-200">
+                                    {grp.orders.map((ord: Order) => {
+                                      const rem = ord.remainingBalance !== undefined
+                                        ? Number(ord.remainingBalance)
+                                        : Math.max(0, Number(ord.totalAmount || 0) - Number(ord.advancePaid || 0));
+                                      return (
+                                        <tr key={ord._id} className="hover:bg-rose-50/20 dark:hover:bg-rose-950/20">
+                                          <td className="py-3 px-3 font-bold text-rose-600 dark:text-rose-400 whitespace-nowrap">
+                                            <button onClick={() => setSelectedOrder(ord)} className="hover:underline">
+                                              #{ord.orderNumber}
+                                            </button>
+                                          </td>
+                                          <td className="py-3 px-3">
+                                            <p className="font-bold">{ord.customerSnapshot?.name}</p>
+                                            <p className="text-[10px] text-slate-400">+91 {ord.customerSnapshot?.mobile}</p>
+                                          </td>
+                                          <td className="py-3 px-3 text-slate-500 whitespace-nowrap">
+                                            {formatDateTime(ord.orderDate || ord.createdAt)}
+                                          </td>
+                                          <td className="py-3 px-3 font-bold">
+                                            {currencySymbol}{ord.totalAmount}
+                                          </td>
+                                          <td className="py-3 px-3 font-black text-rose-600 dark:text-rose-400 text-sm whitespace-nowrap">
+                                            {currencySymbol}{rem}
+                                          </td>
+                                          <td className="py-3 px-3">
+                                            <StatusBadge status={ord.status} size="sm" />
+                                          </td>
+                                          <td className="py-3 px-3 text-center">
+                                            <div className="flex items-center justify-center gap-1.5">
+                                              <button
+                                                onClick={() => {
+                                                  setSelectedOrder(ord);
+                                                  setShowPaymentModal(true);
+                                                }}
+                                                title="Collect Pending Payment"
+                                                className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs"
+                                              >
+                                                Record Pay
+                                              </button>
+                                              <button
+                                                onClick={() => handleWhatsAppShare(ord)}
+                                                title="WhatsApp Reminder"
+                                                className="p-2 rounded-xl bg-emerald-50 text-emerald-600 hover:bg-emerald-500 hover:text-white transition-colors"
+                                              >
+                                                <Smartphone className="w-4 h-4" />
+                                              </button>
+                                            </div>
+                                          </td>
+                                        </tr>
+                                      );
+                                    })}
+                                  </tbody>
+                                </table>
+                              </div>
+
+                              {/* Mobile Cards */}
+                              <div className="md:hidden space-y-2.5">
+                                {grp.orders.map((ord: Order) => {
+                                  const rem = ord.remainingBalance !== undefined
+                                    ? Number(ord.remainingBalance)
+                                    : Math.max(0, Number(ord.totalAmount || 0) - Number(ord.advancePaid || 0));
+                                  return (
+                                    <div
+                                      key={ord._id}
+                                      className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2"
+                                    >
+                                      <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-1.5">
+                                        <button onClick={() => setSelectedOrder(ord)} className="font-black text-xs text-rose-600 dark:text-rose-400">
+                                          #{ord.orderNumber}
+                                        </button>
+                                        <StatusBadge status={ord.status} size="sm" />
+                                      </div>
+                                      <div className="flex justify-between items-start text-xs">
+                                        <div>
+                                          <p className="font-bold text-slate-900 dark:text-white">{ord.customerSnapshot?.name}</p>
+                                          <p className="text-[10px] text-slate-400">+91 {ord.customerSnapshot?.mobile}</p>
+                                        </div>
+                                        <div className="text-right">
+                                          <p className="font-black text-rose-600 dark:text-rose-400">
+                                            Bal: {currencySymbol}{rem}
+                                          </p>
+                                          <p className="text-[10px] text-slate-400">Total: {currencySymbol}{ord.totalAmount}</p>
+                                        </div>
+                                      </div>
+                                      <div className="flex items-center justify-end gap-2 pt-1.5 border-t border-slate-100 dark:border-slate-800">
+                                        <button
+                                          onClick={() => {
+                                            setSelectedOrder(ord);
+                                            setShowPaymentModal(true);
+                                          }}
+                                          className="px-3 py-1.5 rounded-xl bg-emerald-600 text-white font-bold text-xs flex-1 text-center"
+                                        >
+                                          Record Pay
+                                        </button>
+                                        <button
+                                          onClick={() => handleWhatsAppShare(ord)}
+                                          className="py-1.5 px-3 rounded-xl bg-emerald-50 text-emerald-700 font-bold text-xs flex items-center justify-center gap-1"
+                                        >
+                                          <Smartphone className="w-3.5 h-3.5" /> WhatsApp
+                                        </button>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
           </div>
         )}
 
         {/* DASHBOARD LIMIT & PAGINATION CONTROLS BAR */}
-        {totalDashRecords > 0 && (
+        {totalDashRecords > 0 && !(activeCard === 'overdue' && overdueViewMode === 'all_months') && (
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 bg-slate-50 dark:bg-slate-800/60 border-t border-slate-200 dark:border-slate-800 text-xs rounded-b-2xl">
             <div className="flex items-center gap-2">
               <span className="text-slate-500 font-semibold">Rows per page:</span>

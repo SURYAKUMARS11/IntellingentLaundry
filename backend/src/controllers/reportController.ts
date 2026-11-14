@@ -228,6 +228,71 @@ export const getDashboardStats = async (req: Request, res: Response) => {
     const monthAdvTotal = monthOrdersSum[0]?.totalAdv || 0;
     const monthlyRevenue = monthPayTotal > 0 ? monthPayTotal : monthAdvTotal;
 
+    // 7. All-Time Pending Dues (Unrestricted by date filters)
+    const allTimePendingRaw = await Order.find({
+      status: { $ne: 'Cancelled' },
+      $or: [
+        { remainingBalance: { $gt: 0 } },
+        { paymentStatus: { $in: ['Pending', 'Partially Paid'] } },
+      ],
+    }).sort({ orderDate: -1, createdAt: -1 }).lean();
+
+    const allTimePendingOrders = allTimePendingRaw.filter((o: any) => {
+      const rem = o.remainingBalance !== undefined
+        ? Number(o.remainingBalance || 0)
+        : Math.max(0, Number(o.totalAmount || 0) - Number(o.advancePaid || 0));
+      return rem > 0 && o.paymentStatus !== 'Paid';
+    });
+
+    const allTimePendingTotal = allTimePendingOrders.reduce((sum, o: any) => {
+      const rem = o.remainingBalance !== undefined
+        ? Number(o.remainingBalance || 0)
+        : Math.max(0, Number(o.totalAmount || 0) - Number(o.advancePaid || 0));
+      return sum + rem;
+    }, 0);
+    const allTimePendingCount = allTimePendingOrders.length;
+
+    // Group all-time pending orders month-by-month
+    const monthlyPendingMap: {
+      [key: string]: {
+        monthKey: string;
+        monthName: string;
+        year: number;
+        month: number;
+        totalDue: number;
+        count: number;
+        orders: any[];
+      };
+    } = {};
+
+    allTimePendingOrders.forEach((o: any) => {
+      const d = o.orderDate ? new Date(o.orderDate) : new Date(o.createdAt || Date.now());
+      const monthName = d.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+      const sortKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+
+      if (!monthlyPendingMap[sortKey]) {
+        monthlyPendingMap[sortKey] = {
+          monthKey: sortKey,
+          monthName,
+          year: d.getFullYear(),
+          month: d.getMonth() + 1,
+          totalDue: 0,
+          count: 0,
+          orders: [],
+        };
+      }
+      const rem = o.remainingBalance !== undefined
+        ? Number(o.remainingBalance || 0)
+        : Math.max(0, Number(o.totalAmount || 0) - Number(o.advancePaid || 0));
+      monthlyPendingMap[sortKey].totalDue += rem;
+      monthlyPendingMap[sortKey].count += 1;
+      monthlyPendingMap[sortKey].orders.push(o);
+    });
+
+    const allTimePendingByMonth = Object.keys(monthlyPendingMap)
+      .sort((a, b) => b.localeCompare(a))
+      .map((key) => monthlyPendingMap[key]);
+
     res.json({
       success: true,
       stats: {
@@ -237,6 +302,8 @@ export const getDashboardStats = async (req: Request, res: Response) => {
         collectedRevenue: totalCollectedRevenue,
         totalBilled: totalBilledRevenue,
         totalPendingBalance,
+        allTimePendingTotal,
+        allTimePendingCount,
         activeOrders: activeOrdersCount,
         newCustomers: newCustomersCount,
         overdueOrders: overdueOrdersCount,
@@ -258,6 +325,8 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       newCustomersList,
       overdueOrdersList,
       pendingReminders: overdueOrdersList,
+      allTimePendingOrders,
+      allTimePendingByMonth,
       recentOrders: ordersList,
     });
   } catch (error: any) {

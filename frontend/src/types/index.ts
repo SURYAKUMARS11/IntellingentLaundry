@@ -144,6 +144,16 @@ export interface Setting {
   paymentQrUrl?: string;
 }
 
+export interface MonthPendingGroup {
+  monthKey: string;
+  monthName: string;
+  year: number;
+  month: number;
+  totalDue: number;
+  count: number;
+  orders: Order[];
+}
+
 export interface DashboardStats {
   orders: number;
   totalOrders?: number;
@@ -152,6 +162,8 @@ export interface DashboardStats {
   activeOrders: number;
   newCustomers: number;
   overdueOrders: number;
+  allTimePendingTotal?: number;
+  allTimePendingCount?: number;
   todayOrders?: number;
   pendingOrders?: number;
   inProgress?: number;
