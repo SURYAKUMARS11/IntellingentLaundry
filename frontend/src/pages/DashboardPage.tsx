@@ -152,7 +152,7 @@ export const DashboardPage: React.FC = () => {
         const byMonth: MonthPendingGroup[] = dashRes.allTimePendingByMonth || [];
         setAllTimePendingOrders(pendingOrds);
         setAllTimePendingByMonth(byMonth);
-        setExpandedMonthKeys((prev) => (prev.length === 0 && byMonth.length > 0 ? [byMonth[0].monthKey] : prev));
+        
       }
       if (setRes.success) {
         setSetting(setRes.setting);
@@ -711,7 +711,7 @@ export const DashboardPage: React.FC = () => {
               {activeCard === 'overdue' && (
                 overdueViewMode === 'filter'
                   ? 'Showing orders with pending balance in selected period.'
-                  : 'Showing cumulative uncollected order balances across all historical months. Select "Record Pay" on any order to collect payment.'
+                  : ''
               )}
             </p>
           </div>
@@ -1254,30 +1254,23 @@ export const DashboardPage: React.FC = () => {
             ) : (
               // TAB 2: All-Time Dues Grouped Month-by-Month (Unrestricted by Date Filters)
               <div className="space-y-4">
-                {/* Summary Banner */}
-                <div className="p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-rose-500/10 via-amber-500/10 to-rose-500/10 border border-rose-200 dark:border-rose-900/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white">
-                        Total Uncollected Dues (All Months):
-                      </span>
-                      <span className="text-sm sm:text-base font-black text-rose-600 dark:text-rose-400">
-                        {currencySymbol}{(stats?.allTimePendingTotal ?? allTimePendingOrders.reduce((sum, o: any) => sum + Math.max(0, o.remainingBalance !== undefined ? Number(o.remainingBalance) : (Number(o.totalAmount || 0) - Number(o.advancePaid || 0))), 0)).toLocaleString('en-IN')}
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                      Cumulative pending dues from previous and current months ({allTimePendingByMonth.length} months with pending balance). These persist until collected.
-                    </p>
-                  </div>
-
-                  {allTimePendingByMonth.length > 0 && (
+                {/* Top Action & Total Amount Bar */}
+                <div className="flex items-center justify-between gap-3 pb-1">
+                  {allTimePendingByMonth.length > 0 ? (
                     <button
                       onClick={toggleAllMonths}
-                      className="text-xs font-bold text-rose-600 dark:text-rose-400 hover:underline shrink-0"
+                      className="text-xs font-bold text-rose-600 dark:text-rose-400 hover:underline"
                     >
                       {expandedMonthKeys.length === allTimePendingByMonth.length ? 'Collapse All' : 'Expand All'}
                     </button>
-                  )}
+                  ) : <div />}
+
+                  <div className="flex items-center gap-1.5 text-xs sm:text-sm font-extrabold text-slate-700 dark:text-slate-200 ml-auto">
+                    <span className="text-slate-500 font-semibold">Total:</span>
+                    <span className="text-sm sm:text-base font-black text-rose-600 dark:text-rose-400">
+                      {currencySymbol}{(stats?.allTimePendingTotal ?? allTimePendingOrders.reduce((sum, o: any) => sum + Math.max(0, o.remainingBalance !== undefined ? Number(o.remainingBalance) : (Number(o.totalAmount || 0) - Number(o.advancePaid || 0))), 0)).toLocaleString('en-IN')}
+                    </span>
+                  </div>
                 </div>
 
                 {allTimePendingByMonth.length === 0 ? (
@@ -1358,8 +1351,8 @@ export const DashboardPage: React.FC = () => {
                                         Showing {(curPage - 1) * PAGE_SIZE + 1} - {Math.min(grp.count, curPage * PAGE_SIZE)}
                                       </span>
                                       <span>of {grp.count} orders</span>
-                                      <span className="hidden sm:inline text-slate-400">• (5 fixed per view)</span>
-                                      <span className="sm:hidden text-[10px] text-rose-500 font-semibold">• Swipe left/right</span>
+
+
                                     </div>
 
                                     <div className="flex items-center gap-1.5 shrink-0">
